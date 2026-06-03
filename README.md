@@ -107,8 +107,3 @@ mcts-td-planner/
 └── memory/                # 经验存储（自动积累）
 ```
 
----
-
-## 参考
-
-受 [hrpan/tetris_mcts](https://github.com/hrpan/tetris_mcts) 项目启发，该项目的 MCTS+TD 混合架构在俄罗斯方块游戏中取得了优秀成绩。
