@@ -141,16 +141,8 @@ V(s_terminal) =
 ### 方差的使用规则
 
 ```
-σ² 的语义：
-  σ² ≈ 0 → 价值估计高度确定（同类型任务多次一致的结果）
-  σ² 大  → 价值估计不确定（结果波动大，需要更多探索）
-
-方差驱动的探索：
-  CLT-UCB 使用方差作为探索信号：
-    UCB = μ + Φ⁻¹(N) × √(σ²/n)
-  
-  高方差 → 高探索奖励 → 优先被选择（获取更多信息）
-  低方差 → 低探索奖励 → 按价值排序（置信度高）
+方差→信心映射: `python scripts/mcts_compute.py` get_confidence_level
+σ²<0.1→高 | 0.1~0.3→中 | ≥0.3→低
 ```
 
 ---
@@ -204,21 +196,9 @@ V(s_terminal) =
 ### 规则
 
 ```
-资格迹衰减：
-  在一个决策序列中，步骤 t 的资格 = λ^(T-t)
-  
-  其中 λ 是衰减因子，T 是决策序列长度
-
-λ 的选择：
-  λ=0.0 → 只更新最后一步（标准TD(0)）
-  λ=0.5 → 最后几步获得大部分信用
-  λ=0.8 → 序列中几乎所有步骤都获得信用（接近蒙特卡洛）
-  λ=0.9 → 深度信用分配（适合长序列任务）
-
-推荐 λ 值：
-  短序列 (1-3步): λ=0.0 (TD(0))
-  中序列 (4-8步): λ=0.5
-  长序列 (9+步): λ=0.8
+资格迹衰减：步骤 t 的资格 = λ^(T-t)
+推荐 λ: `python scripts/mcts_compute.py get-lambda --steps <N>`
+→ 1-3步:0.0 | 4-8步:0.5 | 9+步:0.8
 ```
 
 ---
@@ -368,60 +348,12 @@ V(s_terminal) =
 
 ### 状态转换规则
 
-```
-HYPOTHESIS → PROVISIONAL:
-  触发: 该知识被推演引用1次，且执行结果与知识方向一致
-  操作: 状态更新为PROVISIONAL，n=1，记录首次验证时间
+状态转换由代码引擎计算: `python scripts/mcts_compute.py check_status_transition`
+权重查询: `python scripts/mcts_compute.py get-status-weight --status <状态>`
 
-HYPOTHESIS → REFUTED:
-  触发: 该知识被推演引用1次，但执行结果与知识方向相反
-  操作: 状态更新为REFUTED，记录证伪原因
-  ★ 这意味着"一次就证伪"，防止错误知识被反复引用
-
-PROVISIONAL → CONFIRMED:
-  触发: 累计 ≥3 次正面验证（n ≥ 3）
-  操作: 状态更新为CONFIRMED，记录确认时间
-
-PROVISIONAL → DISPUTED:
-  触发: 出现矛盾证据（同一特征的新知识与旧知识价值方向相反）
-  操作: 状态更新为DISPUTED，记录矛盾原因
-  同时: 新知识作为独立的HYPOTHESIS条目加入图谱
-
-CONFIRMED → DISPUTED:
-  触发: 出现 ≥2 次矛盾引用
-  操作: 状态更新为DISPUTED，记录矛盾原因
-  同时: 创建旧状态的快照（用于回滚）
-
-DISPUTED → CONFIRMED（回滚）:
-  触发: 新证据支持旧知识，或反驳旧知识的新知识被证伪
-  操作: 恢复快照中的旧状态为CONFIRMED
-
-DISPUTED → REFUTED:
-  触发: 累计 ≥3 次矛盾引用
-  操作: 状态更新为REFUTED，冻结不再使用
-
-CONFIRMED → SLEEPING:
-  触发: 超过30天未使用（last_verified距今 > 30天）
-  操作: 状态更新为SLEEPING，权重减半为0.3×0.5
-  同时: 保留完整上下文信息，用于回忆触发
-
-SLEEPING → PROVISIONAL:
-  触发: 被联想回忆或外部触发重新引用
-  操作: 状态更新为PROVISIONAL，巩固分重置为5
-  同时: 记录"回忆触发"时间
-
-SLEEPING → ARCHIVED:
-  触发: 超过90天未使用（last_verified距今 > 90天）
-  操作: 状态更新为ARCHIVED，移入archive目录存储
-
-ARCHIVED → HYPOTHESIS:
-  触发: 联想回忆时发现关联匹配
-  操作: 状态更新为HYPOTHESIS，从archive移回active文件
-  同时: 巩固分重置为5，需要重新验证
-```
-
-另外，在权重表中补全 SLEEPING 和 ARCHIVED：
-```
+核心规则: HYPOTHESIS→(验证1次)→PROVISIONAL/REFUTED | PROVISIONAL→(n≥3)→CONFIRMED
+           CONFIRMED→(矛盾≥2次)→DISPUTED | DISPUTED→(矛盾≥3次)→REFUTED
+           回滚: DISPUTED→(新证据支持)→CONFIRMED | ARCHIVED→(回忆触发)→HYPOTHESIS
 
 ### 权重体系
 
@@ -541,10 +473,7 @@ ARCHIVED → HYPOTHESIS:
   4. 印象深刻的（状态变化多的）
      → "有过争议/回滚的知识，记忆更深刻"
 
-浮现数量:
-  - 一般浮现 2-4 条
-  - 如果一条都想不起来 → 第3步外部求证
-  - 如果想起来很多（>5条） → 只保留印象最深的 top-3
+浮现数量: 一般2~4条, >5条截断为top-3, 0条→外部求证
 ```
 
 ---
@@ -772,92 +701,7 @@ ARCHIVED → HYPOTHESIS:
 
 记忆文件中存储完整知识图谱。**知识分为"活跃"和"归档"两部分，模拟人脑的"当前意识"和"长期记忆"。**
 
-#### 分层存储结构
+#### 存储与管理
 
-```
-memory/
-├── mcts-td-value-archive.md     # 活跃知识（当前能想起来的）
-└── archive/                      # 归档知识（想不起来的，但被触发还能回忆）
-    ├── 2026-01.md                # 按归档时间分文件
-    ├── 2026-02.md
-    └── ...
-```
-
-#### 活跃与归档的转换
-
-```
-知识刚创建或最近用过 → 在 active 中（当前意识）
-很久没用 → 自动移入 archive（遗忘）
-被触发回忆起来 → 从 archive 移回 active（回忆）
-
-具体规则:
-  巩固分离 → 在 active 中，召回时能想到
-  巩固分低（≤3）且超过60天未使用 → 移入 archive
-  移入 archive 后，常规召回查不到它（想不起来了）
-  但如果推演过程中触发了关联（比如标签匹配），会"忽然想起来"
-  → 从 archive 移回 active，巩固分重置为 5
-```
-
-#### 人脑类比
-
-```
-active/ = 你现在能想起来的事
-  "上次那个API超时问题是怎么解决的来着？哦我想起来了..."
-
-archive/ = 你以为忘了，但被人一提又能想起来的事
-  "你不说我都忘了，去年也遇到过一次类似的..."
-```
-
-#### 存档规则
-
-```
-归档时机:
-  每次执行完TD更新后，检查所有 active 条目:
-  - 如果巩固分 ≤ 3 且 最后验证距今 > 60天
-  - 或者状态为 REFUTED（已证伪的知识不需要一直放在脑子里）
-  → 移入 archive
-
-回忆触发:
-  当联想回忆（第1步）没有找到足够的知识时:
-  → 看一下当前的问题关键词
-  → 去 archive 里翻一下有没有匹配的
-  → 如果有 → 移回 active，巩固分重置，状态改为 HYPOTHESIS（需要重新验证）
-  → 这条路走不通 → 外部求证
-```
-
-#### 存储格式
-
-active 文件和 archive 文件使用相同的格式：
-
-```markdown
----
-name: mcts-td-value-archive
-description: MCTS-TD 引擎的知识图谱价值函数存档
-metadata:
-  type: reference
----
-
-## 知识条目表
-
-| ID | 特征 | q | σ² | n | 状态 | tags | 上下文 | 巩固分 | 创建时间 | 最后验证 |
-|----|------|---|----|----|-----|------|--------|-------|---------|---------|
-| K001 | BUG_FIX\|WEB\|LOW | 0.90 | 0.05 | 30 | CONFIRMED | ["参数校验"] | {tech:"Go"} | 25 | 2026-06-05 | 2026-06-10 |
-
-## 知识变更日志
-
-| 日期 | 条目 | 操作 | 原因 |
-|------|------|------|------|
-| 2026-06-01 | K001 | 创建(HYPOTHESIS) | 初始积累 |
-| 2026-06-10 | K001 | →CONFIRMED | 3次验证通过 |
-```
-
-#### 读取规则
-
-```
-跨会话加载：
-  1. 读取 memory/mcts-td-value-archive.md（活跃知识）
-  2. 活跃知识加载到"当前意识"中，召回时直接查询
-  
-  3. archive/ 下的文件不主动加载（想不起来的事不用翻出来）
-  4. 只有联想回忆找不到足够知识时，才去"努力回忆"——翻 archive
-```
+归档/回忆/清理操作: `python scripts/manage_memory.py archive|recall|cleanup|status`
+存储路径: `~/.claude/data/skills/mcts-td-planner/memory/`（与skill代码物理隔离）

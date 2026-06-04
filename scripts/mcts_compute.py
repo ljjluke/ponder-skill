@@ -449,6 +449,410 @@ def handle_contradiction(existing_entry: dict, new_value: float,
 
 
 # ============================================================================
+# 模块 7: 知识图谱偏置计算
+# ============================================================================
+
+def compute_k_bonus(kg_match: Optional[dict], n_child: int) -> dict:
+    """
+    计算知识图谱偏置 K_bonus。
+
+    Args:
+        kg_match: 知识图谱匹配条目，None 表示无匹配
+        n_child: 子节点访问次数
+
+    Returns:
+        {"k_bonus": float, "label": str, "reason": str}
+    """
+    if n_child >= 3:
+        return {"k_bonus": 0.0, "label": "样本充足", "reason": "n_child>=3，不再依赖先验"}
+    if not kg_match:
+        return {"k_bonus": 0.0, "label": "冷启动", "reason": "无知识图谱匹配"}
+
+    status = kg_match.get("status", "")
+    n = kg_match.get("n", 0)
+    q = kg_match.get("q", 0.0)
+
+    if status == "CONFIRMED" and n >= 5 and q >= 0.8:
+        return {"k_bonus": 0.15, "label": "高可信偏置",
+                "reason": f"CONFIRMED+n={n}+q={q:.2f}"}
+    if status == "PROVISIONAL" and n < 5 and q >= 0.7:
+        return {"k_bonus": 0.05, "label": "中可信偏置",
+                "reason": f"PROVISIONAL+n={n}+q={q:.2f}"}
+    if status in ("DISPUTED", "REFUTED") or q < 0.5:
+        return {"k_bonus": -0.10, "label": "失败警告",
+                "reason": f"status={status}+q={q:.2f}"}
+
+    return {"k_bonus": 0.0, "label": "无显著偏置", "reason": "不满足偏置条件"}
+
+
+# ============================================================================
+# 模块 8: 发散引擎辅助函数
+# ============================================================================
+
+# 六维评分 → 视角映射
+DIMENSION_TO_PERSPECTIVE = {
+    "技术栈": 1, "架构模式": 2, "业务流程": 3,
+    "安全合规": 4, "运维部署": 5, "用户体验": 6,
+}
+
+PERSPECTIVE_NAMES = {
+    1: "技术选型视角", 2: "架构设计视角", 3: "业务流程视角",
+    4: "安全优先视角", 5: "运维优先视角", 6: "用户体验视角",
+    7: "性能优先视角", 8: "最小成本视角", 9: "激进创新视角",
+    10: "反面视角",
+}
+
+PERSPECTIVE_BOUNDS = {"min": 4, "max": 8}
+
+# 盲区分类
+BLINDSPOT_RULES = {
+    "blank": {"range": (0, 4), "label": "完全空白",
+              "action": "必须先补资料，不能跳过"},
+    "partial": {"range": (4, 7), "label": "部分空白",
+                "action": "可生成方案但标注'待验证'"},
+    "covered": {"range": (7, 11), "label": "已覆盖",
+                 "action": "直接生成方案"},
+}
+
+
+def classify_blindspot(score: int) -> dict:
+    """根据六维评分分类盲区。"""
+    for key, rule in BLINDSPOT_RULES.items():
+        lo, hi = rule["range"]
+        if lo <= score < hi:
+            return {"class": key, **rule}
+    return {"class": "covered", **BLINDSPOT_RULES["covered"]}
+
+
+def get_activated_perspectives(dimension_scores: dict[str, int],
+                                task_type: str = "normal") -> list[int]:
+    """
+    根据六维评分和任务类型，返回激活的视角编号列表。
+
+    Args:
+        dimension_scores: {"技术栈": 9, "架构模式": 8, ...}
+        task_type: normal | performance_sensitive | time_constrained | highly_uncertain
+
+    Returns:
+        激活的视角编号列表 (4~8个)
+    """
+    activated = []
+
+    # 规则1: 评分 >= 7 的维度自动激活
+    for dim, score in dimension_scores.items():
+        if score >= 7 and dim in DIMENSION_TO_PERSPECTIVE:
+            activated.append(DIMENSION_TO_PERSPECTIVE[dim])
+
+    # 规则2: 任务类型补充
+    if task_type == "performance_sensitive":
+        activated.append(7)
+    if task_type == "time_constrained":
+        activated.append(8)
+    if task_type == "highly_uncertain":
+        activated.append(9)
+
+    # 反面视角总是激活
+    activated.append(10)
+
+    # 去重保序
+    unique = list(dict.fromkeys(activated))
+
+    # 规则3: 数量边界
+    if len(unique) < PERSPECTIVE_BOUNDS["min"]:
+        # 从高评分维度补足
+        sorted_dims = sorted(dimension_scores.items(), key=lambda x: x[1], reverse=True)
+        for dim, score in sorted_dims:
+            if dim in DIMENSION_TO_PERSPECTIVE:
+                p = DIMENSION_TO_PERSPECTIVE[dim]
+                if p not in unique:
+                    unique.append(p)
+                    if len(unique) >= PERSPECTIVE_BOUNDS["min"]:
+                        break
+
+    if len(unique) > PERSPECTIVE_BOUNDS["max"]:
+        unique = unique[:PERSPECTIVE_BOUNDS["max"]]
+
+    return unique
+
+
+# ============================================================================
+# 模块 9: 知识写入控制
+# ============================================================================
+
+def should_write_to_knowledge_graph(v_leaf: float, round_num: int,
+                                     is_final: bool = False) -> dict:
+    """
+    判断是否应该将本轮经验写入知识图谱。
+
+    Returns:
+        {"should_write": bool, "reason": str}
+    """
+    if is_final:
+        return {"should_write": True, "reason": "最终收敛后强制写入"}
+    if v_leaf >= 0.8:
+        return {"should_write": True, "reason": f"高价值经验(V={v_leaf:.2f}≥0.8)"}
+    if v_leaf <= 0.3:
+        return {"should_write": True, "reason": f"失败经验(V={v_leaf:.2f}≤0.3)，记住避免重复"}
+    if round_num % 5 == 0:
+        return {"should_write": True, "reason": f"第{round_num}轮批量写入"}
+    return {"should_write": False, "reason": "普通经验(V在0.3~0.8)，不写入"}
+
+
+def check_write_safety(existing: Optional[dict], new_q: float,
+                        diff_context: bool = False) -> dict:
+    """
+    写入前安全检查。
+
+    Returns:
+        {"safe": bool, "issues": list[dict]}
+    """
+    issues = []
+    if existing and abs(new_q - existing.get("q", 0)) > 0.5:
+        issues.append({
+            "type": "contradiction",
+            "action": "创建独立HYPOTHESIS（不覆盖已有条目）",
+            "existing_q": existing["q"],
+            "new_q": new_q
+        })
+    if diff_context:
+        issues.append({
+            "type": "context_specific",
+            "action": "标注specific_context=true，召回时降权"
+        })
+    return {"safe": len(issues) == 0, "issues": issues}
+
+
+# ============================================================================
+# 模块 10: 仲裁引擎辅助函数
+# ============================================================================
+
+def needs_re_evaluation(ranked: list[dict],
+                         v_threshold: float = 0.03) -> dict:
+    """
+    检查第1名是否需要追加迭代。
+
+    Returns:
+        {"needs_re_eval": bool, "reason": str}
+    """
+    if len(ranked) < 2:
+        return {"needs_re_eval": False, "reason": "只有一个方案"}
+    first, second = ranked[0], ranked[1]
+    v_diff = first.get("v", 0) - second.get("v", 0)
+    if v_diff < v_threshold and first.get("n", 0) < second.get("n", 0):
+        return {
+            "needs_re_eval": True,
+            "reason": f"V领先{v_diff:.3f}<{v_threshold}且n更少({first['n']}<{second['n']})，追加2轮"
+        }
+    return {"needs_re_eval": False, "reason": "区分度足够或探索充分"}
+
+
+def check_final_convergence(root_total_n: int, solution_count: int,
+                             top_solution: dict) -> dict:
+    """
+    最终收敛判定（仲裁排序前）。
+
+    Returns:
+        {"converged": bool, "reason": str}
+    """
+    if root_total_n < solution_count * 4:
+        return {"converged": False,
+                "reason": f"总访问次数不足(需>{solution_count * 4}, 当前{root_total_n})"}
+    if top_solution.get("n", 0) < 5:
+        return {"converged": False,
+                "reason": f"最优方案访问次数不足(需≥5, 当前{top_solution['n']})"}
+    if top_solution.get("sigma2", 1.0) >= 0.10:
+        return {"converged": False,
+                "reason": f"最优方案方差过大({top_solution['sigma2']:.2f}≥0.10)"}
+    return {"converged": True, "reason": "所有条件满足"}
+
+
+# 熔断机制
+ACCURACY_WINDOW = 10
+
+
+def compute_accuracy(recent_errors: list[float],
+                     error_threshold: float = 0.3) -> float:
+    """计算推演准确率（最近10次中|误差|<threshold的比例）。"""
+    if not recent_errors:
+        return 1.0
+    window = recent_errors[-ACCURACY_WINDOW:]
+    accurate = sum(1 for e in window if abs(e) < error_threshold)
+    return accurate / len(window)
+
+
+def get_fuse_mode(accuracy: float, consecutive_bad: int = 0) -> dict:
+    """获取熔断模式。"""
+    if consecutive_bad >= 3:
+        return {"mode": "suggest_manual", "action": "建议用户手动决策"}
+    if accuracy < 0.50:
+        return {"mode": "pause_ask_user", "action": "暂停推演，直接问用户"}
+    if accuracy < 0.70:
+        return {"mode": "simplified", "action": "降级为简化推演（2步）"}
+    return {"mode": "normal", "action": "正常推演"}
+
+
+def should_recover_mode(recent_5_accuracy: float) -> bool:
+    """检查是否应恢复完整推演模式。"""
+    return recent_5_accuracy > 0.80
+
+
+# 自检结论处理
+SELF_CHECK_ACTIONS = {
+    "通过": {"action": "执行", "require_user": False},
+    "有风险": {"action": "输出报告→用户确认→执行", "require_user": True},
+    "未通过": {"action": "回推演引擎重新推演", "require_user": False, "max_retries": 2},
+}
+
+
+def handle_self_check_result(conclusion: str, retry_count: int = 0) -> dict:
+    """处理自检结论。"""
+    action = SELF_CHECK_ACTIONS.get(conclusion, SELF_CHECK_ACTIONS["通过"])
+    if conclusion == "未通过" and retry_count >= 2:
+        return {"action": "suggest_manual", "reason": "连续2次自检未通过"}
+    return action
+
+
+# 再推演决策
+def re_simulation_decision(ranked: list[dict],
+                            second_has_simulation: bool,
+                            all_affected: bool) -> dict:
+    """再推演模式的决策逻辑。"""
+    if all_affected:
+        return {"action": "back_to_diverge",
+                "reason": "所有方案都受影响，回到发散引擎重新生成方案"}
+    if second_has_simulation:
+        return {"action": "compare_and_switch",
+                "reason": "第2名已有完整推演报告，直接比较后切换"}
+    else:
+        return {"action": "quick_simulate_second",
+                "reason": "第2名只有粗筛结果，执行快速推演(2步)"}
+
+
+# ============================================================================
+# 模块 11: TD 更新编排
+# ============================================================================
+
+def td_update_workflow(optimal_path_nodes: list[dict],
+                        v_actual: float,
+                        knowledge_graph: list[dict]) -> dict:
+    """
+    执行完整的 TD 更新流程。
+
+    Args:
+        optimal_path_nodes: 最优路径上的节点列表
+        v_actual: 实际执行结果价值
+        knowledge_graph: 当前知识图谱
+
+    Returns:
+        {"updates": list, "knowledge_graph": list}
+    """
+    updates = []
+    for node in optimal_path_nodes:
+        v_predicted = node.get("v", 0.0)
+        td_error = compute_td_error(v_actual, v_predicted)
+
+        # 查找知识图谱匹配（简化：按描述关键词匹配）
+        match = None
+        node_desc = node.get("description", "")
+        for entry in knowledge_graph:
+            entry_tags = entry.get("tags", [])
+            if any(tag in node_desc for tag in entry_tags):
+                match = entry
+                break
+
+        if match:
+            n_old = match.get("n", 0)
+            q_old = match.get("q", 0.0)
+            m2_old = match.get("m2", 0.0)
+            q_new, m2_new, n_new, sigma2_new = welford_update(
+                q_old, m2_old, n_old, v_actual)
+            match["n"] = n_new
+            match["q"] = q_new
+            match["m2"] = m2_new
+            match["sigma2"] = sigma2_new
+
+            if abs(td_error) > 0.3:
+                new_status = check_status_transition(
+                    match.get("status", "PROVISIONAL"), n_new)
+                if new_status:
+                    match["status"] = new_status
+
+            updates.append({
+                "type": "update", "id": match.get("id"),
+                "td_error": td_error, "new_q": q_new
+            })
+        elif abs(td_error) > 0.2:
+            new_id = f"K{len(knowledge_graph) + 1}"
+            new_entry = {
+                "id": new_id, "q": v_actual, "sigma2": 0.25, "n": 1,
+                "status": "HYPOTHESIS",
+                "tags": [node_desc[:20]] if node_desc else [],
+                "m2": 0.0,
+            }
+            knowledge_graph.append(new_entry)
+            updates.append({
+                "type": "create", "id": new_id, "td_error": td_error
+            })
+
+    return {"updates": updates, "knowledge_graph": knowledge_graph}
+
+
+# ============================================================================
+# 模块 12: 触发检查与 λ 选择
+# ============================================================================
+
+TRIGGER_KEYWORDS = {
+    "action_verbs": ["做", "实现", "开发", "写", "改", "优化", "重构", "设计",
+                     "添加", "新增", "构建", "搭建", "修复", "改进", "部署", "配置"],
+    "decision_questions": ["怎么", "如何", "用什么", "选哪个", "哪种", "哪个好",
+                          "方案", "架构", "技术选型"],
+    "analysis_verbs": ["分析", "评估", "比较", "审查", "对比"],
+    "continue_keywords": ["继续", "可以", "推演吧", "推演", "go ahead", "yes", "确认"],
+}
+
+EXCLUDE_KEYWORDS = {
+    "greetings": ["你好", "嗨", "hello", "hi", "hey"],
+    "info_query": ["什么意思", "是什么", "怎么用", "如何用", "这段代码"],
+}
+
+
+def quick_trigger_check(user_message: str) -> dict:
+    """快速触发检查（启发式，需 LLM 最终确认）。"""
+    msg = user_message
+    for kw in TRIGGER_KEYWORDS["action_verbs"]:
+        if kw in msg:
+            return {"likely_trigger": True, "reason": f"包含动作词'{kw}'"}
+    for kw in TRIGGER_KEYWORDS["decision_questions"]:
+        if kw in msg:
+            return {"likely_trigger": True, "reason": f"包含决策疑问'{kw}'"}
+    for kw in TRIGGER_KEYWORDS["analysis_verbs"]:
+        if kw in msg:
+            return {"likely_trigger": True, "reason": f"包含分析词'{kw}'"}
+    for kw in EXCLUDE_KEYWORDS["greetings"] + EXCLUDE_KEYWORDS["info_query"]:
+        if kw in msg:
+            return {"likely_trigger": False, "reason": f"匹配排除词'{kw}'"}
+    return {"likely_trigger": False, "reason": "无明显触发信号"}
+
+
+def get_lambda_by_trace_length(steps: int) -> float:
+    """根据序列长度获取推荐 λ 值。"""
+    if steps <= 3:
+        return 0.0
+    elif steps <= 8:
+        return 0.5
+    else:
+        return 0.8
+
+
+def get_status_weight_full(status: str, consolidation_score: int = 0) -> float:
+    """获取状态的完整查询权重（含 SLEEPING 减半）。"""
+    base = STATUS_WEIGHTS.get(status, 0.0)
+    if status == "SLEEPING":
+        return base * 0.5
+    return base
+
+
+# ============================================================================
 # 模块 5: 评分与策略映射
 # ============================================================================
 
@@ -724,7 +1128,148 @@ if __name__ == "__main__":
             "variance": var
         }))
 
+    elif cmd == "k-bonus":
+        # python mcts_compute.py k-bonus --status CONFIRMED --n 5 --q 0.85 --n-child 1
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--status", type=str, default="")
+        parser.add_argument("--n", type=int, default=0)
+        parser.add_argument("--q", type=float, default=0.0)
+        parser.add_argument("--n-child", type=int, default=0)
+        args = parser.parse_args(sys.argv[2:])
+        kg_match = {"status": args.status, "n": args.n, "q": args.q} if args.status else None
+        result = compute_k_bonus(kg_match, args.n_child)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "classify-blindspot":
+        # python mcts_compute.py classify-blindspot --score 4
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--score", type=int, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        result = classify_blindspot(args.score)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "get-activated-perspectives":
+        # python mcts_compute.py get-activated-perspectives --scores '{"技术栈":9,"架构模式":8}' --task-type normal
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--scores", type=str, required=True)
+        parser.add_argument("--task-type", type=str, default="normal")
+        args = parser.parse_args(sys.argv[2:])
+        scores = json.loads(args.scores)
+        result = get_activated_perspectives(scores, args.task_type)
+        print(json.dumps({"activated_perspectives": result,
+                          "count": len(result)}, ensure_ascii=False))
+
+    elif cmd == "should-write-kg":
+        # python mcts_compute.py should-write-kg --v-leaf 0.85 --round 3
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--v-leaf", type=float, required=True)
+        parser.add_argument("--round", type=int, required=True)
+        parser.add_argument("--is-final", action="store_true")
+        args = parser.parse_args(sys.argv[2:])
+        result = should_write_to_knowledge_graph(args.v_leaf, args.round, args.is_final)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "check-write-safety":
+        # python mcts_compute.py check-write-safety --existing-q 0.85 --new-q 0.30
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--existing-q", type=float, default=None)
+        parser.add_argument("--new-q", type=float, required=True)
+        parser.add_argument("--diff-context", action="store_true")
+        args = parser.parse_args(sys.argv[2:])
+        existing = {"q": args.existing_q} if args.existing_q is not None else None
+        result = check_write_safety(existing, args.new_q, args.diff_context)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "needs-re-eval":
+        # python mcts_compute.py needs-re-eval --ranked '[{"name":"A","v":0.84,"n":5},{"name":"B","v":0.83,"n":8}]'
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--ranked", type=str, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        ranked = json.loads(args.ranked)
+        result = needs_re_evaluation(ranked)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "check-final-convergence":
+        # python mcts_compute.py check-final-convergence --root-total-n 20 --solution-count 4 --top-v 0.84 --top-n 5 --top-sigma2 0.03
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--root-total-n", type=int, required=True)
+        parser.add_argument("--solution-count", type=int, required=True)
+        parser.add_argument("--top-v", type=float, required=True)
+        parser.add_argument("--top-n", type=int, required=True)
+        parser.add_argument("--top-sigma2", type=float, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        top = {"v": args.top_v, "n": args.top_n, "sigma2": args.top_sigma2}
+        result = check_final_convergence(args.root_total_n, args.solution_count, top)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "get-fuse-mode":
+        # python mcts_compute.py get-fuse-mode --accuracy 0.65 --consecutive-bad 1
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--accuracy", type=float, required=True)
+        parser.add_argument("--consecutive-bad", type=int, default=0)
+        args = parser.parse_args(sys.argv[2:])
+        result = get_fuse_mode(args.accuracy, args.consecutive_bad)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "handle-self-check":
+        # python mcts_compute.py handle-self-check --conclusion 有风险 --retry-count 0
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--conclusion", type=str, required=True)
+        parser.add_argument("--retry-count", type=int, default=0)
+        args = parser.parse_args(sys.argv[2:])
+        result = handle_self_check_result(args.conclusion, args.retry_count)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "re-simulation-decide":
+        # python mcts_compute.py re-simulation-decide --second-has-sim --all-affected
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--second-has-sim", action="store_true")
+        parser.add_argument("--all-affected", action="store_true")
+        args = parser.parse_args(sys.argv[2:])
+        result = re_simulation_decision([], args.second_has_sim, args.all_affected)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "trigger-check":
+        # python mcts_compute.py trigger-check --message "帮我实现一个登录功能"
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--message", type=str, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        result = quick_trigger_check(args.message)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "get-lambda":
+        # python mcts_compute.py get-lambda --steps 5
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--steps", type=int, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        result = get_lambda_by_trace_length(args.steps)
+        print(json.dumps({"lambda": result}))
+
+    elif cmd == "get-status-weight":
+        # python mcts_compute.py get-status-weight --status SLEEPING
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--status", type=str, required=True)
+        args = parser.parse_args(sys.argv[2:])
+        result = get_status_weight_full(args.status)
+        print(json.dumps({"status": args.status, "weight": result}))
+
     else:
         print(f"未知命令: {cmd}")
-        print("可用命令: ucb, backprop, converge, status-transition, rank, rough-filter, welford")
+        print("可用命令: ucb, backprop, converge, status-transition, rank, rough-filter, welford, "
+              "k-bonus, classify-blindspot, get-activated-perspectives, should-write-kg, "
+              "check-write-safety, needs-re-eval, check-final-convergence, get-fuse-mode, "
+              "handle-self-check, re-simulation-decide, trigger-check, get-lambda, get-status-weight")
         sys.exit(1)
