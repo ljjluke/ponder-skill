@@ -18,17 +18,28 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # 路径配置
-# 优先使用脚本所在项目的目录结构（从脚本位置推导项目根目录）
-SCRIPT_DIR = Path(__file__).resolve().parent.parent
-PROJECT_DIR = SCRIPT_DIR  # scripts/ 的父目录就是项目根
-ACTIVE_FILE = PROJECT_DIR / "memory" / "mcts-td-value-archive.md"
-ARCHIVE_DIR = PROJECT_DIR / "memory" / "archive"
+# 记忆数据统一存储在 ~/.claude/data/ 下，与 skill 代码目录隔离
+# 这样 skill 更新时记忆数据不会丢失
+DATA_DIR = Path.home() / ".claude" / "data" / "skills" / "mcts-td-planner"
+ACTIVE_FILE = DATA_DIR / "memory" / "mcts-td-value-archive.md"
+ARCHIVE_DIR = DATA_DIR / "memory" / "archive"
 
-# 如果项目目录下找不到 memory 目录，回退到 skill 插件目录
+# 如果 data 目录不存在（首次运行），从 skill 模板复制初始化
 SKILL_DIR = Path.home() / ".claude" / "skills" / "mcts-td-planner"
-if not ACTIVE_FILE.parent.exists() and SKILL_DIR.exists():
-    ACTIVE_FILE = SKILL_DIR / "memory" / "mcts-td-value-archive.md"
-    ARCHIVE_DIR = SKILL_DIR / "memory" / "archive"
+if not ACTIVE_FILE.parent.exists():
+    # 尝试从 skill 模板复制
+    template_file = SKILL_DIR / "memory" / "mcts-td-value-archive.md"
+    if template_file.exists():
+        ACTIVE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        import shutil
+        shutil.copy2(template_file, ACTIVE_FILE)
+        print(f"ℹ️ 已从模板初始化 memory 文件: {ACTIVE_FILE}")
+    else:
+        # 从项目目录回退
+        project_memory = Path(__file__).resolve().parent.parent / "memory"
+        if project_memory.exists():
+            ACTIVE_FILE = project_memory / "mcts-td-value-archive.md"
+            ARCHIVE_DIR = project_memory / "archive"
 
 # 确保目录存在
 ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)

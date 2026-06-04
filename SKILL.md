@@ -220,3 +220,18 @@ alwaysApply: true
 | 事后学习引擎 | `engine/td-learner.md` | TD误差计算、价值更新、知识图谱、跨会话持久化 |
 | 推演格式与策略 | `policies/code-task-policy.md` | 通用方案生成规则、推演格式、评分标准 |
 | 算法原理 | `references/algorithm-reference.md` | MCTS/TDL算法原理与设计决策 |
+
+---
+
+## ⚡ 记忆数据安全
+
+本 Skill 的知识图谱存储在 **`~/.claude/data/skills/mcts-td-planner/`** 目录，与 skill 代码文件物理隔离。
+
+| 场景 | 记忆数据 | 说明 |
+|------|---------|------|
+| skill 初次安装 | ✅ 模板自动复制到 data 目录 | 首次安装时初始化空的知识图谱 |
+| skill 更新/重装 | ✅ **数据保留** | data 目录不会被覆盖 |
+| skill 卸载后重装 | ✅ **数据保留** | 除非手动删除 data 目录 |
+| 升级版本（如 1.3→1.4） | ✅ **数据保留** | 升级不影响已有知识条目 |
+
+> 如果想清空记忆重新积累知识，手动删除 `~/.claude/data/skills/mcts-td-planner/` 目录即可。
