@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# MCTS-TD Planner — 一键安装脚本
-# 自动检测当前平台（Claude Code / Cursor / OpenCode / Trae / CodeX）
-# 并将对应的配置文件复制到正确位置。
+# MCTS-TD Planner — Claude Code 安装脚本
+#
+# 此脚本仅适用于 Claude Code。
+# 其他平台（Cursor / OpenCode / Trae / CodeX）只支持单文件规则，
+# 无法利用本项目的多文件模块化结构，请手动参考 deploy/ 下的文件。
 # =============================================================================
 
 set -euo pipefail
@@ -12,7 +14,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 info()  { echo -e "${BLUE}ℹ️${NC} $1"; }
 ok()    { echo -e "${GREEN}✅${NC} $1"; }
@@ -24,53 +26,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # =============================================================================
-# 平台检测
-# =============================================================================
-
-detect_platform() {
-    # 检测 Claude Code
-    if [ -n "${CLAUDE_CODE:-}" ] || command -v claude >/dev/null 2>&1; then
-        # 检查是否在 Claude Code 会话中
-        if [ -n "${CLAUDE_CODE:-}" ]; then
-            echo "claude-code"
-            return
-        fi
-    fi
-
-    # 检测 Cursor
-    if [ -n "${CURSOR_TRACE_ID:-}" ] || [ -f ".cursor/rules" ]; then
-        echo "cursor"
-        return
-    fi
-
-    # 检测 OpenCode
-    if [ -f ".opencode/rules" ] || [ -n "${OPENCODE:-}" ]; then
-        echo "opencode"
-        return
-    fi
-
-    # 检测 Trae（通过环境变量或配置文件）
-    if [ -n "${TRAE_ENV:-}" ] || [ -f ".trae/rules" ]; then
-        echo "trae"
-        return
-    fi
-
-    # 检测 CodeX
-    if [ -n "${CODEX_AGENT:-}" ] || [ -f ".codex/rules" ]; then
-        echo "codex"
-        return
-    fi
-
-    # 未检测到已知平台
-    echo "unknown"
-}
-
-# =============================================================================
-# 各平台安装函数
+# 安装函数
 # =============================================================================
 
 install_claude_code() {
-    info "检测到 Claude Code..."
+    info "Claude Code 安装中..."
 
     # Claude Code 的 SKILL 安装路径
     local skill_dir="$HOME/.claude/skills/mcts-td-planner"
@@ -78,10 +38,10 @@ install_claude_code() {
 
     # 复制核心文件
     cp "$PROJECT_DIR/SKILL.md" "$skill_dir/"
-    cp "$PROJECT_DIR/plugin.json" "$skill_dir/" 2>/dev/null || true
+    cp "$PROJECT_DIR/.claude-plugin/plugin.json" "$skill_dir/" 2>/dev/null || true
 
     # 复制目录结构
-    for dir in engine policies agents references memory/archive scripts deploy; do
+    for dir in rules/ engine policies agents references memory/archive scripts deploy; do
         if [ -d "$PROJECT_DIR/$dir" ]; then
             mkdir -p "$skill_dir/$dir"
             cp -r "$PROJECT_DIR/$dir"/* "$skill_dir/$dir/" 2>/dev/null || true
@@ -99,91 +59,10 @@ install_claude_code() {
     fi
 
     ok "Claude Code 安装完成！"
-    info "Skill 已安装到: $skill_dir"
-    info "记忆数据存储在: $data_dir"
-}
-
-install_cursor() {
-    info "检测到 Cursor..."
-
-    local target_dir="$PROJECT_DIR/.cursor/rules"
-    mkdir -p "$target_dir"
-    cp "$PROJECT_DIR/deploy/cursor/rules/decision-engine.mdc" "$target_dir/"
-    cp "$PROJECT_DIR/deploy/cursor/README.md" "$PROJECT_DIR/.cursor/" 2>/dev/null || true
-
-    # 统计文件行数，让用户知道是完整版
-    local line_count
-    line_count=$(wc -l < "$PROJECT_DIR/deploy/cursor/rules/decision-engine.mdc")
-    ok "Cursor 安装完成！"
-    info "规则文件已复制到: $target_dir/decision-engine.mdc（${line_count}行，完整版）"
-}
-
-install_opencode() {
-    info "检测到 OpenCode..."
-
-    local target_dir="$PROJECT_DIR/.opencode/rules"
-    mkdir -p "$target_dir"
-    cp "$PROJECT_DIR/deploy/opencode/rules/decision-engine.mdc" "$target_dir/"
-    cp "$PROJECT_DIR/deploy/opencode/README.md" "$PROJECT_DIR/.opencode/" 2>/dev/null || true
-
-    local line_count
-    line_count=$(wc -l < "$PROJECT_DIR/deploy/opencode/rules/decision-engine.mdc")
-    ok "OpenCode 安装完成！"
-    info "规则文件已复制到: $target_dir/decision-engine.mdc（${line_count}行，完整版）"
-}
-
-install_trae() {
-    info "检测到 Trae（需手动配置）..."
-    info "此文件是完整规则集（内联自 engine/、policies/、agents/ 全部内容），与 Claude Code 版本功能对等。"
+    info "Skill 目录: $skill_dir"
+    info "记忆数据: $data_dir（更新 skill 不会丢失）"
     info ""
-    info "请打开 Trae 设置，将以下文件内容添加到项目规则中："
-    info "  $PROJECT_DIR/deploy/trae/instructions.md"
-    echo ""
-    echo "--- 建议的操作 ---"
-    echo "1. 在 Trae 中打开项目设置"
-    echo "2. 找到 '项目规则' 或 'Agent 指令'"
-    echo "3. 将 deploy/trae/instructions.md 的内容复制进去"
-    echo "------------------"
-}
-
-install_codex() {
-    info "检测到 CodeX（需手动配置）..."
-    info "此文件是完整规则集（内联自 engine/、policies/、agents/ 全部内容），与 Claude Code 版本功能对等。"
-    info ""
-    info "请将以下文件内容添加到 CodeX Agent 的系统提示："
-    info "  $PROJECT_DIR/deploy/codex/instructions.md"
-    echo ""
-    echo "--- 建议的操作 ---"
-    echo "1. 在 CodeX 中打开 Agent 配置"
-    echo "2. 找到 '系统提示' 或 'System Prompt'"
-    echo "3. 将 deploy/codex/instructions.md 的内容追加到末尾"
-    echo "------------------"
-}
-
-install_unknown() {
-    info "未能自动检测到已知平台。"
-
-    # 列出所有可用平台
-    echo ""
-    echo "可用平台:"
-    echo "  1) Claude Code"
-    echo "  2) Cursor"
-    echo "  3) OpenCode"
-    echo "  4) Trae"
-    echo "  5) CodeX"
-
-    # 让用户选择
-    echo ""
-    read -p "请选择平台 (1-5): " choice
-
-    case "$choice" in
-        1) install_claude_code ;;
-        2) install_cursor ;;
-        3) install_opencode ;;
-        4) install_trae ;;
-        5) install_codex ;;
-        *) error "无效选择" ;;
-    esac
+    info "使用方法：输入任意任务，看到 ⚡ 标志说明生效"
 }
 
 # =============================================================================
@@ -193,45 +72,35 @@ install_unknown() {
 main() {
     echo ""
     echo "==========================================="
-    echo "  🧠 MCTS-TD Planner — 一键安装"
+    echo "  🧠 MCTS-TD Planner — Claude Code 安装"
     echo "==========================================="
     echo ""
 
     # 检查项目目录完整性
     if [ ! -f "$PROJECT_DIR/SKILL.md" ]; then
         error "未找到 SKILL.md，请确保在项目根目录运行此脚本"
-        info "当前目录: $PROJECT_DIR"
         exit 1
     fi
 
-    # 检测平台
-    local platform
-    platform=$(detect_platform)
-    info "当前平台: $platform"
+    # 检查是否在 Claude Code 环境中
+    if [ -z "${CLAUDE_CODE:-}" ]; then
+        warn "未检测到 Claude Code 环境变量"
+        warn "其他平台（Cursor / OpenCode / Trae / CodeX）仅支持单文件规则"
+        warn "无法利用本项目的多文件模块化结构，体验会大幅简化"
+        echo ""
+        read -p "是否仍然继续安装到 Claude Code 的目录？(y/N): " confirm
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+            info "安装已取消"
+            exit 0
+        fi
+    fi
 
-    echo ""
-
-    # 按平台安装
-    case "$platform" in
-        claude-code) install_claude_code ;;
-        cursor)      install_cursor ;;
-        opencode)    install_opencode ;;
-        trae)        install_trae ;;
-        codex)       install_codex ;;
-        *)           install_unknown ;;
-    esac
+    install_claude_code
 
     echo ""
     echo "==========================================="
     echo "  🎉 安装完成！"
     echo "==========================================="
-    echo ""
-    info "各平台使用方法："
-    echo "  Claude Code: 输入任意任务，看到 ⚡ 标志说明生效"
-    echo "  Cursor:      重启 Cursor 后生效（完整规则集，与 Claude Code 对等）"
-    echo "  OpenCode:    重启 OpenCode 后生效（完整规则集，与 Claude Code 对等）"
-    echo "  Trae/CodeX:  按上述说明完成手动配置后生效（完整规则集）"
-    echo ""
 }
 
 main "$@"

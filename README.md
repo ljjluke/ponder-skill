@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <b>不绑定任何平台，Claude Code / Cursor / OpenCode / Trae / CodeX 都能用</b>
+  <b>不绑定任何平台，但推荐在 Claude Code 中使用以获得完整体验</b>
 </p>
 
 <br>
@@ -70,7 +70,7 @@ AI: → 那 OAuth2 排除，JWT 和 Session 二选一
 | **经验越用越准** | 做过类似的事会自动参考，还会总结 |
 | **适合的才是最好的** | 不盲目选评分最高的，选最适合你当前情况的 |
 | **记忆不会丢** | 经验自动记住，更新 skill 也不丢失 |
-| **不绑定平台** | Claude Code、Cursor、OpenCode、Trae、CodeX 都能用 |
+| **不绑定平台** | 推荐 Claude Code（完整三引擎），其他平台仅支持单文件规则 |
 
 ---
 
@@ -95,22 +95,14 @@ AI: → 那 OAuth2 排除，JWT 和 Session 二选一
 git clone https://github.com/ljjluke/mcts-skill.git
 cd mcts-skill
 
-# 一键安装（自动检测当前平台，复制文件到正确位置）
+# 一键安装（适用于 Claude Code）
 bash scripts/install.sh
 ```
 
-### 各平台手动安装
-
-各平台的安装文件内联了 `engine/`、`policies/`、`agents/` 的**全部规则**，与 Claude Code 版本功能对等，不是阉割版。
-
-| 平台 | 安装方式 | 内容说明 |
-|------|---------|---------|
-| **Cursor** | `cp deploy/cursor/rules/decision-engine.mdc .cursor/rules/decision-engine.mdc` | 三引擎+知识图谱+记忆管理+熔断机制 完整版 |
-| **OpenCode** | `cp deploy/opencode/rules/decision-engine.mdc .opencode/rules/decision-engine.mdc` | 同上 |
-| **Trae** | 将 `deploy/trae/instructions.md` 的内容添加到 Trae 的项目规则中 | 同上 |
-| **CodeX** | 将 `deploy/codex/instructions.md` 的内容添加到 CodeX 的 Agent 系统提示中 | 同上 |
-
-> 各平台详细部署说明：[deploy/](./deploy/)
+> ⚠️ **其他平台（Cursor / OpenCode / Trae / CodeX）说明**：  
+> 这些平台只支持单文件规则，无法像 Claude Code 那样引用多文件目录。  
+> 如需安装，请手动将 `SKILL.md` 或 `engine/mcts-core.md` 中的规则复制到对应平台的规则设置中，但体验会大幅简化（缺少模块化知识图谱和管理脚本）。  
+> **推荐使用 Claude Code 获得完整体验。**
 
 ### ⚡ 记忆数据安全
 
@@ -221,10 +213,10 @@ mcts-td-planner/
 │   └── archive/                长期归档（自动管理）
 │
 ├── scripts/                ← 辅助脚本
-│   ├── install.sh            一键安装脚本
+├── install.sh            一键安装脚本（仅 Claude Code）
 │   └── manage_memory.py      记忆管理（归档/回忆/清理）
 │
-├── deploy/                 ← 各平台部署配置
+├── deploy/                 ← 其他平台部署参考（推荐 Claude Code）
 │   ├── cursor/                Cursor
 │   ├── opencode/              OpenCode
 │   ├── trae/                  Trae
