@@ -216,77 +216,49 @@ expansion_potential = NONE:
   - 中等任务: 2~3 步到底
   - 复杂任务: 3~4 步到底
 
-### ⚠️ 递归发散深度限制（防止无限嵌套）
+### ⚠️ 递归发散深度控制（代码硬控，不是提示词）
 
-Simulation 推演过程中，可能遇到新的决策点（"这里又有两个选择"），此时需要
-再次启动发散引擎。但递归发散不能太深，否则会爆炸。
+Simulation 推演中遇到新决策点（"这里又有两个选择"）时，
+**必须通过代码守卫检查**，不能凭 LLM 自己判断。
 
 ```
-递归发散深度限制:
+代码守卫流程（每次遇到子决策点时执行）:
 
-  MAX_RECURSIVE_DIVERGE_DEPTH = 2  ← 最多嵌套2层
+  Step 1: 判断决策类型
+    `python mcts_compute.py needs-sub-diverge --type <tech_choice|risk|user_preference|uncertainty>`
+    → 只有 tech_choice 类型才会触发子发散，其他类型走知识决策树或询问用户
 
-  层级定义:
-    Level 0: 顶层 MCTS 树搜索（正常推演，可以完整发散）
-    Level 1: Simulation 中遇到子决策 → 启动简化发散（快速2视角，1步推演）
-    Level 2: 简化发散中又遇到子决策 → 不再发散，直接做假设继续
+  Step 2: 检查递归深度
+    `python mcts_compute.py enter-simulation`
+    → 返回当前深度和允许的操作模式
 
-  每一层的处理规则:
+    depth=0: full模式（顶层，六维地图+多视角+完整推演）
+    depth=1: simplified模式（2个快速方案，1~2步推演）
+    depth=2: micro_diverge模式（单视角快速方案，1步推演，方差+0.1）
+    depth≥3: micro_diverge_risky模式（微发散但标记高风险，方差+0.15）
+    ⚠️ 每层都执行真正的发散推演，只是深度和视角递减，不做假设
 
-    Level 0（顶层推演）:
-      → 正常发散引擎: 完整六维地图+六路侦查+视角轮盘
-      → 完整推演: Selection→Expansion→Simulation→Backpropagation
-      → 迭代控制: 收敛判定生效
+  Step 3: 如果允许子发散
+    `python mcts_compute.py begin-sub-diverge` → 深度+1
+    ... 执行简化发散（不画六维地图，2个视角，1步推演）...
+    `python mcts_compute.py end-sub-diverge` → 深度-1
 
-    Level 1（Simulation 中的子决策）:
-      → 简化发散: 只出2个快速方案（视角少、不画六维地图）
-      → 快速推演: 1步到底，不展开树
-      → 不写入知识图谱（太浅，不值得）
-      → 子决策结果作为 Simulation 的 V_leaf 修正项
-
-    Level 2（子决策中的子决策）:
-      → 不再发散，直接做假设: "假设选择最常规的做法"
-      → 快速推演到底（1步）
-      → 方差 +0.2（因为这是嵌套假设）
-      → 标记: "L2假设: 未发散发散"
-
-  触发条件:
-    什么时候 Simulation 中需要启动子发散？
-
-    case 遇到明确的技术选型点:
-      例如: "这里需要选一个缓存方案（Redis vs Memcached vs 本地）"
-      → 如果当前深度 < MAX_RECURSIVE_DIVERGE_DEPTH → 启动子发散
-      → 如果已到最大深度 → 直接做假设
-
-    case 遇到风险/不确定点:
-      例如: "如果这个API不可用，是用fallback还是报错？"
-      → 非技术选型，只需要做一个判断 → 不启动子发散
-      → 直接用知识获取决策树（查记忆→自学→问用户→假设）
-
-    case 遇到用户偏好/约束点:
-      例如: "用户想要简单的还是完整的？"
-      → 不启动子发散 → 记录为待确认问题 → 做保守假设继续
+  Step 4: 合成结果
+    `python mcts_compute.py synthesize-sim --base-v <V> --sub-results '<JSON>'`
+    → 子发散结果权重0.2（不可靠），基础推演权重0.8
 
   安全阀:
-    如果递归深度已达 2 但确实需要发散:
-      → 不嵌套发散，而是标记这个点为"高风险假设"
-      → 在推演报告中输出: "⚠️ 子决策点X未发散（已达最大递归深度），假设为Y"
-      → 方差 +0.3（高风险假设）
+    `export MCTS_MAX_DIVERGE_DEPTH=3` (环境变量硬上限，默认3)
+    超过硬上限: 抛出 RecursionError，强制终止
 ```
 
-### 递归深度追踪
+### 递归深度状态查询
 
-在 Simulation 过程中维护递归深度计数器：
+任何时候都可以查询当前状态:
+  `python mcts_compute.py diverge-depth` → 返回 {"depth":1,"max_depth":2,"status":"simplified","can_diverge":true}
 
-```
-Simulation 开始时: recursive_depth = 0
-遇到子决策需要发散: recursive_depth += 1
-  如果 recursive_depth > 2: 不做发散，直接假设
-子决策推演完成: recursive_depth -= 1
-
-每层子发散的结果只影响当前 Simulation 的 V_leaf，
-不独立写入知识图谱，不创建独立的推演报告。
-```
+整个MCTS搜索结束后重置:
+  `python mcts_compute.py reset-depth`
 
 模拟输出:
   V_leaf = 模拟路径的最终价值 (0.0 ~ 1.0)

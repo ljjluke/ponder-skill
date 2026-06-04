@@ -853,6 +853,227 @@ def get_status_weight_full(status: str, consolidation_score: int = 0) -> float:
 
 
 # ============================================================================
+# 模块 13: 递归深度守卫（防止 MCTS Simulation 无限嵌套发散）
+# ============================================================================
+
+import threading
+import os
+
+# 最大递归发散深度
+MAX_RECURSIVE_DIVERGE_DEPTH = 2
+
+# 线程局部存储——每个子 agent 线程独立计数，互不干扰
+_recursive_depth_local = threading.local()
+
+
+def _get_depth():
+    """获取当前线程的递归深度。"""
+    if not hasattr(_recursive_depth_local, 'depth'):
+        _recursive_depth_local.depth = 0
+    return _recursive_depth_local.depth
+
+
+def _set_depth(new_depth: int):
+    """设置当前线程的递归深度。"""
+    # 安全阀：绝对不能超过环境变量配置的硬上限
+    hard_limit = int(os.environ.get("MCTS_MAX_DIVERGE_DEPTH", "3"))
+    if new_depth > hard_limit:
+        raise RecursionError(
+            f"递归发散深度 {new_depth} 超过硬上限 {hard_limit}，"
+            f"可能发生了无限递归。已强制终止。"
+        )
+    _recursive_depth_local.depth = new_depth
+
+
+def enter_simulation() -> dict:
+    """
+    Simulation 开始前调用，返回当前递归状态。
+    调用方必须检查返回的 allowed 字段。
+
+    Returns:
+        {"depth": int, "allowed": bool, "mode": str, "assume": bool,
+         "variance_penalty": float, "message": str}
+    """
+    depth = _get_depth()
+
+    if depth == 0:
+        result = {
+            "depth": 0,
+            "allowed": True,
+            "mode": "full",
+            "assume": False,
+            "variance_penalty": 0.0,
+            "message": "顶层MCTS: 可以完整发散和推演"
+        }
+    elif depth == 1:
+        result = {
+            "depth": 1,
+            "allowed": True,
+            "mode": "simplified",
+            "assume": False,
+            "variance_penalty": 0.0,
+            "message": "Level 1子决策: 只做简化发散(2个快速方案，1步推演)，不写知识图谱"
+        }
+    elif depth == 2:
+        result = {
+            "depth": 2,
+            "allowed": True,
+            "mode": "micro_diverge",
+            "assume": False,
+            "variance_penalty": 0.0,
+            "message": "Level 2微发散: 单视角快速方案，1步推演到底，方差+0.1（深度惩罚）"
+        }
+    else:
+        # depth >= 3: 微发散但标记高风险
+        result = {
+            "depth": depth,
+            "allowed": True,
+            "mode": "micro_diverge_risky",
+            "assume": False,
+            "variance_penalty": 0.15,
+            "message": f"深度{depth}≥3，仍执行微发散但标记高风险，方差+0.15"
+        }
+
+    return result
+
+
+def begin_sub_diverge() -> dict:
+    """
+    子发散开始前调用，递归深度+1。
+    必须在 enter_simulation() 检查通过后调用。
+
+    Returns:
+        {"depth": int, "entered": bool, "error": str|None}
+    """
+    current = _get_depth()
+    new_depth = current + 1
+
+    try:
+        _set_depth(new_depth)
+        return {"depth": new_depth, "entered": True, "error": None}
+    except RecursionError as e:
+        return {"depth": current, "entered": False, "error": str(e)}
+
+
+def end_sub_diverge():
+    """子发散结束后调用，递归深度-1。"""
+    current = _get_depth()
+    if current > 0:
+        _set_depth(current - 1)
+
+
+def reset_recursive_depth():
+    """重置递归深度（整个 MCTS 搜索结束后调用）。"""
+    _recursive_depth_local.depth = 0
+
+
+def needs_sub_diverge(decision_type: str, current_depth: int = None) -> dict:
+    """
+    判断当前决策点是否需要启动子发散。
+
+    Args:
+        decision_type: "tech_choice" | "risk" | "user_preference" | "uncertainty"
+        current_depth: 当前递归深度，None 则自动获取
+
+    Returns:
+        {"needs_diverge": bool, "action": str, "reason": str}
+    """
+    if current_depth is None:
+        current_depth = _get_depth()
+
+    # 只有明确的技术选型才触发子发散
+    if decision_type == "tech_choice":
+        if current_depth < MAX_RECURSIVE_DIVERGE_DEPTH:
+            return {
+                "needs_diverge": True,
+                "action": "begin_sub_diverge",
+                "reason": f"技术选型点，深度{current_depth}<{MAX_RECURSIVE_DIVERGE_DEPTH}，启动子发散"
+            }
+        else:
+            return {
+                "needs_diverge": False,
+                "action": "assume",
+                "reason": f"技术选型点但深度已达{current_depth}，不做发散直接假设"
+            }
+
+    # 风险/不确定点 → 不启动子发散，用知识决策树
+    if decision_type in ("risk", "uncertainty"):
+        return {
+            "needs_diverge": False,
+            "action": "knowledge_tree",
+            "reason": f"风险/不确定点(类型:{decision_type})，用知识获取决策树，不发散"
+        }
+
+    # 用户偏好/约束点 → 不启动子发散，记录待确认
+    if decision_type == "user_preference":
+        return {
+            "needs_diverge": False,
+            "action": "defer_to_user",
+            "reason": "用户偏好/约束点，记录问题待确认，不发散"
+        }
+
+    return {
+        "needs_diverge": False,
+        "action": "unknown",
+        "reason": f"未知决策类型: {decision_type}"
+    }
+
+
+def get_diverge_depth_report() -> dict:
+    """获取当前递归深度报告（用于推演日志）。"""
+    depth = _get_depth()
+    status = enter_simulation()
+    return {
+        "depth": depth,
+        "max_depth": MAX_RECURSIVE_DIVERGE_DEPTH,
+        "status": status["mode"],
+        "can_diverge": status["allowed"] and not status["assume"],
+    }
+
+
+# ============================================================================
+# 模块 14: 模拟结果合成
+# ============================================================================
+
+def synthesize_simulation_result(base_v_leaf: float,
+                                  sub_diverge_results: list[dict]) -> float:
+    """
+    将子发散结果合成为最终的 V_leaf。
+
+    子发散结果只修正 base_v_leaf，不独立作为新方案。
+
+    Args:
+        base_v_leaf: 基础模拟的 V 值
+        sub_diverge_results: 子发散结果列表 [{"v": float, "weight": float}, ...]
+
+    Returns:
+        合成后的最终 V_leaf
+    """
+    if not sub_diverge_results:
+        return base_v_leaf
+
+    # 子发散结果加权修正（权重低，因为子发散深度浅、不可靠）
+    total_weight = 0.0
+    weighted_sum = 0.0
+
+    for r in sub_diverge_results:
+        w = r.get("weight", 0.2)  # 默认权重 0.2（子发散不可靠）
+        v = r.get("v", base_v_leaf)
+        weighted_sum += v * w
+        total_weight += w
+
+    if total_weight == 0:
+        return base_v_leaf
+
+    # 基础推演占主导，子发散只做小幅修正
+    sub_avg = weighted_sum / total_weight
+    # 基础推演权重 0.8，子发散权重 0.2
+    final_v = base_v_leaf * 0.8 + sub_avg * 0.2
+
+    return round(final_v, 3)
+
+
+# ============================================================================
 # 模块 5: 评分与策略映射
 # ============================================================================
 
@@ -1265,6 +1486,52 @@ if __name__ == "__main__":
         args = parser.parse_args(sys.argv[2:])
         result = get_status_weight_full(args.status)
         print(json.dumps({"status": args.status, "weight": result}))
+
+    elif cmd == "enter-simulation":
+        # python mcts_compute.py enter-simulation
+        result = enter_simulation()
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "begin-sub-diverge":
+        # python mcts_compute.py begin-sub-diverge
+        result = begin_sub_diverge()
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "end-sub-diverge":
+        # python mcts_compute.py end-sub-diverge
+        end_sub_diverge()
+        print(json.dumps({"depth": _get_depth(), "message": "子发散结束，深度-1"}))
+
+    elif cmd == "needs-sub-diverge":
+        # python mcts_compute.py needs-sub-diverge --type tech_choice
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--type", type=str, required=True,
+                           help="tech_choice|risk|user_preference|uncertainty")
+        args = parser.parse_args(sys.argv[2:])
+        result = needs_sub_diverge(args.type)
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "diverge-depth":
+        # python mcts_compute.py diverge-depth
+        result = get_diverge_depth_report()
+        print(json.dumps(result, ensure_ascii=False))
+
+    elif cmd == "reset-depth":
+        # python mcts_compute.py reset-depth
+        reset_recursive_depth()
+        print(json.dumps({"depth": 0, "message": "递归深度已重置"}))
+
+    elif cmd == "synthesize-sim":
+        # python mcts_compute.py synthesize-sim --base-v 0.8 --sub-results '[{"v":0.7,"weight":0.2}]'
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--base-v", type=float, required=True)
+        parser.add_argument("--sub-results", type=str, default="[]")
+        args = parser.parse_args(sys.argv[2:])
+        sub = json.loads(args.sub_results)
+        result = synthesize_simulation_result(args.base_v, sub)
+        print(json.dumps({"final_v_leaf": result}))
 
     else:
         print(f"未知命令: {cmd}")
