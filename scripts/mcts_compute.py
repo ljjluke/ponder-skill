@@ -891,7 +891,7 @@ def enter_simulation() -> dict:
     调用方必须检查返回的 allowed 字段。
 
     Returns:
-        {"depth": int, "allowed": bool, "mode": str, "assume": bool,
+        {"depth": int, "allowed": bool, "mode": str,
          "variance_penalty": float, "message": str}
     """
     depth = _get_depth()
@@ -901,7 +901,6 @@ def enter_simulation() -> dict:
             "depth": 0,
             "allowed": True,
             "mode": "full",
-            "assume": False,
             "variance_penalty": 0.0,
             "message": "顶层MCTS: 可以完整发散和推演"
         }
@@ -910,7 +909,6 @@ def enter_simulation() -> dict:
             "depth": 1,
             "allowed": True,
             "mode": "simplified",
-            "assume": False,
             "variance_penalty": 0.0,
             "message": "Level 1子决策: 只做简化发散(2个快速方案，1步推演)，不写知识图谱"
         }
@@ -919,7 +917,6 @@ def enter_simulation() -> dict:
             "depth": 2,
             "allowed": True,
             "mode": "micro_diverge",
-            "assume": False,
             "variance_penalty": 0.0,
             "message": "Level 2微发散: 单视角快速方案，1步推演到底，方差+0.1（深度惩罚）"
         }
@@ -1027,7 +1024,6 @@ def get_diverge_depth_report() -> dict:
         "depth": depth,
         "max_depth": MAX_RECURSIVE_DIVERGE_DEPTH,
         "status": status["mode"],
-        "can_diverge": status["allowed"] and not status["assume"],
     }
 
 
