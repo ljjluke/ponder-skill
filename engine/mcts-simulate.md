@@ -426,16 +426,24 @@ Simulation 推演中遇到新决策点（"这里又有两个选择"）时，
 
 每次 Backpropagation 完成后，**可选地**将本轮经验写回知识图谱。这是 MCTS-TD 混合算法的关键：树搜索负责短期决策，知识图谱负责长期记忆。
 
+### 写入前门禁
+
+写入前先过L-GCMS门禁: `python knowledge_lifecycle.py gate-check --experience '<JSON>' --kg '<JSON>'`
+四重过滤: 可复用性 + 信息密度 + 新颖性 + 可靠性 → store/observe/discard/merge
+门禁分<0.4→丢弃 | 0.4~0.59→暂存观察(15天验证窗口) | ≥0.6→正常存储
+
 ### 写入时机
 
-```
-写入条件: `python scripts/mcts_compute.py should-write-kg --v-leaf <V> --round <N> [--is-final]`
+写入条件: `python scripts/mcts_compute.py should-write-kg --v-leaf <V> --round <N>`
 V≥0.8 | V≤0.3 | 轮次%5==0 | 最终收敛后 → 写入知识图谱
 
-写入前检查: `python scripts/mcts_compute.py check-write-safety`
-新q与已有CONFIRMED差>0.5→创建独立HYPOTHESIS | 上下文差异大→标注specific_context
+写入安全检查: `python scripts/mcts_compute.py check-write-safety`
 
----
+### 记忆生命周期维护
+
+每次任务结束后自动执行:
+`python knowledge_lifecycle.py full-maintenance --kg '<JSON>' --recent-tasks '<JSON>' --context '<JSON>'`
+→ GC Roots追踪 → 分层重判 → Minor/Major GC → 归档回忆 → 错误检测 → 记忆压实
 
 ## 迭代控制
 

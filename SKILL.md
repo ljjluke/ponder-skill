@@ -289,6 +289,7 @@ alwaysApply: true
 | 推演引擎 | `engine/mcts-simulate.md` | MCTS树搜索：Selection→Expansion→Simulation→Backpropagation |
 | 仲裁引擎 | `engine/mcts-converge.md` | 汇总排序 + 结果自检 + 盲区审计 + TD更新写回 |
 | 事后学习引擎 | `engine/td-learner.md` | TD误差计算、价值更新、知识图谱、跨会话持久化 |
+| 🧠 记忆存储引擎 | `scripts/knowledge_lifecycle.py` | L-GCMS: 门禁过滤+分层存储+遗忘曲线+情境回忆 |
 | 推演格式与策略 | `policies/task-policy.md` | 通用方案生成规则、推演格式、评分标准 |
 | 📖 算法原理 | `references/algorithm-reference.md` | 按需引用，不加载到每次推理上下文 |
 | 🖥 计算引擎 | `scripts/mcts_compute.py` | 纯数值计算（UCB/反向传播/收敛判定/状态机） |
