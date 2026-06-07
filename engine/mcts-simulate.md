@@ -8,7 +8,7 @@ description: MCTS-TD Decision Engine "Step 2" — Simulate Engine. True MCTS tre
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
 > 1. **OUTPUT LANGUAGE**: User language already detected. Continue using that language.
 > 2. **MCTS PHASES**: Selection → Expansion → Simulation → Backpropagation. Each round visible to user.
-> 3. **TREE OUTPUT**: Show tree state summary after each round.
+> 3. **KNOWLEDGE ACQUISITION**: When roll-out needs info → ①memory ②self-learn ③ask user ④assume. If user-preference or constraint unclear, MUST ask user.
 > 4. **CONVERGENCE**: Stop when best solution V stable for 3 rounds OR max iterations reached.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. Internal reasoning is English; user sees their language.

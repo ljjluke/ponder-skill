@@ -4,8 +4,9 @@ description: |
   Universal decision engine with language adaptation. MANDATORY RULES:
   1. DETECT user language via: node scripts/language_adapter.js detect "<msg>"
   2. ALL user-facing output MUST be in detected language (zh→中文, ja→日本語, ko→한국어, en→English)
-  3. Execute phases: [Review Map] → [Recon Report] → [Solution List] → [Decision Report]
+  3. Execute phases: [Constraint Collection] → [Review Map] → [Recon Report] → [Solution List] → [Decision Report]
   4. Use language_adapter.js for labels: node scripts/language_adapter.js labels <lang>
+  5. NEVER assume missing info — if constraints are unclear, ASK USER before generating solutions
   Internal reasoning is English; user sees their language. This is NON-NEGOTIABLE.
 version: 1.4.0
 license: MIT

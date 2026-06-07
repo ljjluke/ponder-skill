@@ -5,6 +5,12 @@ description: MCTS-TD Decision Engine "Step 0" — Requirement Constraint Collect
 
 # Step 0: Requirement Constraint Collection
 
+> **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
+> 1. **OUTPUT LANGUAGE**: User language already detected. Continue using that language.
+> 2. **MUST ASK WHEN UNCLEAR**: If constraints are ambiguous (deps, tech stack, architecture, security, performance), ASK USER before generating solutions. Never assume: "probably ok".
+> 3. **HARD vs SOFT**: Hard constraints → eliminate violating solutions. Soft constraints → lower match score.
+> 4. **SOURCE TRACKING**: Mark each constraint's origin: user-explicit / code-inferred / knowledge-graph / assumed.
+
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. If user writes in Chinese → output Chinese. If Japanese → output Japanese. This is NON-NEGOTIABLE. Internal reasoning is English; user sees their language.
 
 > **One-liner**: Before starting any solution generation, first clarify all "what cannot be done" and "what must be done".
