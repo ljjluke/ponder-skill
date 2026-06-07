@@ -2,10 +2,10 @@
 name: mcts-td-planner
 description: |
   Universal decision engine with language adaptation. MANDATORY RULES:
-  1. DETECT user language via: python scripts/language_adapter.py detect --message "<msg>"
+  1. DETECT user language via: node scripts/language_adapter.js detect "<msg>"
   2. ALL user-facing output MUST be in detected language (zh→中文, ja→日本語, ko→한국어, en→English)
   3. Execute phases: [Review Map] → [Recon Report] → [Solution List] → [Decision Report]
-  4. Use language_adapter.py for labels: python scripts/language_adapter.py labels --lang <lang>
+  4. Use language_adapter.js for labels: node scripts/language_adapter.js labels <lang>
   Internal reasoning is English; user sees their language. This is NON-NEGOTIABLE.
 version: 1.4.0
 license: MIT
@@ -27,8 +27,8 @@ This Skill's core engine is fully English. The language adaptation layer handles
 │  STEP 0 (MANDATORY — before any engine logic):              │
 │                                                             │
 │  ① DETECT user's language (CODE-ENFORCED):                  │
-│     python scripts/language_adapter.py detect               │
-│       --message "<user message>"                            │
+│     node scripts/language_adapter.js detect                 │
+│       "<user message>"                                      │
 │     → Returns {"lang": "zh"|"ja"|"ko"|"en"|...}            │
 │     → Also sets language state for session                  │
 │                                                             │
@@ -41,8 +41,8 @@ This Skill's core engine is fully English. The language adaptation layer handles
 │                                                             │
 │  ④ OUTPUT to user (CODE-ENFORCED LABELS):                   │
 │     For FIXED LABELS, use code:                             │
-│       python scripts/language_adapter.py labels --lang zh   │
-│       python scripts/language_adapter.py template           │
+│       node scripts/language_adapter.js labels --lang zh     │
+│       node scripts/language_adapter.js template             │
 │         --phase review_map --lang zh --task "登录功能"      │
 │                                                             │
 │     For DYNAMIC CONTENT, LLM translates:                    │
@@ -57,9 +57,9 @@ This Skill's core engine is fully English. The language adaptation layer handles
 ```
 
 **Enforcement**: 
-- **Code-enforced**: Language detection and fixed labels via `language_adapter.py`
+- **Code-enforced**: Language detection and fixed labels via `language_adapter.js` (Node.js - cross-platform)
 - **Prompt-enforced**: After every output block, self-check: "Is this in the user's language?" If not, retranslate.
-- **State tracking**: `language_adapter.py state --check` to verify consistency
+- **State tracking**: `node scripts/language_adapter.js state --check` to verify consistency
 
 ---
 
@@ -86,7 +86,7 @@ Phase 3 — Output then auto-proceed: [Converged Solution List]
 
 Phase 3.5 — Only ask user when truly needed (after simulation):
   After MCTS simulation completes, if two solutions are nearly tied:
-    python mcts_compute.py should-ask-user --ranked '<JSON>'
+    node scripts/mcts_compute.js should-ask-user --ranked '<JSON>'
     If should_ask=true → ask user about their specific usage needs
     (not technical details — ask about usage scenarios, frequency, priorities)
   If there is a clear winner → proceed to decision report directly.
@@ -259,7 +259,7 @@ User intent understanding
 
 ### Mandatory Trigger Checklist
 
-Code hint (optional): `python scripts/mcts_compute.py trigger-check --message "<user message>"`
+Code hint (optional): `node scripts/mcts_compute.js trigger-check --message "<user message>"`
 The trigger keyword list is in Python. LLM should use semantic understanding as the primary trigger mechanism — keywords are only a fallback hint.
 
 Trigger conditions (any one triggers activation):
@@ -338,11 +338,10 @@ After convergence:
 | Simulate Engine | `engine/mcts-simulate.md` | MCTS tree search: Selection→Expansion→Simulation→Backpropagation |
 | Converge Engine | `engine/mcts-converge.md` | Aggregation + self-check + blindspot audit + TD update write-back |
 | TD Learning Engine | `engine/td-learner.md` | TD error, value update, knowledge graph, cross-session persistence |
-| 🌐 Language Adapter | `scripts/language_adapter.py` | **CODE-ENFORCED** language detection + labels + templates |
-| 🧠 Memory Engine | `scripts/knowledge_lifecycle.py` | L-GCMS: gate filtering + tiered storage + forgetting curve + context recall |
+| 🌐 Language Adapter | `scripts/language_adapter.js` | **CODE-ENFORCED** language detection + labels + templates (Node.js, cross-platform) |
+| 🖥 Compute Engine | `scripts/mcts_compute.js` | Numerical computation (UCB/backprop/convergence/state machine) (Node.js, cross-platform) |
 | Simulation Format | `policies/task-policy.md` | General solution generation rules, simulation format, scoring rubric |
 | 📖 Algorithm Ref | `references/algorithm-reference.md` | On-demand reference, not loaded in reasoning context |
-| 🖥 Compute Engine | `scripts/mcts_compute.py` | Numerical computation (UCB/backprop/convergence/state machine) |
 
 ---
 

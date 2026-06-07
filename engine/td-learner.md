@@ -143,7 +143,7 @@ Variance Update (batch, for eligibility trace backpropagation):
 
 ```
 Variance→Confidence mapping:
-  `python scripts/mcts_compute.py` get_confidence_level
+  `node scripts/mcts_compute.js` get_confidence_level
   σ²<0.1→High | 0.1~0.3→Medium | ≥0.3→Low
 ```
 
@@ -200,7 +200,7 @@ Simulation scenario:
 
 ```
 Eligibility trace decay: Step t's eligibility = λ^(T-t)
-Recommended λ: `python scripts/mcts_compute.py get-lambda --steps <N>`
+Recommended λ: `node scripts/mcts_compute.js get-lambda --steps <N>`
 → 1-3 steps: 0.0 | 4-8 steps: 0.5 | 9+ steps: 0.8
 ```
 
@@ -364,8 +364,8 @@ Each knowledge entry undergoes following state transitions in its lifecycle:
 ### State Transition Rules
 
 State transitions calculated by code engine:
-`python scripts/mcts_compute.py check_status_transition`
-Weight query: `python scripts/mcts_compute.py get-status-weight --status <status>`
+`node scripts/mcts_compute.js check_status_transition`
+Weight query: `node scripts/mcts_compute.js get-status-weight --status <status>`
 
 Core rules:
   HYPOTHESIS→(verified 1 time)→PROVISIONAL/REFUTED |
@@ -744,6 +744,6 @@ Memory file stores complete knowledge graph. **Knowledge divided into "active" a
 #### Storage and Management
 
 Archive/recall/cleanup operations:
-`python scripts/manage_memory.py archive|recall|cleanup|status`
+`node scripts/manage_memory.js archive|recall|cleanup|status`
 Storage path: `~/.claude/data/skills/mcts-td-planner/memory/`
 (physically isolated from skill code)

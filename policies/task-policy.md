@@ -197,14 +197,14 @@ After all solutions simulated, output aggregate comparison table:
 │           │       │        │            │ dependency               │
 └───────────┴───────┴────────┴────────────┴──────────────────────────┘
 
-CLT-UCB: `python scripts/mcts_compute.py` compute_clt_ucb
+CLT-UCB: `node scripts/mcts_compute.js` compute_clt_ucb
 φ⁻¹(N): N=2→1.5, 3→1.0, 4→0.8, 5→0.7, n_i is solution simulation count
 ```
 
 ### Handling Close Rankings
 
 ```
-Close ranking: `python scripts/mcts_compute.py handle_close_ranking`
+Close ranking: `node scripts/mcts_compute.js handle_close_ranking`
 UCB diff <0.05 → Detailed comparison (V/σ²), diff <0.02 → Suggest user decision
 ```
 
@@ -212,7 +212,7 @@ UCB diff <0.05 → Detailed comparison (V/σ²), diff <0.02 → Suggest user dec
 
 ## Policy Function Selection Guide
 
-Ported from tetris_mcts's policy.py, select different policies by stage:
+Ported from tetris_mcts's policy module, select different policies by stage:
 
 ### Rough Filter Stage Policy
 

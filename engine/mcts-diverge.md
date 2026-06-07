@@ -6,9 +6,9 @@ description: MCTS-TD Decision Engine "Step 1" — Diverge Engine. Diverge (Eight
 # Step 1: Diverge Engine — Diverge × Converge
 
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
-> 1. **OUTPUT LANGUAGE**: Use `python scripts/language_adapter.py detect` to get user's language. ALL output MUST be in that language.
+> 1. **OUTPUT LANGUAGE**: Use `node scripts/language_adapter.js detect "<msg>"` to get user's language. ALL output MUST be in that language.
 > 2. **PHASE ORDER**: Review Map → Recon Report → Solution List. Each MUST be output before proceeding.
-> 3. **CALL CODE**: `python scripts/language_adapter.py template --phase review_map --lang <lang>` for headers.
+> 3. **CALL CODE**: `node scripts/language_adapter.js template review_map <lang>` for headers.
 > 4. **NO SKIP**: Do not skip any phase. Do not collapse phases into one summary.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. If user writes in Chinese → output Chinese. If Japanese → output Japanese. This is NON-NEGOTIABLE. Internal reasoning is English; user sees their language.
@@ -403,18 +403,18 @@ Converge Phase Output: Structured Solution List
 
 ```
 Domain Hint (optional):
-  `python scripts/mcts_compute.py identify-domain`
+  `node scripts/mcts_compute.js identify-domain`
   → Only as reference signal, LLM makes final judgment
 
 Eight-Facet Mirror Loading:
-  `python scripts/mcts_compute.py get-dimensions`
+  `node scripts/mcts_compute.js get-dimensions`
   → Always returns 8 abstract facets + optional domain template reference
 
 Blindspot Classification:
-  `python scripts/mcts_compute.py classify-blindspot --score <0-10>`
+  `node scripts/mcts_compute.js classify-blindspot --score <0-10>`
 
 Learning Depth Gate:
-  `python scripts/mcts_compute.py check-learning-depth`
+  `node scripts/mcts_compute.js check-learning-depth`
   → Check after diverge phase completes, if not passed,
      return to recon completion
 ```

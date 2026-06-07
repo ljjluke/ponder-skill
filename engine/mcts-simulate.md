@@ -97,13 +97,13 @@ Node = {
 
 ```
 UCB = V + c×√(ln(N_parent)/n_child) + K_bonus, c=√2≈1.414, n_child=0→UCB=+∞
-Numerical calculation: `python scripts/mcts_compute.py ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>`
+Numerical calculation: `node scripts/mcts_compute.js ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>`
 ```
 
 ### Knowledge Graph Bias K_bonus
 
 ```
-K_bonus: `python scripts/mcts_compute.py k-bonus --status <status> --n <n> --q <q> --n-child <n>`
+K_bonus: `node scripts/mcts_compute.js k-bonus --status <status> --n <n> --q <q> --n-child <n>`
 CONFIRMED+n≥5+q≥0.8→+0.15 | PROVISIONAL+n<5+q≥0.7→+0.05 | DISPUTED/REFUTED/q<0.5→-0.10
 Only effective when n_child<3
 ```
@@ -149,7 +149,7 @@ Step 3: When reaching an expandable node:
   → Enter Expansion
 ```
 
-> UCB numerical calculation: `python scripts/mcts_compute.py ucb --v 0.8 --n 3 --parent-n 10`
+> UCB numerical calculation: `node scripts/mcts_compute.js ucb --v 0.8 --n 3 --parent-n 10`
 
 ---
 
@@ -250,12 +250,12 @@ cannot rely on LLM's own judgment.
 Code Guard Flow (execute each time a sub-decision point is encountered):
 
   Step 1: Determine decision type
-    `python mcts_compute.py needs-sub-diverge --type <tech_choice|risk|user_preference|uncertainty>`
+    `node scripts/mcts_compute.js needs-sub-diverge --type <tech_choice|risk|user_preference|uncertainty>`
     → Only tech_choice type triggers sub-divergence,
       other types go through knowledge decision tree or ask user
 
   Step 2: Check recursion depth
-    `python mcts_compute.py enter-simulation`
+    `node scripts/mcts_compute.js enter-simulation`
     → Returns current depth and allowed operation mode
 
     depth=0: full mode (top-level, six-dimension map + multi-perspective +
@@ -269,13 +269,13 @@ Code Guard Flow (execute each time a sub-decision point is encountered):
        and perspectives, no assumptions
 
   Step 3: If sub-divergence allowed
-    `python mcts_compute.py begin-sub-diverge` → depth+1
+    `node scripts/mcts_compute.js begin-sub-diverge` → depth+1
     ... Execute simplified divergence (no six-dimension map, 2 perspectives,
         1-step simulation) ...
-    `python mcts_compute.py end-sub-diverge` → depth-1
+    `node scripts/mcts_compute.js end-sub-diverge` → depth-1
 
   Step 4: Synthesize results
-    `python mcts_compute.py synthesize-sim --base-v <V> --sub-results '<JSON>'`
+    `node scripts/mcts_compute.js synthesize-sim --base-v <V> --sub-results '<JSON>'`
     → Sub-divergence results weight 0.2 (unreliable),
       base simulation weight 0.8
 
@@ -287,11 +287,11 @@ Code Guard Flow (execute each time a sub-decision point is encountered):
 ### Recursive Depth State Query
 
 Anytime you can query current state:
-  `python mcts_compute.py diverge-depth`
+  `node scripts/mcts_compute.js diverge-depth`
   → Returns {"depth":1,"max_depth":2,"status":"simplified","can_diverge":true}
 
 Reset after entire MCTS search ends:
-  `python mcts_compute.py reset-depth`
+  `node scripts/mcts_compute.js reset-depth`
 
 Simulation Output:
   V_leaf = Final value of simulation path (0.0 ~ 1.0)
@@ -445,7 +445,7 @@ During roll-out, each step forward, if **discovering need for certain knowledge 
 ### Core Formula
 
 ```
-Backpropagation: `python scripts/mcts_compute.py` backpropagate_path
+Backpropagation: `node scripts/mcts_compute.js` backpropagate_path
 Each ancestor node: n+=1, w+=V_leaf, V=w/n, Welford online update σ²
 ```
 
@@ -478,7 +478,7 @@ After each Backpropagation completes, **optionally** write this round's experien
 ### Pre-write Gate
 
 Before writing, pass L-GCMS gate:
-`python knowledge_lifecycle.py gate-check --experience '<JSON>' --kg '<JSON>'`
+`node scripts/knowledge_lifecycle.js gate-check --experience '<JSON>' --kg '<JSON>'`
 Four filters: Reusability + Information Density + Novelty + Reliability
   → store/observe/discard/merge
 Gate score <0.4→discard | 0.4~0.59→temporary observe (15-day verification window)
@@ -486,15 +486,15 @@ Gate score <0.4→discard | 0.4~0.59→temporary observe (15-day verification wi
 
 ### Write Timing
 
-Write condition: `python scripts/mcts_compute.py should-write-kg --v-leaf <V> --round <N>`
+Write condition: `node scripts/mcts_compute.js should-write-kg --v-leaf <V> --round <N>`
 V≥0.8 | V≤0.3 | Round%5==0 | After final convergence → Write to knowledge graph
 
-Write safety check: `python scripts/mcts_compute.py check-write-safety`
+Write safety check: `node scripts/mcts_compute.js check-write-safety`
 
 ### Memory Lifecycle Maintenance
 
 Auto-execute after each task:
-`python knowledge_lifecycle.py full-maintenance --kg '<JSON>' --recent-tasks '<JSON>' --context '<JSON>'`
+`node scripts/knowledge_lifecycle.js full-maintenance --kg '<JSON>' --recent-tasks '<JSON>' --context '<JSON>'`
 → GC Roots tracking → Tier re-judgment → Minor/Major GC → Archive recall →
   Error detection → Memory compaction
 
@@ -505,10 +505,10 @@ Auto-execute after each task:
 ```
 Iteration is not infinite, jointly determined by:
 
-Hard limit: `python scripts/mcts_compute.py` get_max_iterations
+Hard limit: `node scripts/mcts_compute.js` get_max_iterations
   → simple=5,medium=10,complex=20,debug=8
 
-Convergence: `python scripts/mcts_compute.py should_stop_iteration`
+Convergence: `node scripts/mcts_compute.js should_stop_iteration`
   ① V change <0.05 in last 3 rounds
   ② High-value nodes n≥3
   ③ Best n≥5 and σ²<0.05

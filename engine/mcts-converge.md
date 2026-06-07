@@ -8,7 +8,7 @@ description: MCTS-TD Decision Engine "Step 3~3.6" — Converge Engine. Aggregate
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
 > 1. **OUTPUT LANGUAGE**: User language already detected. Continue using that language.
 > 2. **CONVERGE PHASES**: Aggregate → Self-Check → Blindspot Audit → Decision Report.
-> 3. **FINAL OUTPUT**: Use `python scripts/language_adapter.py template --phase decision_report --lang <lang>`
+> 3. **FINAL OUTPUT**: Use `node scripts/language_adapter.js template decision_report <lang>`
 > 4. **RANKING**: Rank solutions by V (value), show top 3 with n, σ², confidence.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. Internal reasoning is English; user sees their language.
@@ -69,7 +69,7 @@ Confidence=High(n≥5,σ²<0.05)/Medium/Low
 ### MCTS Ranking Rules
 
 ```
-Ranking rule: `python scripts/mcts_compute.py rank --solutions '<JSON>'`
+Ranking rule: `node scripts/mcts_compute.js rank --solutions '<JSON>'`
 Sort by V descending. When V diff <0.05, compare n and σ².
 needs_re_evaluation checks if additional iterations needed.
 Output recommended solution + best path + main risk + confidence level.
@@ -78,7 +78,7 @@ Output recommended solution + best path + main risk + confidence level.
 ### Convergence Determination
 
 ```
-Convergence check: `python scripts/mcts_compute.py check-final-convergence`
+Convergence check: `node scripts/mcts_compute.js check-final-convergence`
 Conditions: Root total n≥solution_count×4 | 1st place n≥5 |
             1st place σ²<0.10 | V gap >0.05
 Not converged → Add 3 rounds (max 2 times) |
@@ -198,13 +198,13 @@ things:
 
 ```
 Self-check conclusion handling:
-  `python scripts/mcts_compute.py handle-self-check --conclusion <Pass/Risk/NotPassed>`
+  `node scripts/mcts_compute.js handle-self-check --conclusion <Pass/Risk/NotPassed>`
 ```
 
 ### Circuit Breaker Mechanism
 
 ```
-Circuit breaker: `python scripts/mcts_compute.py get-fuse-mode --accuracy <float> --consecutive-bad <int>`
+Circuit breaker: `node scripts/mcts_compute.js get-fuse-mode --accuracy <float> --consecutive-bad <int>`
 Accuracy = proportion of last 10 times where |error|<0.3
 <70% → simplified | <50% → ask user | Consecutive 3 times <50% → suggest manual
 ```
@@ -326,7 +326,7 @@ If encountering unforeseen issues during execution:
 ## Complete Re-simulate Mode Rules
 
 ```
-Re-simulate decision: `python scripts/mcts_compute.py re-simulation-decide`
+Re-simulate decision: `node scripts/mcts_compute.js re-simulation-decide`
 Core: 2nd place has simulation → Direct comparison |
        2nd place no simulation → Quick simulate (2 steps) |
        All affected → Return to Diverge Engine
@@ -352,7 +352,7 @@ Each time encountering unexpected:
 ### Complete Write-back Flow
 
 ```
-TD update orchestrated by `python scripts/mcts_compute.py` td_update_workflow:
+TD update orchestrated by `node scripts/mcts_compute.js` td_update_workflow:
 1. Calculate V_actual, TD_error = V_actual - V_predicted
 2. Traverse optimal path nodes → Match knowledge graph → Update or create
    HYPOTHESIS
