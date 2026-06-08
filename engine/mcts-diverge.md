@@ -6,9 +6,9 @@ description: MCTS-TD Decision Engine "Step 1" — Diverge Engine. Diverge (Eight
 # Step 1: Diverge Engine — Diverge × Converge
 
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
-> 1. **OUTPUT LANGUAGE**: Use `node scripts/language_adapter.js detect "<msg>"` to get user's language. ALL output MUST be in that language.
+> 1. **OUTPUT LANGUAGE**: User language already detected. Continue using that language.
 > 2. **PHASE ORDER**: Review Map → Recon Report → Solution List. Each MUST be output before proceeding.
-> 3. **CALL CODE**: `node scripts/language_adapter.js template review_map <lang>` for headers.
+> 3. **LANGUAGE GUARD**: `node scripts/language_guard.js check --user-lang <lang> --output "..."` verifies output language.
 > 4. **NO SKIP**: Do not skip any phase. Do not collapse phases into one summary.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. If user writes in Chinese → output Chinese. If Japanese → output Japanese. This is NON-NEGOTIABLE. Internal reasoning is English; user sees their language.

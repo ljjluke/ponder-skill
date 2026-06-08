@@ -8,7 +8,7 @@ description: MCTS-TD Decision Engine "Step 3~3.6" — Converge Engine. Aggregate
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
 > 1. **OUTPUT LANGUAGE**: User language already detected. Continue using that language.
 > 2. **CONVERGE PHASES**: Aggregate → Self-Check → Blindspot Audit → Decision Report.
-> 3. **FINAL OUTPUT**: Use `node scripts/language_adapter.js template decision_report <lang>`
+> 3. **FINAL OUTPUT**: In user's detected language. `node scripts/language_guard.js check` verifies consistency.
 > 4. **RANKING**: Rank solutions by V (value), show top 3 with n, σ², confidence.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. Internal reasoning is English; user sees their language.
