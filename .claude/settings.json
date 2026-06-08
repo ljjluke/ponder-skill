@@ -2,7 +2,7 @@
   "scheduled_tasks": [
     {
       "cron": "0 3 * * 0",
-      "prompt": "/mcts-td-planner 运行记忆归档: 执行知识图谱归档，将超过60天未使用且巩固分≤3的知识移入archive",
+      "prompt": "/mcts-td-planner Run knowledge graph archive: move entries unused >60 days with consolidation score <=3 into archive",
       "durable": true
     }
   ]
