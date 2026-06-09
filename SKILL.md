@@ -8,7 +8,7 @@ description: |
   creating an internal "simulation board" that explores multiple paths before committing to one.
   Like AlphaGo for thinking: explore branches → simulate outcomes → backpropagate learnings → converge to best path.
   
-  Applies to ANY user message — coding, analysis, decision-making, creative work, conversation, planning, diagnosis.
+  Applies to ANY user message — coding, bug fixing, debugging, analysis, decision-making, creative work, conversation, planning, diagnosis.
   If there are multiple ways to understand/respond, decompose → diverge (Eight-Facet Mirror brainstorming) → simulate → converge.
   Language adaptive. Phase output visible to user. Never monologue. Never skip thinking steps.
 version: 1.4.0
