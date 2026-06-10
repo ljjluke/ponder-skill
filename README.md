@@ -154,9 +154,11 @@ User intent → Constraint Collection
 ```bash
 # International (GitHub)
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
+/plugin install mcts-td-planner
 
 # China (Gitee)
 /plugin marketplace add https://gitee.com/ljjluke/mcts-skill
+/plugin install mcts-td-planner
 ```
 
 Type any task. When you see the ⚡, it's working.

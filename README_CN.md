@@ -193,9 +193,11 @@ AI: ⚡ 这事有好几种做法，先让我想清楚
 ```bash
 # 国际 (GitHub)
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
+/plugin install mcts-td-planner
 
 # 国内 (Gitee)
 /plugin marketplace add https://gitee.com/ljjluke/mcts-skill
+/plugin install mcts-td-planner
 ```
 
 装好后输入任意任务，看到 ⚡ 标志说明生效。
