@@ -202,6 +202,13 @@ AI: ⚡ 这事有好几种做法，先让我想清楚
 
 装好后输入任意任务，看到 ⚡ 标志说明生效。
 
+## 🔄 升级
+
+```bash
+/plugin marketplace update
+/plugin install mcts-td-planner
+```
+
 ### ⚡ 记忆安全
 
 知识图谱存储在 `~/.claude/data/skills/mcts-td-planner/`，与 skill 代码物理隔离。更新、重装都不会丢。想清除记忆删掉那个目录即可。

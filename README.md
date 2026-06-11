@@ -161,6 +161,13 @@ User intent → Constraint Collection
 /plugin install mcts-td-planner
 ```
 
+## 🔄 Upgrade
+
+```bash
+/plugin marketplace update
+/plugin install mcts-td-planner
+```
+
 Type any task. When you see the ⚡, it's working.
 
 ### ⚡ Memory Safety
