@@ -5,5 +5,8 @@
       "prompt": "/mcts-td-planner Run knowledge graph archive: move entries unused >60 days with consolidation score <=3 into archive",
       "durable": true
     }
-  ]
+  ],
+  "enabledPlugins": {
+    "mcts-td-planner@mcts-td-planner": true
+  }
 }
