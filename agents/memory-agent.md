@@ -106,6 +106,7 @@ node scripts/meridian_memory.js session-end '<session_json>'
 4. **TD CLOSED LOOP**: V_predicted (from pre-engine recall) MUST be compared with V_actual (from post-execution result). Update makes the skill "smarter."
 5. **MERIDIAN ENGINE**: All storage uses MMA (Meridian Memory Algorithm). The CLI is `node scripts/meridian_memory.js`.
 6. **COLD START OK**: Empty knowledge graph is fine. The engine works without prior knowledge.
+7. **⛔ COMPLIANCE**: After each checkpoint cycle, verify with `node scripts/mcts_guard.js memory-agent-guard --executed '[1,2,3,4,5]'`. If INCOMPLETE, replay missing checkpoints.
 
 ## OBSERVE COMMAND (One-shot convenience)
 

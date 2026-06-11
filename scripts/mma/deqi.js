@@ -2,9 +2,10 @@
  *  得气 (Deqi) — 知识召回 + 经气预热 + 三焦工作记忆 + 循经感传
  *  "刺之要，气至而有效" —《灵枢·九针十二原》
  * ═══════════════════════════════════════════════════════════════ */
-const { SHU_LEVELS, SPECIAL_POINT_TYPES, HEXAGRAM_SEQUENCE } = require('./constants');
+const { SHU_LEVELS, SPECIAL_POINT_TYPES, HEXAGRAM_SEQUENCE, getNextHexagram } = require('./constants');
 const { ziwuLiuzhu } = require('./ziwu');
 const { loadWorkingMemory, saveWorkingMemory } = require('./io');
+const { getDiagnosisWeight } = require('./diagnosis');
 
 const UPPER_BURNER_LIMIT = 7; // 上焦容量 = 认知负荷7±2
 
@@ -35,12 +36,16 @@ function deqi(kg, query, context = {}) {
         for (let i = 0; i < meridian.points.length; i++) {
             const point = meridian.points[i];
             if (point.hidden) continue; // 隐穴不出现在常规召回
-            const score = computeDeqiScore(point, query, meridian, i) + primingBonus;
+            let score = computeDeqiScore(point, query, meridian, i) + primingBonus;
+            // 八纲辨证权重调整
+            const diagWeight = getDiagnosisWeight(point, meridian, context);
+            score *= diagWeight;
             if (score > 0.1) {
                 results.push({
                     point, meridian: mKey, meridian_name: meridian.name,
                     position: i, deqi_score: Math.min(score, 1.0),
                     source: mKey === primedMeridian ? 'primed' : 'ziwu',
+                    diagnosis_weight: diagWeight,
                 });
             }
         }
@@ -53,13 +58,17 @@ function deqi(kg, query, context = {}) {
     results.sort((a, b) => b.deqi_score - a.deqi_score);
     const top = results.slice(0, query.limit || 10);
 
+    // ── 记忆再巩固: 被召回的穴位进入不稳定窗口(30分钟) ──
+    openReconsolidationWindow(top);
+
     // ── 更新三焦工作记忆 ──
     updateWorkingMemory(wm, top);
     saveWorkingMemory(wm);
 
-    // 卦序预召回 — 追加演化链上的下一卦知识
+    // 卦序预召回 — 追加演化链上的下一卦知识（不超过limit的30%）
     const evolutionResults = hexagramPreRecall(kg, top);
-    for (const er of evolutionResults) {
+    const maxEvolution = Math.max(1, Math.floor((query.limit || 10) * 0.3));
+    for (const er of evolutionResults.slice(0, maxEvolution)) {
         if (!top.find(t => t.point.id === er.point.id)) {
             top.push(er);
         }
@@ -72,6 +81,7 @@ function deqi(kg, query, context = {}) {
 function searchUpperBurner(wm, query) {
     const hits = [];
     for (const entry of wm.upper) {
+        if (!entry || !entry.point) continue;
         let score = 0;
         if (query.tags && entry.point.tags)
             score = entry.point.tags.filter(t => query.tags.includes(t)).length / Math.max(query.tags.length, 1) * 0.6;
@@ -106,6 +116,23 @@ function updateWorkingMemory(wm, topResults) {
         if (midIdx >= 0) wm.middle.splice(midIdx, 1);
         wm.middle.unshift(overflow);
     }
+    // 中焦清理: 超过72小时未召回 → 降入下焦
+    const MIDDLE_TTL_HOURS = 72;
+    const demoted = [];
+    wm.middle = wm.middle.filter(e => {
+        const hoursSince = (Date.now() - new Date(e.recalled_at)) / 3600000;
+        if (hoursSince > MIDDLE_TTL_HOURS) {
+            demoted.push(e);
+            return false;
+        }
+        return true;
+    });
+    // 降入下焦（去重后追加）
+    for (const d of demoted) {
+        const lowerIdx = wm.lower.findIndex(e => e.point_id === d.point_id);
+        if (lowerIdx >= 0) wm.lower.splice(lowerIdx, 1);
+        wm.lower.push(d);
+    }
     // 下焦清理: 超过24小时 → 移出
     wm.lower = wm.lower.filter(e => (Date.now() - new Date(e.recalled_at)) / 3600000 < 24);
     // 记录最后活跃经脉
@@ -129,6 +156,25 @@ function computeDeqiScore(point, query, meridian, position) {
     if (point.special_type && SPECIAL_POINT_TYPES[point.special_type]) score += (SPECIAL_POINT_TYPES[point.special_type].boost - 1) * 0.1;
     score += (point.q || 0.5) * 0.05;
     score += Math.min((point.consolidation_score || 0) / 100, 0.05);
+
+    // 源监控: 亲历>推理>传闻
+    const srcReliability = point.source_reliability;
+    if (srcReliability !== undefined) {
+        if (srcReliability >= 0.8) score *= 1.1;       // 亲历/告知 → 加分
+        else if (srcReliability < 0.4) score *= 0.7;    // 传闻/类比 → 减分
+    }
+
+    // 编码特异性: 情景记忆匹配当前task_type → 加分
+    if (point.memory_type === 'episodic' && point.task_type && query.task_type) {
+        if (point.task_type === query.task_type) score *= 1.15;
+    }
+
+    // 再巩固窗口内 → 略微加分(刚被用过)
+    if (point._reconsolidation_active && point.reconsolidation_window) {
+        const closesAt = new Date(point.reconsolidation_window.closes_at);
+        if (Date.now() < closesAt.getTime()) score *= 1.05;
+    }
+
     return score;
 }
 
@@ -193,9 +239,50 @@ function hexagramPreRecall(kg, topResults) {
     return results;
 }
 
-function getNextHexagram(current) {
-    const idx = HEXAGRAM_SEQUENCE.indexOf(current);
-    return idx >= 0 && idx < 63 ? HEXAGRAM_SEQUENCE[idx + 1] : null;
+module.exports = { deqi, computeDeqiScore, propagateSensation, updateWorkingMemory, hexagramPreRecall, openReconsolidationWindow };
+
+
+/**
+ * ═══════════════════════════════════════════════════════════════
+ *  记忆再巩固 (Memory Reconsolidation)
+ *  "温故而知新，可以为师矣" —《论语》
+ * ═══════════════════════════════════════════════════════════════
+ *
+ *  每次得气召回成功后，被召回的穴位进入"不稳定窗口"(30分钟)。
+ *  在这个窗口内，新传入的相关信息可以修改该穴位的属性。
+ *  这是人脑"每次回忆都是重构"的神经基础。
+ *
+ *  效果:
+ *    → 窗口内再次被调用 → 巩固分+3(回忆加强)
+ *    → 窗口内被TD更新 → q值可塑性×1.5
+ *    → 窗口关闭 → 穴位重新锁定
+ */
+function openReconsolidationWindow(topResults) {
+    const now = new Date().toISOString();
+    const windowMs = 30 * 60 * 1000; // 30分钟
+
+    for (const r of topResults.slice(0, 5)) { // 只对top-5开窗口
+        if (!r.point) continue;
+        r.point.reconsolidation_window = {
+            opened_at: now,
+            closes_at: new Date(Date.now() + windowMs).toISOString(),
+            opened_by: 'deqi_recall',
+        };
+        // 窗口内标记: 下次TD更新时检查
+        r.point._reconsolidation_active = true;
+    }
 }
 
-module.exports = { deqi, computeDeqiScore, propagateSensation, updateWorkingMemory, hexagramPreRecall };
+/**
+ * 检查穴位是否在再巩固窗口内
+ * @returns {boolean}
+ */
+function isInReconsolidationWindow(point) {
+    if (!point.reconsolidation_window || !point._reconsolidation_active) return false;
+    const closesAt = new Date(point.reconsolidation_window.closes_at);
+    if (Date.now() > closesAt.getTime()) {
+        point._reconsolidation_active = false;
+        return false;
+    }
+    return true;
+}

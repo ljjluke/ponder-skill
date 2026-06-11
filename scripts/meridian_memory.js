@@ -32,7 +32,8 @@ const { reinforceReduce } = require('./mma/reinforce');
 const { ziwuLiuzhu } = require('./mma/ziwu');
 const { decayCheck, sessionEnd, experienceReplay } = require('./mma/decay');
 const { recordCoOccurrence, clusterDetect } = require('./mma/cluster');
-const { getStatus } = require('./mma/status');
+const { getStatus, computeFourImages } = require('./mma/status');
+const { batchDiagnose } = require('./mma/diagnosis');
 
 function output(obj) { log(JSON.stringify(obj, null, 2)); }
 
@@ -49,6 +50,8 @@ function main() {
         log("  reinforce <point_id> <td_error> [exp_json] — 补泻更新");
         log("  ziwu      [context_json]               — 子午流注");
         log("  status                                  — 系统全景");
+        log("  four-images                             — 四象成熟度诊断");
+        log("  diagnose  <query_json> [context_json]   — 八纲辨证知识诊断");
         log("  decay                                   — 衰减检查");
         log("  replay    [limit]                       — 温故知新");
         log("  session-end <session_json>              — 睡眠回放");
@@ -85,6 +88,15 @@ function main() {
             }
             case "status": {
                 output(getStatus(loadMMA())); break;
+            }
+            case "four-images": {
+                output(computeFourImages(loadMMA())); break;
+            }
+            case "diagnose": {
+                const kg = loadMMA(), query = JSON.parse(args[1] || "{}"), ctx = JSON.parse(args[2] || "{}");
+                const recalled = deqi(kg, query, ctx);
+                const diag = batchDiagnose(kg, recalled, ctx);
+                output(diag); break;
             }
             case "decay": {
                 const kg = loadMMA();
@@ -131,9 +143,9 @@ main();
  */
 function observeRoute(phase, data) {
     try {
-    const kg = loadMMA();
-    let result;
-    switch (phase) {
+        const kg = loadMMA();
+        let result;
+        switch (phase) {
         case 'pre_engine': {
             // ① Recall relevant memories, note V_predicted
             const query = data.query || { limit: 5 };

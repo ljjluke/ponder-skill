@@ -13,6 +13,87 @@ function computeUcb(v, nChild, nParent, c = 1.414, kBonus = 0) {
     return v + c * Math.sqrt(Math.log(nParent) / nChild) + kBonus;
 }
 
+/**
+ * ═══════════════════════════════════════════════════════════════
+ *  奇正相生自适应探索 (Qi-Zheng Adaptive Explore-Exploit)
+ *  "凡战者，以正合，以奇胜" —《孙子兵法·兵势》
+ * ═══════════════════════════════════════════════════════════════
+ *
+ *  正 (Zheng) = Exploitation 利用已知 — V项权重
+ *  奇 (Qi) = Exploration 探索未知 — 探索项权重
+ *
+ *  根据知识图谱状态动态调整 UCB 的探索常数 c:
+ *    → 知识丰富(多CONFIRMED) → c↓ 偏向利用
+ *    → 知识匮乏(冷启动) → c↑ 偏向探索
+ *    → 情感信号: 喜→偏奇(探索), 恐→偏正(保守)
+ *
+ * @param {object} context — { kg_match_count, confirmed_ratio, emotion, task_novelty }
+ * @returns {number} 自适应 c 值 (0.5 ~ 2.5)
+ */
+function computeAdaptiveC(context = {}) {
+    const DEFAULT_C = 1.414; // √2 — 经典UCB平衡点
+
+    let c = DEFAULT_C;
+
+    // 1. 知识匹配度: 匹配越多→越偏向利用(正)
+    const matchCount = context.kg_match_count || 0;
+    if (matchCount >= 10) c -= 0.3;
+    else if (matchCount >= 5) c -= 0.15;
+    else if (matchCount === 0) c += 0.4; // 冷启动→偏向探索(奇)
+
+    // 2. 知识可信度: CONFIRMED比例越高→越偏向利用(正)
+    const confirmedRatio = context.confirmed_ratio;
+    if (confirmedRatio !== undefined) {
+        if (confirmedRatio >= 0.7) c -= 0.2;
+        else if (confirmedRatio >= 0.4) c -= 0.1;
+        else if (confirmedRatio < 0.2) c += 0.25;
+    }
+
+    // 3. 情感信号 (七情→奇正)
+    // 喜/惊 → 开放心态，偏向探索(奇)
+    // 恐/忧 → 保守心态，偏向利用(正)
+    const emotion = context.emotion || '';
+    if (['xi', 'jing'].includes(emotion)) c += 0.2;
+    else if (['kong', 'you_si', 'bei'].includes(emotion)) c -= 0.2;
+
+    // 4. 任务新颖度: 新领域→偏向探索(奇)
+    if (context.task_novelty === 'high') c += 0.3;
+    else if (context.task_novelty === 'low') c -= 0.1;
+
+    // 5. 势 (Shi) — 时机成熟度
+    // 子午流注经脉匹配度>0.6 → "势"成熟 → 偏向利用
+    if (context.shi_maturity && context.shi_maturity > 0.6) c -= 0.15;
+
+    // 限制范围: 0.5 ~ 2.5
+    return Math.max(0.5, Math.min(2.5, Math.round(c * 1000) / 1000));
+}
+
+/**
+ * 势 (Shi) — 决策时机成熟度
+ * 综合经脉活跃度、知识匹配度、情感状态判断"势"是否成熟
+ * @returns {number} 0~1, >0.6表示势成熟
+ */
+function computeShiMaturity(context = {}) {
+    let shi = 0.5;
+
+    // 经脉匹配度
+    if (context.meridian_match_score) shi += (context.meridian_match_score - 0.5) * 0.3;
+
+    // 知识匹配数
+    const matchCount = context.kg_match_count || 0;
+    if (matchCount >= 5) shi += 0.2;
+    else if (matchCount >= 2) shi += 0.1;
+    else shi -= 0.1;
+
+    // 情感: 安(relief) → 势成熟
+    if (context.emotion === 'an') shi += 0.1;
+
+    // 时辰: 当前经脉活跃 → 势成熟
+    if (context.active_meridian_count && context.active_meridian_count >= 4) shi += 0.1;
+
+    return Math.max(0, Math.min(1, shi));
+}
+
 function computeCltUcb(v, sigma2, nI, N) {
     const phiInv = { 2: 1.5, 3: 1.0, 4: 0.8, 5: 0.7 };
     return v + (phiInv[N] || 0.5) * Math.sqrt(sigma2 / nI);
@@ -50,7 +131,8 @@ function getMaxIterations(taskType) {
 function shouldStopIteration(rootNodes, taskType, currentRound, vHistory) {
     if (currentRound >= getMaxIterations(taskType)) return [true, "Hard limit"];
     if (!rootNodes || rootNodes.length === 0) return [true, "No nodes"];
-    const best = rootNodes.reduce((a, b) => (a.v || 0) > (b.v || 0) ? a : b);
+    const best = rootNodes.reduce((a, b) => ((a && a.v) || 0) > ((b && b.v) || 0) ? a : b, null);
+    if (!best) return [true, "No valid nodes"];
     if (checkValueStability(vHistory)) return [true, "Value stable"];
     if (checkHighConfidence(best.n || 0, best.sigma2 || 1)) return [true, "High confidence"];
     return [false, "Continue"];
@@ -200,6 +282,29 @@ function main() {
     try {
         switch (cmd) {
             case "ucb": output({ ucb: computeUcb(+o.v, +o.n, +o.parent_n, +o.c || 1.414, +o.k_bonus || 0) }); break;
+            case "adaptive-c": {
+                output({
+                    c: computeAdaptiveC({
+                        kg_match_count: +o.kg_match_count || 0,
+                        confirmed_ratio: o.confirmed_ratio !== undefined ? parseFloat(o.confirmed_ratio) : undefined,
+                        emotion: o.emotion || '',
+                        task_novelty: o.task_novelty || 'medium',
+                        shi_maturity: o.shi_maturity !== undefined ? parseFloat(o.shi_maturity) : undefined,
+                    }),
+                });
+                break;
+            }
+            case "shi-maturity": {
+                output({
+                    shi: computeShiMaturity({
+                        meridian_match_score: parseFloat(o.meridian_match_score) || 0.5,
+                        kg_match_count: +o.kg_match_count || 0,
+                        emotion: o.emotion || '',
+                        active_meridian_count: +o.active_meridian_count || 0,
+                    }),
+                });
+                break;
+            }
             case "rank": { const s = JSON.parse(o.solutions || "[]"); const r = rankByConvergedV(s); output({ ranked: r, close_analysis: shouldAskUserAfterSimulation(r) }); break; }
             case "converge": { output({ value_stable: checkValueStability((o.v_history || "").split(",").map(Number)), high_confidence: checkHighConfidence(+o.n, +o.sigma2), should_stop: checkValueStability((o.v_history || "").split(",").map(Number)) || checkHighConfidence(+o.n, +o.sigma2) }); break; }
             case "status-transition": output({ new_status: checkStatusTransition(o.current, +o.n || 0, o.has_contradiction, +o.contradiction_count || 0), current_weight: getStatusWeight(o.current) }); break;
@@ -217,8 +322,37 @@ function main() {
             case "reset-depth": resetRecursiveDepth(); output({ depth: 0 }); break;
             case "diverge-depth": output(getDivergeDepthReport()); break;
             case "should-ask-user": { output(shouldAskUserAfterSimulation(JSON.parse(o.ranked || "[]"))); break; }
-            case "cull": { const s = JSON.parse(o.solutions || "[]"); output({ kept: s.map(x => x.id), culled: [], summary: `${s.length} -> ${s.length} kept` }); break; }
-            case "coverage-matrix": output({ matrix: {}, coverage_rate: 1.0 }); break;
+            case "cull": {
+                const s = JSON.parse(o.solutions || "[]");
+                const criteria = JSON.parse(o.criteria || "{}");
+                // Apply culling rules: P0(boundary) → P1(foundation) → P2(force) → P3(risk) → P4(compare)
+                // This is a numerical pass-through; full culling logic is in the LLM diverge engine
+                const kept = [], culled = [];
+                for (const sol of s) {
+                    const violates = [];
+                    if (criteria.boundary && sol.violates_boundary) violates.push('P0-boundary');
+                    if (criteria.foundation && sol.exceeds_resources) violates.push('P1-foundation');
+                    if (violates.length > 0) { culled.push({ id: sol.id, reasons: violates }); }
+                    else kept.push(sol);
+                }
+                output({ kept: kept.map(x => x.id), culled, summary: `${s.length} -> ${kept.length} kept, ${culled.length} culled` });
+                break;
+            }
+            case "coverage-matrix": {
+                const s = JSON.parse(o.solutions || "[]");
+                const facets = ['F1-force','F2-foundation','F3-change','F4-penetration','F5-risk','F6-visible','F7-boundary','F8-convergence'];
+                const matrix = {};
+                let totalCoverage = 0;
+                for (const sol of s) {
+                    const coverage = sol.facet_coverage || [];
+                    matrix[sol.id || sol.name || '?'] = facets.map((f, i) => coverage[i] ? '✓' : '-').join('');
+                    totalCoverage += (coverage.filter(Boolean).length || 0);
+                }
+                const maxPossible = s.length * facets.length;
+                const coverageRate = maxPossible > 0 ? Math.round(totalCoverage / maxPossible * 100) / 100 : 1.0;
+                output({ matrix, coverage_rate: coverageRate, facets });
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }

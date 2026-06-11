@@ -11,7 +11,7 @@ description: |
   Applies to ANY user message — coding, bug fixing, debugging, analysis, decision-making, creative work, conversation, planning, diagnosis.
   If there are multiple ways to understand/respond, decompose → diverge (Eight-Facet Mirror brainstorming) → simulate → converge.
   Language adaptive. Phase output visible to user. Never monologue. Never skip thinking steps.
-version: 1.5.0
+version: 1.6.0
 license: MIT
 alwaysApply: true
 ---
@@ -71,6 +71,38 @@ alwaysApply: true
 > **ALWAYS DECOMPOSE FIRST** | **OUTPUT IN USER LANGUAGE** | **PHASED OUTPUT (0→1→2→3→4)** | **GRILL THE USER** | **3 SOLUTIONS → MCTS**
 >
 > Full rules: engine/mcts-constraint.md | engine/mcts-diverge.md | engine/mcts-simulate.md | engine/mcts-converge.md | engine/td-learner.md
+>
+> **⚠️ COMPRESSION RECOVERY (if engine/*.md files are unavailable, execute this block):**
+> ```
+> STEP 0 (EVERY message): Decompose → find decision points. If ≥1 multi-option → engine ON.
+>   ⛔ NEVER claim "only one solution" without: listing ≥2 alternatives you considered + WHY dismissed.
+>   ⛔ If unsure: node scripts/mcts_guard.js decomposition-guard --claim '<JSON>'
+>   ⛔ If blocked: expand facets, list alternatives, acquire info first.
+>
+> STEP 1: Output [八面审视镜] — 8 facets each with: concrete dimension name + score 0-10 + known info + blindspots + ideas.
+> STEP 2: Output [侦查报告] — per-facet recon findings + cross-validation.
+> STEP 3: Output [收敛方案] — 2~8 solutions, each with: approach + basis + complexity + difference from others + facet coverage matrix.
+>   → THEN auto-enter MCTS simulate. Do NOT pause for confirmation.
+> STEP 4: Output [决策报告] — MCTS ranking (V/n/σ²/confidence) + self-check (flaw find + reverse think + risk assess) + blindspot audit.
+>
+> INFO ACQUISITION (5-level, NEVER skip ①→②→③):
+>   ① Memory graph query  ② Self-learn (web/code/docs)  ③ Diverge handoff  ④ Ask user (constraints ONLY)  ⑤ Assume (+0.1 variance)
+>   ⛔ NEVER jump to ④ or ⑤ without exhausting ①②③ first.
+>
+> SELF-CHECK (mandatory before execution):
+>   □ Flaw find: vague judgment? unverified assumption? ignored risk?
+>   □ Reverse think: if #2 is better than #1, why?
+>   □ Risk assess: worst case? severity? can bear?
+>
+> MEMORY AGENT (silent, 5 checkpoints):
+>   ① pre_engine: deqi recall   ② during_diverge: perceive emotion   ③ post_simulate: ashi insert
+>   ④ pre_converge: conflict detect (ALERT if found, max 2/session)   ⑤ post_execution: TD update + decay
+>   → ALL via: node scripts/meridian_memory.js observe --phase <name>
+>
+> COMPLIANCE SELF-AUDIT (when in doubt):
+>   node scripts/mcts_guard.js all-guards
+>   → Returns checklist of everything that must NOT be skipped.
+> ```
 
 > **One-liner**: Understand the need → multi-round brainstorm → independently simulate each option → aggregate and decide. Never fill in missing requirements. Never pretend to know what you don't. Never research the same thing twice.
 
@@ -344,6 +376,7 @@ After convergence:
 | 🧠 Memory Agent | `agents/memory-agent.md` | Silent observer: 史官+谏官 dual role, 5 checkpoints (recall→perceive→record→alert→consolidate) |
 | 🖥 MMA Engine | `scripts/meridian_memory.js` | Meridian Memory Algorithm: 得气/子午流注/循经感传/补泻/阿是穴/隐穴/睡眠回放/腧穴集群 |
 | 🖥 Compute Engine | `scripts/mcts_compute.js` | UCB/backprop/convergence/state machine + cull/coverage/user-ask logic |
+| 🛡️ Compliance Guard | `scripts/mcts_guard.js` | 7引擎守卫: 反唯一方案/阶段强制/信息获取优先级/方案多样性/自检/Memory Agent/合规审计 |
 | 📋 Lifecycle Engine | `scripts/knowledge_lifecycle.js` | L-GCMS: gate filtering + tiered storage + forgetting curve + context recall (legacy, being replaced by MMA) |
 | Simulation Format | `policies/task-policy.md` | General solution generation rules, simulation format, scoring rubric |
 | 📖 Algorithm Ref | `references/algorithm-reference.md` | On-demand reference, not loaded in reasoning context |

@@ -2,8 +2,8 @@
  *  补泻手法 (Reinforce/Reduce) — 价值更新 + 五行生克
  *  "盛则泻之，虚则补之" —《灵枢·经脉》
  * ═══════════════════════════════════════════════════════════════ */
-const { SHU_LEVELS, FIVE_ELEMENT, SIX_YAO_LIFECYCLE, YAO_TO_SHU } = require('./constants');
-const { ARCHIVE_DIR } = require('./constants');
+const { SHU_LEVELS, FIVE_ELEMENT, SIX_YAO_LIFECYCLE, YAO_TO_SHU, ARCHIVE_DIR } = require('./constants');
+const { findPointById } = require('./io');
 const fs = require('fs');
 
 /**
@@ -12,7 +12,7 @@ const fs = require('fs');
  * tdError < -0.15 → 泻(drain): 价值高估了，降低
  */
 function reinforceReduce(kg, pointId, tdError, experience = {}) {
-    const found = findPoint(kg, pointId);
+    const found = findPointById(kg, pointId);
     if (!found) return null;
 
     const { point, meridianKey } = found;
@@ -30,10 +30,14 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
     if (tdError > 0.15) { technique = 'tonify'; consolidationDelta = 5; }
     else if (tdError < -0.15) { technique = 'drain'; consolidationDelta = -3; }
 
-    point.q = Math.max(0, Math.min(1, newQ));
+    // 记忆再巩固: 在窗口内的穴位可塑性×1.5
+    const inWindow = checkReconsolidationWindow(point);
+    const plasticity = inWindow ? 1.5 : 1.0;
+    const adjustedQ = oldQ + delta / newN * plasticity; // 窗口内q值调整幅度更大
+    point.q = Math.max(0, Math.min(1, adjustedQ));
     point.sigma2 = Math.max(0.01, Math.min(1, newSigma2));
     point.n = newN;
-    point.consolidation_score = Math.max(0, (point.consolidation_score || 0) + consolidationDelta);
+    point.consolidation_score = Math.max(0, (point.consolidation_score || 0) + consolidationDelta + (inWindow ? 3 : 0));
     point.last_verified = new Date().toISOString();
     point.td_error_history = point.td_error_history || [];
     point.td_error_history.push({ td_error: tdError, technique, v_predicted: oldQ, v_actual: x, timestamp: new Date().toISOString() });
@@ -83,19 +87,8 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
     // 五行生克关系更新
     updateFiveElementRelations(kg, meridianKey, point, technique);
 
-    return { point, meridian: meridianKey, technique, delta, newQ, newSigma2 };
-}
-
-function findPoint(kg, pointId) {
-    for (const [key, m] of Object.entries(kg.meridians)) {
-        const idx = m.points.findIndex(p => p.id === pointId);
-        if (idx >= 0) return { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
-    }
-    for (const [key, m] of Object.entries(kg.extra)) {
-        const idx = m.points.findIndex(p => p.id === pointId);
-        if (idx >= 0) return { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
-    }
-    return null;
+    return { point, meridian: meridianKey, technique, delta, newQ: point.q, newSigma2: point.sigma2,
+        reconsolidation_active: inWindow };
 }
 
 function updateShuLevel(point, technique, newQ) {
@@ -135,7 +128,7 @@ function updateFiveElementRelations(kg, meridianKey, point, technique) {
 
 /** 隐穴 — 不删除，只标记hidden，常规召回查不到 */
 function hidePoint(kg, meridianKey, pointId) {
-    const found = findPoint(kg, pointId);
+    const found = findPointById(kg, pointId);
     if (!found) return;
     found.point.hidden = true;
     found.point.hidden_at = new Date().toISOString();
@@ -185,4 +178,18 @@ function computeTrigramStability(point) {
     return { ben, zhi, bian };
 }
 
-module.exports = { reinforceReduce, findPoint, hidePoint, updateFiveElementRelations, getYaoStage, computeTrigramStability };
+module.exports = { reinforceReduce, hidePoint, updateFiveElementRelations, getYaoStage, computeTrigramStability };
+
+
+/**
+ * 检查穴位是否在再巩固窗口内 (内联实现，避免循环依赖)
+ */
+function checkReconsolidationWindow(point) {
+    if (!point.reconsolidation_window || !point._reconsolidation_active) return false;
+    const closesAt = new Date(point.reconsolidation_window.closes_at);
+    if (Date.now() > closesAt.getTime()) {
+        point._reconsolidation_active = false;
+        return false;
+    }
+    return true;
+}

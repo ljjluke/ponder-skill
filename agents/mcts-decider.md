@@ -36,6 +36,12 @@ Before generating ANY solution, systematically collect constraints:
 - Check: can I confirm this from project code? If not, ASK THE USER.
 - Never assume "probably ok" for missing constraints.
 
+**⛔ GUARD**: If tempted to say "only one feasible approach", STOP and run:
+```
+node scripts/mcts_guard.js decomposition-guard --claim '{"task":"<desc>","reason":"<why single>","facets_checked":<N>,"memory_checked":<bool>,"web_searched":<bool>}'
+```
+If verdict is BLOCKED → expand facets, list alternatives, acquire info. Do NOT proceed.
+
 ### 1. Diverge Engine (engine/mcts-diverge.md)
 **Diverge phase** (brainstorming):
 - Eight-Facet Mirror: repeatedly review all 8 facets with cross-facet associations
@@ -68,8 +74,22 @@ Show tree state summary after each round.
 ### 4. TD Update (after execution)
 Compute V_actual → TD_error → update knowledge graph → gate check → memory maintenance.
 
+## 🛡️ Compliance Guards (MUST execute at these points)
+
+| When | Guard Command |
+|------|--------------|
+| Before claiming "only one solution" | `node scripts/mcts_guard.js decomposition-guard --claim '<JSON>'` |
+| After generating solutions | `node scripts/mcts_guard.js diversity-challenge --solutions '<JSON>'` |
+| When acquiring info during simulation | `node scripts/mcts_guard.js info-gap-guard --log '<JSON>'` |
+| Before executing selected solution | `node scripts/mcts_guard.js self-check-guard` |
+| Before final decision report | `node scripts/mcts_guard.js compliance-report --state '<JSON>'` |
+| After each engine phase | `node scripts/mcts_guard.js phase-enforce --completed '<JSON>'` |
+| Memory Agent verification | `node scripts/mcts_guard.js memory-agent-guard --executed '<JSON>'` |
+
 ## Key Rules
 - NEVER fill in missing requirements — ask the user.
 - NEVER pretend to know — research it.
+- ⛔ NEVER claim "single feasible solution" without passing decomposition-guard.
 - Decompose every user message first. Multi-option needs → full engine. Single option → execute directly.
 - Output language MUST match the user's language.
+- If context was compressed/reloaded → run `node scripts/mcts_guard.js all-guards` to rebuild compliance awareness.

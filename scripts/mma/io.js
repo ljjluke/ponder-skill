@@ -58,4 +58,21 @@ function saveWorkingMemory(wm) {
     fs.writeFileSync(WORKING_MEMORY_FILE, JSON.stringify(wm, null, 0), 'utf-8');
 }
 
-module.exports = { ensureDirs, loadMMA, saveMMA, freshKG, loadWorkingMemory, saveWorkingMemory };
+module.exports = { ensureDirs, loadMMA, saveMMA, freshKG, loadWorkingMemory, saveWorkingMemory, findPointById };
+
+
+/**
+ * 通用穴位查找 — 在12经脉+奇经八脉中按ID查找穴位
+ * cluster.js 和 reinforce.js 各自定义了类似函数，统一到此
+ */
+function findPointById(kg, pointId) {
+    for (const [key, m] of Object.entries(kg.meridians)) {
+        const idx = m.points.findIndex(p => p.id === pointId);
+        if (idx >= 0) return { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
+    }
+    for (const [key, m] of Object.entries(kg.extra)) {
+        const idx = m.points.findIndex(p => p.id === pointId);
+        if (idx >= 0) return { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
+    }
+    return null;
+}

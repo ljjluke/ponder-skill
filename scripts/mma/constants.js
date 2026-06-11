@@ -220,6 +220,20 @@ const EMOTION_CONSOLIDATION = {
     neutral:{ name: "中性", boost: 2, desc: "无强烈情绪" },
 };
 
+// ===== 源可靠性权重 (Source Reliability) =====
+// "知之为知之，不知为不知，是知也" —《论语》
+// 人脑源监控(Source Monitoring): 区分信息的来源可信度
+const SOURCE_RELIABILITY = {
+    execution_result: { weight: 1.0,  label: '亲历', desc: '亲自执行并验证过的' },
+    user_stated:      { weight: 0.85, label: '告知', desc: '用户明确告知的' },
+    multiple_sources: { weight: 0.80, label: '多方', desc: '多个来源交叉验证' },
+    official_doc:     { weight: 0.75, label: '文档', desc: '官方文档/规范' },
+    inference:        { weight: 0.50, label: '推理', desc: '从已知推理出的' },
+    analogy:          { weight: 0.35, label: '类比', desc: '从其他领域类比' },
+    hearsay:          { weight: 0.20, label: '传闻', desc: '未经核实的传闻' },
+    unknown:          { weight: 0.40, label: '未知', desc: '来源不明' },
+};
+
 // ===== 七情 → 经脉映射 =====
 const EMOTION_MERIDIAN_MAP = {
     xi:      'heart',
@@ -322,6 +336,96 @@ const MONTH_STAR_OFFSET = {
     yin_shen_si_hai: [2, 1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 9],  // 寅申巳亥年
 };
 
+// ===== 天干地支 (Heavenly Stems & Earthly Branches) =====
+// 殷商甲骨文 — 中国最古老的时间编码系统
+// 天干: 时空的"天"维度 / 地支: 时空的"地"维度
+// 合为六十甲子: 天地交合的完整时空坐标
+
+const HEAVENLY_STEMS = ['jia','yi','bing','ding','wu','ji','geng','xin','ren','gui'];
+const EARTHLY_BRANCHES = ['zi','chou','yin','mao','chen','si','wu','wei','shen','you','xu','hai'];
+
+// 天干五行属性
+const STEM_ELEMENT = {
+    jia: 'wood', yi: 'wood',              // 甲乙木
+    bing: 'fire', ding: 'fire',           // 丙丁火
+    wu: 'earth', ji: 'earth',             // 戊己土
+    geng: 'metal', xin: 'metal',          // 庚辛金
+    ren: 'water', gui: 'water',           // 壬癸水
+};
+
+// 天干→脏腑/经脉映射 (《黄帝内经》)
+const STEM_MERIDIAN = {
+    jia: 'gallbladder', yi: 'liver',      // 甲胆乙肝
+    bing: 'small_intestine', ding: 'heart', // 丙小肠丁心
+    wu: 'stomach', ji: 'spleen',          // 戊胃己脾
+    geng: 'large_intestine', xin: 'lung', // 庚大肠辛肺
+    ren: 'bladder', gui: 'kidney',        // 壬膀胱癸肾
+};
+
+// 地支→经脉映射 (十二经纳地支)
+const BRANCH_MERIDIAN = {
+    zi: 'gallbladder', chou: 'liver',     // 子胆丑肝
+    yin: 'lung', mao: 'large_intestine',  // 寅肺卯大肠
+    chen: 'stomach', si: 'spleen',        // 辰胃巳脾
+    wu: 'heart', wei: 'small_intestine',  // 午心未小肠
+    shen: 'bladder', you: 'kidney',       // 申膀胱酉肾
+    xu: 'pericardium', hai: 'triple_burner', // 戌心包亥三焦
+};
+
+// 地支→时辰映射 (每个地支对应2小时)
+const BRANCH_HOUR = {
+    zi: [23, 1], chou: [1, 3], yin: [3, 5], mao: [5, 7],
+    chen: [7, 9], si: [9, 11], wu: [11, 13], wei: [13, 15],
+    shen: [15, 17], you: [17, 19], xu: [19, 21], hai: [21, 23],
+};
+
+// 十二消息卦 (Twelve Waning-and-Waxing Hexagrams)
+// 复→临→泰→大壮→夬→乾 (阳长) / 姤→遁→否→观→剥→坤 (阴长)
+// 映射到知识"消长"的年度周期
+const TWELVE_XIAOXI = [
+    { hexagram: 'fu',  branch: 'zi',   month: 11, yang_yao: 1, phase: 'rebirth',  label: '一阳来复' },
+    { hexagram: 'lin', branch: 'chou', month: 12, yang_yao: 2, phase: 'growing',  label: '二阳临' },
+    { hexagram: 'tai', branch: 'yin',  month: 1,  yang_yao: 3, phase: 'balanced', label: '三阳开泰' },
+    { hexagram: 'dazhuang', branch: 'mao', month: 2, yang_yao: 4, phase: 'strong', label: '四阳大壮' },
+    { hexagram: 'guai', branch: 'chen', month: 3, yang_yao: 5, phase: 'peak_approaching', label: '五阳夬' },
+    { hexagram: 'qian', branch: 'si',  month: 4, yang_yao: 6, phase: 'peak',     label: '六阳纯乾' },
+    { hexagram: 'gou',  branch: 'wu',  month: 5,  yin_yao: 1,  phase: 'declining', label: '一阴姤' },
+    { hexagram: 'dun',  branch: 'wei', month: 6,  yin_yao: 2,  phase: 'retreating', label: '二阴遁' },
+    { hexagram: 'pi',   branch: 'shen', month: 7, yin_yao: 3,  phase: 'blocked', label: '三阴否' },
+    { hexagram: 'guan',  branch: 'you', month: 8, yin_yao: 4,  phase: 'observing', label: '四阴观' },
+    { hexagram: 'bo',    branch: 'xu',  month: 9, yin_yao: 5,  phase: 'stripping', label: '五阴剥' },
+    { hexagram: 'kun',   branch: 'hai', month: 10, yin_yao: 6, phase: 'dormant', label: '六阴纯坤' },
+];
+
+/**
+ * 根据公历日期计算日干支 (精确算法 — 基于已知甲子日)
+ * 参考: 1900-01-01 = 甲戌日 (jia xu)
+ */
+function computeDayGanZhi(year, month, day) {
+    const baseDate = new Date(1900, 0, 1); // 1900-01-01
+    const targetDate = new Date(year, month - 1, day);
+    const daysDiff = Math.round((targetDate - baseDate) / 86400000);
+    // 1900-01-01 甲戌日: 天干甲(index 0), 地支戌(index 10)
+    const stemIdx = ((daysDiff % 10) + 10) % 10;  // 甲=0
+    const branchIdx = ((daysDiff % 12) + 12) % 12; // 戌=10
+    return {
+        stem: HEAVENLY_STEMS[stemIdx],
+        branch: EARTHLY_BRANCHES[(branchIdx + 10) % 12], // 调整基准到甲子=0
+        stem_idx: stemIdx,
+        branch_idx: (branchIdx + 10) % 12,
+        ganzhi: HEAVENLY_STEMS[stemIdx] + '_' + EARTHLY_BRANCHES[(branchIdx + 10) % 12],
+    };
+}
+
+/**
+ * 时辰→地支 (精确算法)
+ * 23-01=子时, 01-03=丑时, ...
+ */
+function getHourBranch(hour) {
+    const branchIdx = Math.floor(((hour + 1) % 24) / 2);
+    return EARTHLY_BRANCHES[branchIdx];
+}
+
 // ===== 六十四卦序 (Hexagram Sequence) =====
 // 用于预召回: 一条知识自然演化出的下一卦知识
 // 屯→蒙→需→讼→师→比→... 每条知识有natural_next_hexagram
@@ -353,9 +457,12 @@ module.exports = {
     TWELVE_MERIDIANS, EIGHT_EXTRA_MERIDIANS,
     SHU_LEVELS, SPECIAL_POINT_TYPES,
     KNOWLEDGE_DIMENSIONS, EIGHT_FACET_QUESTIONS,
-    KNOWLEDGE_DIMENSIONS, EIGHT_FACET_QUESTIONS,
     SIX_YAO_LIFECYCLE, YAO_TO_SHU, HEXAGRAM_RELATIONS,
     LUOSHU_GRID, YEAR_STAR_BASE, MONTH_STAR_OFFSET,
+    HEAVENLY_STEMS, EARTHLY_BRANCHES, STEM_ELEMENT, STEM_MERIDIAN, BRANCH_MERIDIAN, BRANCH_HOUR,
+    TWELVE_XIAOXI,
     HEXAGRAM_SEQUENCE,
-    EMOTION_CONSOLIDATION, EMOTION_MERIDIAN_MAP, FIVE_ELEMENT,
+    EMOTION_CONSOLIDATION, EMOTION_MERIDIAN_MAP, FIVE_ELEMENT, SOURCE_RELIABILITY,
+    getNextHexagram, getPrevHexagram,
+    computeDayGanZhi, getHourBranch,
 };

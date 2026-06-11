@@ -70,7 +70,10 @@ function loadKG() {
             }
         }
         return entries;
-    } catch (e) { return []; }
+    } catch (e) {
+        log(`[WARN] loadKG: failed to parse ${ACTIVE_FILE}: ${e.message}`);
+        return [];
+    }
 }
 
 function saveKG(entries) {

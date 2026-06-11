@@ -4,11 +4,19 @@
  *  睡眠时海马体以20倍速回放白天经历，筛选重要记忆巩固到皮层
  * ═══════════════════════════════════════════════════════════════ */
 const { EMOTION_CONSOLIDATION } = require('./constants');
-const { findPoint, hidePoint } = require('./reinforce');
+const { hidePoint } = require('./reinforce');
+const { findPointById } = require('./io');
+
+// 六爻状态映射 — 兼容新旧状态系统
+// reinforce.js 引入了六爻生命周期: chu1/yao2/yao3/yao4/yao5/yao6 → 状态
+// 确保衰减检查覆盖所有状态
+const CONFIRMED_LIKE = new Set(['CONFIRMED', 'ACTIVE', 'MATURE']);
+const PROVISIONAL_LIKE = new Set(['PROVISIONAL', 'HYPOTHESIS']);
 
 /**
  * 记忆衰减检查 — 久不使用则"气虚"，自动降级或隐穴
- *   >90天 + 巩固分≤3 + 非CONFIRMED → 隐穴
+ *  情景记忆(episodic): >60天 → 隐穴 (具体经历忘得快)
+ *  语义记忆(semantic): >90天 → 隐穴 (事实知识忘得慢)
  *   >30天 + CONFIRMED → SLEEPING
  *   ≤7天 + SLEEPING → 唤醒
  */
@@ -21,10 +29,19 @@ function decayCheck(kg) {
             if (p.hidden) continue;
             const lastVerified = new Date(p.last_verified || p.created_at);
             const daysSince = (now - lastVerified) / 86400000;
-            if (daysSince > 90 && (p.consolidation_score || 0) <= 3 && p.status !== 'CONFIRMED') {
+
+            // 情景记忆衰减更快
+            const hideThreshold = p.memory_type === 'episodic' ? 60 : 90;
+            const baseConsolidation = p.consolidation_score || 0;
+            // 源不可靠的知识衰减更快（传闻比亲历忘得快）
+            const sourceDecayFactor = (p.source_reliability && p.source_reliability < 0.5) ? 0.7 : 1.0;
+            const effectiveDays = daysSince / sourceDecayFactor;
+
+            if (effectiveDays > hideThreshold && baseConsolidation <= 3 && !CONFIRMED_LIKE.has(p.status)) {
                 hidePoint(kg, key, p.id);
-                decayed.push({ point_id: p.id, meridian: key, action: 'hide', days: Math.round(daysSince) });
-            } else if (daysSince > 30 && p.status === 'CONFIRMED' && p.status !== 'SLEEPING') {
+                decayed.push({ point_id: p.id, meridian: key, action: 'hide',
+                    days: Math.round(daysSince), memory_type: p.memory_type, source: p.source });
+            } else if (daysSince > 30 && CONFIRMED_LIKE.has(p.status) && p.status !== 'SLEEPING') {
                 p.status = 'SLEEPING'; p.slept_at = now.toISOString();
                 decayed.push({ point_id: p.id, meridian: key, action: 'sleep', days: Math.round(daysSince) });
             } else if (daysSince <= 7 && p.status === 'SLEEPING') {
@@ -51,7 +68,7 @@ function sessionEnd(kg, sessionPoints = [], sessionEmotions = []) {
 
     // 1. 回放本会话的每个知识交互
     for (const pointId of sessionPoints) {
-        const found = findPoint(kg, pointId);
+        const found = findPointById(kg, pointId);
         if (!found) continue;
         const { point } = found;
 

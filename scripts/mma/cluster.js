@@ -5,6 +5,8 @@
  *  这是大脑Chunking的经络映射
  * ═══════════════════════════════════════════════════════════════ */
 
+const { findPointById } = require('./io');
+
 const CO_OCCURRENCE_THRESHOLD = 3; // 共现≥3次 → 成组
 
 /**
@@ -72,8 +74,8 @@ function clusterDetect(kg) {
         let leader = null, bestScore = -1;
         for (const pid of pointIds) {
             const found = findPointById(kg, pid);
-            if (found && (found.consolidation_score || 0) > bestScore) {
-                bestScore = found.consolidation_score || 0;
+            if (found && found.point && (found.point.consolidation_score || 0) > bestScore) {
+                bestScore = found.point.consolidation_score || 0;
                 leader = pid;
             }
         }
@@ -88,9 +90,9 @@ function clusterDetect(kg) {
         // 标记穴位
         for (const pid of pointIds) {
             const found = findPointById(kg, pid);
-            if (found) {
-                found.cluster_id = cid;
-                if (pid === leader && !found.special_type) found.special_type = 'yuan';
+            if (found && found.point) {
+                found.point.cluster_id = cid;
+                if (pid === leader && !found.point.special_type) found.point.special_type = 'yuan';
             }
         }
     }
@@ -105,7 +107,7 @@ function detectClusterElement(kg, pointIds) {
     const elements = {};
     for (const pid of pointIds) {
         const found = findPointById(kg, pid);
-        if (found?.five_element) elements[found.five_element] = (elements[found.five_element] || 0) + 1;
+        if (found?.point?.five_element) elements[found.point.five_element] = (elements[found.point.five_element] || 0) + 1;
     }
     let best = null, bestCount = 0;
     for (const [el, count] of Object.entries(elements)) {
@@ -114,16 +116,4 @@ function detectClusterElement(kg, pointIds) {
     return best;
 }
 
-function findPointById(kg, pointId) {
-    for (const m of Object.values(kg.meridians)) {
-        const p = m.points.find(p => p.id === pointId);
-        if (p) return p;
-    }
-    for (const m of Object.values(kg.extra)) {
-        const p = m.points.find(p => p.id === pointId);
-        if (p) return p;
-    }
-    return null;
-}
-
-module.exports = { recordCoOccurrence, clusterDetect, findPointById };
+module.exports = { recordCoOccurrence, clusterDetect };

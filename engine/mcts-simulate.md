@@ -15,6 +15,7 @@ description: MCTS-TD Decision Engine "Step 2" — Simulate Engine. True MCTS tre
 >    ④ ASK USER: Only if ①②③ all fail AND the question is about user constraints/preferences/context (not technical trivia).
 >    ⑤ ASSUME: Last resort. Mark as assumption, +0.1 variance penalty.
 >    **NEVER jump to asking user without exhausting memory and web first. NEVER ask technical questions the user wouldn't know.**
+>    **⛔ VERIFY**: Run `node scripts/mcts_guard.js info-gap-guard --log '<JSON>'` to check acquisition order compliance.
 > 4. **CONVERGENCE**: Stop when best solution V stable for 3 rounds OR max iterations reached.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. Internal reasoning is English; user sees their language.

@@ -1,5 +1,6 @@
 /** 子午流注 — 上下文触发经脉活跃度 + 九宫飞星四级叠加 */
-const { EMOTION_MERIDIAN_MAP, LUOSHU_GRID, YEAR_STAR_BASE, MONTH_STAR_OFFSET } = require('./constants');
+const { EMOTION_MERIDIAN_MAP, LUOSHU_GRID, YEAR_STAR_BASE, MONTH_STAR_OFFSET,
+        computeDayGanZhi, getHourBranch, STEM_MERIDIAN, BRANCH_MERIDIAN, EARTHLY_BRANCHES } = require('./constants');
 
 /**
  * 九宫飞星 — 计算某年某月某日某时的飞星落到哪个宫
@@ -60,6 +61,24 @@ function ziwuLiuzhu(kg, context = {}) {
         if (techStack && m.desc.toLowerCase().includes(techStack)) meridianScores[key] = (meridianScores[key] || 0) + 0.1;
         if (EMOTION_MERIDIAN_MAP[emotion] === key) meridianScores[key] = (meridianScores[key] || 0) + 0.25;
     }
+
+    // === 3.5. 天干地支经脉增强 ===
+    const dayGanZhi = computeDayGanZhi(year, month, now.getDate());
+    const hourBranch = getHourBranch(hour);
+
+    // 日天干→经脉: 当天干对应的经脉获得0.2加权
+    const stemMeridian = STEM_MERIDIAN[dayGanZhi.stem];
+    if (stemMeridian) meridianScores[stemMeridian] = (meridianScores[stemMeridian] || 0) + 0.2;
+
+    // 时地支→经脉: 当前时辰对应的经脉获得0.25加权
+    const branchMeridian = BRANCH_MERIDIAN[hourBranch];
+    if (branchMeridian) meridianScores[branchMeridian] = (meridianScores[branchMeridian] || 0) + 0.25;
+
+    // 日干支纳音: 将日干支信息注入context供后续使用
+    if (context) {
+        context._day_ganzhi = dayGanZhi.ganzhi;
+        context._hour_branch = hourBranch;
+    }
     
     // === 4. 归一化 + 排序 ===
     const sorted = Object.entries(meridianScores)
@@ -103,9 +122,12 @@ function computeDayStar(year, month, day) {
     return star;
 }
 
-/** 时飞星: 子午卯酉日起1, 辰戌丑未日起4, 寅申巳亥日起7 */
+/** 时飞星: 根据日地支和时辰精确计算 (修复 — 使用天干地支算法而非 day%12) */
 function computeHourStar(day, hour) {
-    const dz = day % 12; // 日地支
+    // 使用精确的日干支算法计算日地支
+    const today = new Date();
+    const ganzhi = computeDayGanZhi(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const dz = EARTHLY_BRANCHES.indexOf(ganzhi.branch); // 日地支索引 (0=子,...,11=亥)
     let base;
     if ([0, 6].includes(dz)) base = 1;       // 子午卯酉日
     else if ([1, 4, 7, 10].includes(dz)) base = 4; // 辰戌丑未日

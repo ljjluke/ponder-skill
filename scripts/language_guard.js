@@ -80,15 +80,18 @@ function getScriptName(char) {
 /**
  * Detect user language from message.
  * Returns script code for session tracking.
+ * Maps Unicode script names to ISO 639-1 language codes where applicable.
  */
 function detectLanguage(text) {
     const { script, confidence, note } = detectScript(text);
-    return {
-        lang: script.toLowerCase().substring(0, 2),
-        script,
-        confidence,
-        note: note || "",
+    // Map Unicode script names to standard language codes
+    const scriptToLang = {
+        Han: 'zh', Latin: 'en', Arabic: 'ar', Cyrillic: 'ru',
+        Hiragana: 'ja', Katakana: 'ja', Hangul: 'ko',
+        Devanagari: 'hi', Thai: 'th', Hebrew: 'he', Greek: 'el',
     };
+    const lang = scriptToLang[script] || script.toLowerCase().substring(0, 2);
+    return { lang, script, confidence, note: note || "" };
 }
 
 /**

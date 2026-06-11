@@ -10,6 +10,8 @@ description: MCTS-TD Decision Engine "Step 3~3.6" — Converge Engine. Aggregate
 > 2. **CONVERGE PHASES**: Aggregate → Self-Check → Blindspot Audit → Decision Report.
 > 3. **FINAL OUTPUT**: In user's detected language. `node scripts/language_guard.js check` verifies consistency.
 > 4. **RANKING**: Rank solutions by V (value), show top 3 with n, σ², confidence.
+> 5. **⛔ SELF-CHECK MANDATORY**: Before executing, run `node scripts/mcts_guard.js self-check-guard` and answer ALL 9 questions in the checklist. Do NOT skip.
+> 6. **⛔ COMPLIANCE**: Before final decision, run `node scripts/mcts_guard.js compliance-report --state '<JSON>'` to audit the full pipeline.
 
 > ⚠️ **OUTPUT LANGUAGE RULE (HIGHEST PRIORITY)**: All user-facing output MUST be in the user's detected language. Internal reasoning is English; user sees their language.
 
