@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.5.0 (2026-06-10)
+
+### Major
+- **MMA Meridian Memory Algorithm**: 12 meridians + 8 extraordinary vessels acupoint-based knowledge storage. Deqi recall, Ziwu Liuzhu context triggering, Propagated Sensation spreading activation. Inspired by Yellow Emperor's Inner Canon (《黄帝内经》).
+- **Memory Agent (Sub-Agent)**: Silent observer running 5 auto-checkpoints alongside the decision engine. Court Historian dual role (records speech + records deeds) + Remonstrance Official (alerts on contradictions). `agents/memory-agent.md`
+- **7 Cognitive Optimizations**: Emotion Modulator (七情→consolidation boost), Triple Burner Working Memory (三焦气化 7±2 chunks), Hidden Acupoint (隐穴 not delete), Meridian Priming (经气预热 +0.15), Yin-Yang Conflict Detection (阴阳对冲→DISPUTED), Sleep Replay (睡眠回放 consolidation), Acupoint Clusters (腧穴集群 auto-chunking)
+
+### Added
+- `scripts/meridian_memory.js` — MMA engine CLI with `observe` unified command for all 5 checkpoints
+- `scripts/mma/` — Modular architecture: constants, io, ziwu, deqi, ashi, reinforce, decay, cluster, status (9 modules)
+- `agents/memory-agent.md` — Memory Agent behavior definition (English, matching core engine language)
+- UPGRADE section in README.md and README_CN.md
+
+### Changed
+- SKILL.md: MEMORY PROTOCOL upgraded to MEMORY AGENT LIFECYCLE with 5 observation checkpoints
+- SKILL.md: Engine File Index updated with Memory Agent and MMA Engine entries
+- README.md & README_CN.md: Human-like Memory section → MMA Meridian Memory System
+- README.md & README_CN.md: Architecture diagram now includes Memory Agent layer
+- Version bumped 1.4.0 → 1.5.0 across all files
+
+### Removed
+- `policies/code-task-policy.md` — merged into task-policy.md
+- `deploy/` directory — removed all other-platform deployment references
+- `scripts/install.sh` — install only via `/plugin marketplace add`
+
 ## 1.4.0 (2026-06-08)
 
 ### Major
