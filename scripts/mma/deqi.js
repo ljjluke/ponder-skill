@@ -7,7 +7,7 @@ const { ziwuLiuzhu } = require('./ziwu');
 const { loadWorkingMemory, saveWorkingMemory } = require('./io');
 const { getDiagnosisWeight } = require('./diagnosis');
 
-const UPPER_BURNER_LIMIT = 7; // 上焦容量 = 认知负荷7±2
+const UPPER_BURNER_LIMIT = 7; // Upper burner capacity = 7±2 chunks
 
 /**
  * 得气 — 不是"搜索"，而是让上下文"共振"出最相关的记忆。
@@ -35,9 +35,9 @@ function deqi(kg, query, context = {}) {
 
         for (let i = 0; i < meridian.points.length; i++) {
             const point = meridian.points[i];
-            if (point.hidden) continue; // 隐穴不出现在常规召回
+            if (point.hidden) continue; // Hidden acupoints excluded from routine recall
             let score = computeDeqiScore(point, query, meridian, i) + primingBonus;
-            // 八纲辨证权重调整
+            // Eight-Principle weight adjustment
             const diagWeight = getDiagnosisWeight(point, meridian, context);
             score *= diagWeight;
             if (score > 0.1) {
@@ -95,28 +95,28 @@ function searchUpperBurner(wm, query) {
 function getPrimedMeridian(wm) {
     if (!wm.last_meridian || !wm.last_meridian_ts) return null;
     const elapsed = (Date.now() - wm.last_meridian_ts) / 1000;
-    if (elapsed > 300) return null; // 5分钟半衰
+    if (elapsed > 300) return null; // 5-min half-life
     return wm.last_meridian;
 }
 
 /** 更新三焦: 新召回→上焦, 上焦溢出→中焦 */
 function updateWorkingMemory(wm, topResults) {
     const now = new Date().toISOString();
-    // 上焦: 本回合召回结果
+    // Upper: current round results
     for (const r of topResults.slice(0, UPPER_BURNER_LIMIT)) {
         const entry = { point_id: r.point.id, point: r.point, meridian: r.meridian, recalled_at: now };
         const idx = wm.upper.findIndex(e => e.point_id === r.point.id);
         if (idx >= 0) wm.upper.splice(idx, 1);
         wm.upper.unshift(entry);
     }
-    // 上焦溢出→中焦 (旧条目)
+    // Upper overflow -> middle (old entries)
     while (wm.upper.length > UPPER_BURNER_LIMIT) {
         const overflow = wm.upper.pop();
         const midIdx = wm.middle.findIndex(e => e.point_id === overflow.point_id);
         if (midIdx >= 0) wm.middle.splice(midIdx, 1);
         wm.middle.unshift(overflow);
     }
-    // 中焦清理: 超过72小时未召回 → 降入下焦
+    // Middle: >72h no recall -> demote to lower
     const MIDDLE_TTL_HOURS = 72;
     const demoted = [];
     wm.middle = wm.middle.filter(e => {
@@ -127,15 +127,15 @@ function updateWorkingMemory(wm, topResults) {
         }
         return true;
     });
-    // 降入下焦（去重后追加）
+    // Demote to lower (deduped)
     for (const d of demoted) {
         const lowerIdx = wm.lower.findIndex(e => e.point_id === d.point_id);
         if (lowerIdx >= 0) wm.lower.splice(lowerIdx, 1);
         wm.lower.push(d);
     }
-    // 下焦清理: 超过24小时 → 移出
+    // Lower: >24h -> remove
     wm.lower = wm.lower.filter(e => (Date.now() - new Date(e.recalled_at)) / 3600000 < 24);
-    // 记录最后活跃经脉
+    // Record last active meridian
     if (topResults.length > 0) {
         wm.last_meridian = topResults[0].meridian;
         wm.last_meridian_ts = Date.now();
@@ -157,19 +157,19 @@ function computeDeqiScore(point, query, meridian, position) {
     score += (point.q || 0.5) * 0.05;
     score += Math.min((point.consolidation_score || 0) / 100, 0.05);
 
-    // 源监控: 亲历>推理>传闻
+    // Source: firsthand > inference > hearsay
     const srcReliability = point.source_reliability;
     if (srcReliability !== undefined) {
-        if (srcReliability >= 0.8) score *= 1.1;       // 亲历/告知 → 加分
-        else if (srcReliability < 0.4) score *= 0.7;    // 传闻/类比 → 减分
+        if (srcReliability >= 0.8) score *= 1.1;       // firsthand/hearsay → bonus
+        else if (srcReliability < 0.4) score *= 0.7;    // hearsay/analogy → penalty
     }
 
-    // 编码特异性: 情景记忆匹配当前task_type → 加分
+    // Encoding specificity: episodic task_type match -> bonus
     if (point.memory_type === 'episodic' && point.task_type && query.task_type) {
         if (point.task_type === query.task_type) score *= 1.15;
     }
 
-    // 再巩固窗口内 → 略微加分(刚被用过)
+    // Reconsolidation window -> slight boost (recently used)
     if (point._reconsolidation_active && point.reconsolidation_window) {
         const closesAt = new Date(point.reconsolidation_window.closes_at);
         if (Date.now() < closesAt.getTime()) score *= 1.05;
@@ -186,7 +186,7 @@ function propagateSensation(results, kg, threshold = 0.3) {
         if (r.deqi_score < threshold) continue;
         const meridian = kg.meridians[r.meridian] || kg.extra[r.meridian];
         if (!meridian) continue;
-        // 前后各2穴位扩散
+        // Spread 2 points forward/backward
         for (let d = -2; d <= 2; d++) {
             if (d === 0) continue;
             const pos = r.position + d;
@@ -198,7 +198,7 @@ function propagateSensation(results, kg, threshold = 0.3) {
                 }
             }
         }
-        // 表里经传导
+        // Paired meridian conduction
         if (kg.meridians[r.meridian] && kg.meridians[r.meridian].paired) {
             const paired = kg.meridians[kg.meridians[r.meridian].paired];
             if (paired && r.position < paired.points.length && paired.points[r.position] && !paired.points[r.position].hidden) {
@@ -218,7 +218,7 @@ function propagateSensation(results, kg, threshold = 0.3) {
  */
 function hexagramPreRecall(kg, topResults) {
     const results = [];
-    for (const r of topResults.slice(0, 3)) { // 只对top-3做预召回
+    for (const r of topResults.slice(0, 3)) { // pre-recall only top-3
         if (!r.point.hexagram_seq) continue;
         const nextHex = getNextHexagram(r.point.hexagram_seq);
         if (!nextHex) continue;
@@ -228,7 +228,7 @@ function hexagramPreRecall(kg, topResults) {
                 if (p.hexagram_seq === nextHex && !p.hidden) {
                     results.push({
                         point: p, meridian: key, meridian_name: m.name,
-                        deqi_score: r.deqi_score * 0.6, // 预召回权重较低
+                        deqi_score: r.deqi_score * 0.6, // pre-recall weight is lower
                         source: 'hexagram_evolution',
                         evolved_from: r.point.id,
                     });
@@ -259,9 +259,9 @@ module.exports = { deqi, computeDeqiScore, propagateSensation, updateWorkingMemo
  */
 function openReconsolidationWindow(topResults) {
     const now = new Date().toISOString();
-    const windowMs = 30 * 60 * 1000; // 30分钟
+    const windowMs = 30 * 60 * 1000; // 30 min window
 
-    for (const r of topResults.slice(0, 5)) { // 只对top-5开窗口
+    for (const r of topResults.slice(0, 5)) { // open window only for top-5
         if (!r.point) continue;
         r.point.reconsolidation_window = {
             opened_at: now,

@@ -93,9 +93,9 @@ function ashiInsert(kg, entry) {
         source_reliability: srcConfig.weight,   // 0.2 ~ 1.0
         source_label: srcConfig.label,          // 亲历 | 告知 | 推理 | ...
         elaboration_level: elaborationLevel.level, // shallow | medium | deep | deepest
-        task_type: entry.task_type || null,     // 情景记忆的上下文
-        context_snapshot: entry.context || {},   // 编码时的上下文快照
-        reconsolidation_window: null,           // 再巩固窗口(方案13)
+        task_type: entry.task_type || null,     // episodic memory context
+        context_snapshot: entry.context || {},   // encoding-time context snapshot
+        reconsolidation_window: null,           // reconsolidation window
         // 完整性: 记录了哪些维度缺失
         _missing_dimensions: completeness.missing,
         _completion_suggestions: completeness.suggestions,
@@ -209,22 +209,22 @@ function assessQuality(entry) {
     const hasContext = category || emotion || (source !== 'unknown' && source !== 'hearsay');
     const hasSource = source !== 'unknown';
 
-    // 完全空: 没有任何信息
+    // Completely empty: no information at all
     if (!desc && tags.length === 0 && !source && !emotion && !category) {
-        return { verdict: 'REJECT', score: 0, reason: '完全空内容' };
+        return { verdict: 'REJECT', score: 0, reason: 'completely empty content' };
     }
 
-    // 真正的噪音: 内容极短 + 无标签 + 无情绪 + 无来源
+    // True noise: very short + no tags + no emotion + no source
     if (desc.length < 10 && tags.length === 0 && !emotion && source === 'unknown') {
-        return { verdict: 'REJECT', score: 0.1, reason: '无实质内容: 无描述/无标签/无情绪/无来源' };
+        return { verdict: 'REJECT', score: 0.1, reason: 'no content: no description/tags/emotion/source' };
     }
 
-    // 极短描述但有关键结构化信息 → 放行
+    // Very short but has structured info → pass through
     if (!hasContent && !hasContext && !hasSource) {
-        return { verdict: 'REJECT', score: 0.15, reason: '信息量极低' };
+        return { verdict: 'REJECT', score: 0.15, reason: 'information too low' };
     }
 
-    // 其他情况 → 全部放行
+    // Everything else → pass through
     let qualityScore = 0.5;
     if (desc.length >= 30) qualityScore += 0.15;
     if (tags.length >= 2) qualityScore += 0.1;
@@ -233,7 +233,7 @@ function assessQuality(entry) {
     if (source !== 'unknown') qualityScore += 0.1;
     if (category) qualityScore += 0.05;
 
-    return { verdict: 'PASS', score: Math.min(1, qualityScore), reason: '含有效信息' };
+    return { verdict: 'PASS', score: Math.min(1, qualityScore), reason: 'contains valid info' };
 }
 
 /**
@@ -260,41 +260,41 @@ function assessCompleteness(entry) {
     const missing = [];
     const suggestions = [];
 
-    // 核心层
+    // Core level
     if (desc.length < 20) {
         missing.push('description');
-        suggestions.push('补充详细描述，说明做了什么、为什么这样做、结果如何');
+        suggestions.push('Add detailed description explaining what was done, why, and the result');
     }
     if (tags.length === 0) {
         missing.push('tags');
-        suggestions.push('添加2~3个标签，帮助知识被找到');
+        suggestions.push('Add 2-3 tags to help recall this knowledge');
     }
     if (source === 'unknown') {
         missing.push('source');
-        suggestions.push('标明信息来源: 亲历/告知/文档/推理');
+        suggestions.push('Specify info source: firsthand/hearsay/documentation/inference');
     }
 
-    // 上下文层
+    // Context level
     if (!category) {
         missing.push('category');
-        suggestions.push('归入一个分类');
+        suggestions.push('Assign a category');
     }
     if (contextKeys.length === 0) {
         missing.push('context');
-        suggestions.push('附加上下文快照(任务类型/技术栈等)');
+        suggestions.push('Attach context snapshot (task type, tech stack, etc.)');
     }
 
-    // 体验层: 这不是必填的，但缺失会减信息量
+    // Experience level: optional but reduces info density
     if (!emotion) {
-        missing.push('emotion(可选)');
+        missing.push('emotion(optional)');
     }
     if (tags.length < 2) {
-        missing.push('more_tags(推荐)');
+        missing.push('more_tags(recommended)');
     }
 
     return {
         missing,
-        suggestions: suggestions.slice(0, 3), // 最多3条建议
+        suggestions: suggestions.slice(0, 3), // max 3 suggestions
         completeness_score: Math.round((1 - missing.length / 8) * 100) / 100,
     };
 }

@@ -31,7 +31,7 @@ function computeUcb(v, nChild, nParent, c = 1.414, kBonus = 0) {
  * @returns {number} 自适应 c 值 (0.5 ~ 2.5)
  */
 function computeAdaptiveC(context = {}) {
-    const DEFAULT_C = 1.414; // √2 — 经典UCB平衡点
+    const DEFAULT_C = 1.414; // sqrt2 - classic UCB balance
 
     let c = DEFAULT_C;
 
@@ -39,7 +39,7 @@ function computeAdaptiveC(context = {}) {
     const matchCount = context.kg_match_count || 0;
     if (matchCount >= 10) c -= 0.3;
     else if (matchCount >= 5) c -= 0.15;
-    else if (matchCount === 0) c += 0.4; // 冷启动→偏向探索(奇)
+    else if (matchCount === 0) c += 0.4; // cold start -> bias explore (Qi)
 
     // 2. 知识可信度: CONFIRMED比例越高→越偏向利用(正)
     const confirmedRatio = context.confirmed_ratio;
@@ -163,9 +163,9 @@ function computeKBonus(kgMatch, nChild) {
 }
 
 function classifyBlindspot(score) {
-    if (score < 4) return { class: "blank", label: "must learn first", action: "必须先补资料，不能跳过" };
-    if (score < 7) return { class: "partial", label: "generate with caution", action: "可生成方案但标注'待验证'" };
-    return { class: "covered", label: "can generate directly", action: "直接生成方案" };
+    if (score < 4) return { class: "blank", label: "must learn first", action: "research required, cannot skip" };
+    if (score < 7) return { class: "partial", label: "generate with caution", action: "generate with 'pending verification' marker" };
+    return { class: "covered", label: "can generate directly", action: "generate directly" };
 }
 
 function getConfidenceLevel(sigma2) {

@@ -33,7 +33,7 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
     // 记忆再巩固: 在窗口内的穴位可塑性×1.5
     const inWindow = checkReconsolidationWindow(point);
     const plasticity = inWindow ? 1.5 : 1.0;
-    const adjustedQ = oldQ + delta / newN * plasticity; // 窗口内q值调整幅度更大
+    const adjustedQ = oldQ + delta / newN * plasticity; // larger q adjustment during reconsolidation window
     point.q = Math.max(0, Math.min(1, adjustedQ));
     point.sigma2 = Math.max(0.01, Math.min(1, newSigma2));
     point.n = newN;
@@ -55,9 +55,9 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
     
     // 本卦/之卦/变卦 — 三卦判断知识稳定性
     const trigram = computeTrigramStability(point);
-    point.ben_gua = trigram.ben;      // 本卦: 当前q值趋势
-    point.zhi_gua = trigram.zhi;      // 之卦: TD误差方向
-    point.bian_gua = trigram.bian;    // 变卦: σ²突变风险
+    point.ben_gua = trigram.ben;      // original hexagram: current q trend
+    point.zhi_gua = trigram.zhi;      // derived hexagram: TD error direction
+    point.bian_gua = trigram.bian;    // changing hexagram: sigma2 mutation risk
     
     // 六爻阶段→旧状态映射(兼容)
     const yaoToStatus = { chu1: 'HYPOTHESIS', yao2: 'PROVISIONAL', yao3: 'ACTIVE', yao4: 'MATURE', yao5: 'CONFIRMED', yao6: 'CONFIRMED' };
@@ -66,7 +66,7 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
     // 上爻转化: 顶峰→升华(原穴)或衰退(休眠)
     if (yaoStage === 'yao6') {
         if (trigram.zhi === 'ji' && trigram.bian === 'xiao') {
-            point.special_type = 'yuan'; // 升华为原穴 — 关键高频召回知识
+            point.special_type = 'yuan'; // elevated to Yuan-source — key high-frequency knowledge
             point.yao6_direction = 'ascend';
         } else if (trigram.zhi === 'xiong' || trigram.bian === 'da') {
             point.status = 'SLEEPING'; point.slept_at = new Date().toISOString();

@@ -129,17 +129,17 @@ function computeFourImages(kg) {
         health_assessment: '',
     };
 
-    // 健康评估
+    // Health assessment — 四象脉象
     if (summary.old_yang_ratio >= 40 && summary.old_yin_ratio < 20) {
-        summary.health_assessment = '气盛 — 知识图谱成熟健康，经验丰富';
+        summary.health_assessment = 'Qi flourishing — mature and reliable knowledge graph';
     } else if (summary.young_yang_ratio >= 50) {
-        summary.health_assessment = '气生 — 知识图谱快速成长期，大量新知识积累中';
+        summary.health_assessment = 'Qi growing — rapid expansion phase, much new knowledge accumulating';
     } else if (summary.old_yin_ratio >= 30) {
-        summary.health_assessment = '气虚 — 较多知识趋于遗忘，建议温故知新';
+        summary.health_assessment = 'Qi deficient — many points nearing forgetting, review recommended';
     } else if (summary.young_yin_ratio >= 40) {
-        summary.health_assessment = '气平 — 知识图谱稳定运行中';
+        summary.health_assessment = 'Qi stable — knowledge graph running steadily';
     } else {
-        summary.health_assessment = '气杂 — 知识分布均匀，各方面均衡发展';
+        summary.health_assessment = 'Qi mixed — balanced development across all dimensions';
     }
 
     return { images, summary };

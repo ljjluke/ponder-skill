@@ -35,7 +35,7 @@ function ziwuLiuzhu(kg, context = {}) {
     for (const [pos, grid] of Object.entries(LUOSHU_GRID)) {
         let weight = 0;
         for (const star of starWeights) {
-            if (star === parseInt(pos)) weight += 0.25; // 飞星落到此宫
+            if (star === parseInt(pos)) weight += 0.25; // flying star lands on this palace
             // 相邻宫也有微弱影响
             const adjacents = getAdjacentPositions(parseInt(pos));
             if (adjacents.includes(star)) weight += 0.1;
@@ -104,11 +104,11 @@ function computeYearStar(year) {
 
 /** 月飞星: 根据年地支选择起始月星 */
 function computeMonthStar(year, month) {
-    const dz = year % 12; // 年地支索引: 0=子,1=丑,...
+    const dz = year % 12; // year earthly branch index: 0=zi,1=chou,...
     let pattern;
-    if ([0, 6].includes(dz)) pattern = 'zi_wu_mao_you';       // 子午卯酉
-    else if ([1, 4, 7, 10].includes(dz)) pattern = 'chen_xu_chou_wei'; // 辰戌丑未
-    else pattern = 'yin_shen_si_hai';                          // 寅申巳亥
+    if ([0, 6].includes(dz)) pattern = 'zi_wu_mao_you';       // zi-wu-mao-you
+    else if ([1, 4, 7, 10].includes(dz)) pattern = 'chen_xu_chou_wei'; // chen-xu-chou-wei
+    else pattern = 'yin_shen_si_hai';                          // yin-shen-si-hai
     return MONTH_STAR_OFFSET[pattern][month - 1];
 }
 
@@ -118,7 +118,7 @@ function computeDayStar(year, month, day) {
     let star = (dayOfYear % 9) + 1;
     // 夏至后逆飞
     const summerSolstice = Math.floor((new Date(year, 5, 21) - new Date(year, 0, 0)) / 86400000);
-    if (dayOfYear > summerSolstice) star = 10 - star; // 逆飞: 1→9, 9→1
+    if (dayOfYear > summerSolstice) star = 10 - star; // reverse: 1→9, 9→1
     return star;
 }
 
@@ -127,12 +127,12 @@ function computeHourStar(day, hour) {
     // 使用精确的日干支算法计算日地支
     const today = new Date();
     const ganzhi = computeDayGanZhi(today.getFullYear(), today.getMonth() + 1, today.getDate());
-    const dz = EARTHLY_BRANCHES.indexOf(ganzhi.branch); // 日地支索引 (0=子,...,11=亥)
+    const dz = EARTHLY_BRANCHES.indexOf(ganzhi.branch); // day branch index (0=zi,...,11=hai)
     let base;
-    if ([0, 6].includes(dz)) base = 1;       // 子午卯酉日
-    else if ([1, 4, 7, 10].includes(dz)) base = 4; // 辰戌丑未日
-    else base = 7;                              // 寅申巳亥日
-    const shichen = Math.floor(hour / 2); // 时辰 0-11
+    if ([0, 6].includes(dz)) base = 1;       // zi-wu-mao-you days
+    else if ([1, 4, 7, 10].includes(dz)) base = 4; // chen-xu-chou-wei days
+    else base = 7;                              // yin-shen-si-hai days
+    const shichen = Math.floor(hour / 2); // shichen 0-11
     let star = base + shichen;
     while (star > 9) star -= 9;
     return star;

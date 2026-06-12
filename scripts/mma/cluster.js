@@ -7,7 +7,7 @@
 
 const { findPointById } = require('./io');
 
-const CO_OCCURRENCE_THRESHOLD = 3; // 共现≥3次 → 成组
+const CO_OCCURRENCE_THRESHOLD = 3; // co-occurrence >=3 -> chunk
 
 /**
  * 记录一次共现 — 每次deqi返回的多个穴位互相关联

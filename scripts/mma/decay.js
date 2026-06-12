@@ -83,7 +83,7 @@ function sessionEnd(kg, sessionPoints = [], sessionEmotions = []) {
         }
 
         // 3. 巩固分更新: 情绪越强，巩固越多
-        const baseBoost = 2; // 基础回放增益
+        const baseBoost = 2; // base replay boost
         const totalBoost = baseBoost + Math.min(emotionBoost, 15);
         point.consolidation_score = (point.consolidation_score || 0) + totalBoost;
         point.last_replayed = now.toISOString();

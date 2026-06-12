@@ -140,10 +140,10 @@ function diagnose(point, meridian, context = {}) {
  * 涩脉: 知识不确定/矛盾
  */
 function determinePulse(yinYang, ei, ch, de, sigma2, n) {
-    if (de === 'excess' && ch === 'heat') return 'hua';      // 滑脉 — 实+热=流畅可靠
-    if (de === 'excess' && ch === 'cold') return 'chen';     // 沉脉 — 实+寒=深层可靠需挖掘
-    if (ei === 'biao' && de.includes('deficiency')) return 'fu';  // 浮脉 — 表+虚=表面有效深层不可靠
-    if (ch.includes('cold') && de.includes('deficiency')) return 'chi'; // 迟脉 — 寒+虚=低频冷门
+    if (de === 'excess' && ch === 'heat') return 'hua';      // Hua pulse - excess+heat = smooth reliable
+    if (de === 'excess' && ch === 'cold') return 'chen';     // Chen pulse - excess+cold = deep need dig
+    if (ei === 'biao' && de.includes('deficiency')) return 'fu';  // Fu pulse - exterior+deficient = surface only
+    if (ch.includes('cold') && de.includes('deficiency')) return 'chi'; // Chi pulse - cold+deficient = low frequency
     if (ch === 'heat' && sigma2 > 0.3) return 'shu';         // 数脉 — 热+高不确定性=热点但不稳定
     if (sigma2 > 0.3) return 'se';                           // 涩脉 — 高方差=不确定/矛盾
     if (n >= 3 && sigma2 < 0.15) return 'hua';               // 滑脉 — 多样本低方差
