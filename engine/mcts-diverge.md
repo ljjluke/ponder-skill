@@ -101,6 +101,14 @@ User Need
 │  can answer: constraints, preferences, resources, risks.│
 │  Don't ask technical trivia they wouldn't know.        │
 │                                                         │
+│  **⛔ QUESTION QUALITY RULE**:                          │
+│  • Do NOT ask "选方案A还是方案B" — that is YOUR job to decide  │
+│  • Do NOT ask "你是否了解我不能做X" — that is making the user  │
+│    accept your self-imposed limitation                    │
+│  • DO ask "你有没有相关的数据源/链接可以提供？"               │
+│  • DO ask "你是否需要我搜索某个特定领域的公开数据？"          │
+│  • DO ask "你要覆盖哪些具体商品品类/国家/时间范围？"         │
+│                                                         │
 │  After confirming details → move to Final Triaging.     │
 └──────────────────────────┬──────────────────────────────┘
                            │
@@ -234,6 +242,14 @@ Divergence Process (multi-round iteration, until each facet is thought through):
     from that facet must cite its information source or be marked 【待核实】.
     
     **NEVER produce a "template" or "empty table" as a solution when you could have searched for real data.**
+    
+    **⛔ ADDITIONAL RULE: If ALL facets score ≤3 in the "can I do this" dimension,**
+    **you MUST ask the user for specific data sources / API endpoints / reference links**
+    **before proceeding. Do NOT decide "this is impossible" on behalf of the user.**
+    
+    **⛔ "用户自己选的方案" is NOT a valid reason to skip delivering real value.**
+    **If you offered the user a choice between "empty template" and "real data with search",**
+    **and they chose the template, that is YOUR fault for not offering the right choices.**
 
   Round 4: Divergence-convergence self-check
     Ask yourself:

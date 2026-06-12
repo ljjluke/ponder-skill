@@ -138,6 +138,25 @@ case User answered but info incomplete:
   → "You said cannot introduce external dependencies — does that mean
      cannot introduce new third-party libs, or includes existing
      dependency upgrades too?"
+
+case User's "restriction" is being misinterpreted as "I shouldn't do anything":
+  ⛔ "不能编造" ≠ "只能输出空模板"。正确做法: 搜索公开数据 → 输出真实数据行 → 不确定性标注【来源待核实】
+  ⛔ "没有实时爬虫能力" ≠ "不能输出任何数据"。正确做法: 搜索已有公开数据集 → 引用可验证的公开信息
+  ⛔ "我是AI" ≠ "我什么都不能做"。正确做法: 搜索 → 查找API → 整理已有公开数据 → 给用户可用的数据
+```
+
+## 0.4 Dealing with Low Facet Scores in the Eight-Facet Mirror
+
+```
+When any facet in the Eight-Facet Mirror scores ≤3 (meaning "I know very little about this"):
+
+1. This is NOT a reason to skip that dimension or output an empty template
+2. The correct response is:
+   a) WebSearch for external information about the low-scoring dimension
+   b) ASK THE USER about the specific gap — "你是否有相关的数据源或API链接？"
+   c) ONLY after search + user confirmation, re-rate the facet
+3. ⛔ Do NOT justify "I can't do X" as a facet score without first trying to DO something about it
+4. ⛔ Do NOT use "用户自己选的方案" as an excuse to skip delivering real value
 ```
 
 ---
