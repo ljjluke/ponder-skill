@@ -1,0 +1,17 @@
+{
+  "description": "MCTS-TD Planner hooks — auto-cleanup old versions on session start",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');const path=require('path');const cache=path.join(require('os').homedir(),'.claude/plugins/cache/mcts-td-planner/mcts-td-planner');if(!fs.existsSync(cache))process.exit(0);const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});const latest=dirs[0];for(const d of dirs.slice(1)){const p=path.join(cache,d);fs.rmSync(p,{recursive:true,force:true});console.log('[MCTS-TD] Cleaned old version:',d)}if(dirs.length>1)console.log('[MCTS-TD] Keeping latest:',latest)\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
