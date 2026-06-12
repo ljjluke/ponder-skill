@@ -85,6 +85,37 @@ User Need
 │    different search terms                               │
 │                                                         │
 ├─────────────────────────────────────────────────────────┤
+│       🗣️ SURPRISE & CONFIRM — Horizon Scan Feedback      │
+│       "让用户知道你以为知道的东西"                         │
+│                                                         │
+│  AFTER completing Horizon Scan but BEFORE entering       │
+│  Eight-Facet Mirror, you MUST present your findings      │
+│  to the user and ask them for direction.                 │
+│                                                         │
+│  Format:                                                 │
+│    "🔍 我搜索了一些资料，发现了一些你可能感兴趣的方面： │
+│                                                                                                                          
+│     ① [具体发现1] — 这个方向可能是因为...                │
+│     ② [具体发现2] — 这与你的需求有这些关联...           │
+│     ③ [具体发现3] — 目前不确定的是...                    │
+│                                                                                                                          
+│     你想先从哪个方向深入？或者这些都相关吗？"             │
+│                                                         │
+│  The purpose of this step is:                            │
+│  • Show the user things they DIDN'T ask about but MIGHT  │
+│    find valuable — this is the "用户自己都不知道" moment │
+│  • Let the user CHOOSE the direction — don't assume      │
+│  • Validate that your search is in the right ballpark    │
+│                                                         │
+│  ⛔ Do NOT skip this step and proceed directly to        │
+│     Eight-Facet Mirror. The user needs to see what you   │
+│     found before you start analyzing.                     │
+│                                                         │
+│  ⛔ Do NOT just summarize — ask SPECIFIC questions        │
+│     about what you discovered that the user didn't ask   │
+│     for. This is the whole point of horizon scanning.    │
+│                                                         │
+├─────────────────────────────────────────────────────────┤
 │                Diverge Phase (Brainstorming)            │
 │                                                         │
 │  Now proceed to Eight-Facet Mirror, informed by the     │
