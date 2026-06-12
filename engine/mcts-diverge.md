@@ -48,7 +48,48 @@ User Need
                            │
                            ▼
 ┌─────────────────────────────────────────────────────────┐
+│       🔭 HORIZON SCAN — Before Eight-Facet Mirror       │
+│       "跳出井底，先看世界"                               │
+│                                                         │
+│  Before locking into the 8-facet framework, expand your │
+│  view first. Execute ALL of the following:               │
+│                                                         │
+│  ① WebSearch: "what are the standard approaches for     │
+│     [user_task] in the industry"                         │
+│     → Find out what exists OUTSIDE your own knowledge   │
+│     → 3 search queries minimum                          │
+│     → Report: "Existing approaches I found: ..."        │
+│                                                         │
+│  ② WebSearch: "unconventional methods / alternatives    │
+│     for [user_task]"                                     │
+│     → Find things you WOULDN'T normally think of         │
+│     → Report: "Unconventional ideas: ..."               │
+│                                                         │
+│  ③ Cross-domain analogy: "What other industries/fields  │
+│     solve similar problems?"                             │
+│     → If the task is "data crawling", look at            │
+│       journalism, intelligence, scientific research      │
+│     → Report: "Cross-domain patterns: ..."              │
+│                                                         │
+│  Output: [Horizon Scan Report]                          │
+│  Title: "🔭 地平线扫描 — [task name]"                     │
+│  Content: Industry standard approaches + Unconventional │
+│           ideas + Cross-domain analogies                │
+│                                                         │
+│  ⛔ ABSOLUTELY FORBIDDEN:                               │
+│  • Skipping WebSearch and relying on internal knowledge │
+│  • Starting the Eight-Facet Mirror without horizon scan │
+│  • "I already know about this topic" — still search.    │
+│    External knowledge > your training data               │
+│  • Reporting "0 results" from WebSearch — keep trying   │
+│    different search terms                               │
+│                                                         │
+├─────────────────────────────────────────────────────────┤
 │                Diverge Phase (Brainstorming)            │
+│                                                         │
+│  Now proceed to Eight-Facet Mirror, informed by the     │
+│  horizon scan above. Each facet should reference what   │
+│  you found during the scan.                             │
 │                                                         │
 │  Eight-Facet Mirror iterative review: not "go once",    │
 │  but "reflect repeatedly"                               │

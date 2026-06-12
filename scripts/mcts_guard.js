@@ -432,7 +432,50 @@ function engineMode(taskProfile = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  守卫9: 全流程合规审计
+//  守卫9: 地平线扫描强制检查 — 反"井底之蛙"
+// ═══════════════════════════════════════════════════════════════
+
+function horizonScanGuard(scan = {}) {
+    const { websearch_count, unconventional_searched, cross_domain_searched, task } = scan;
+
+    const missing = [];
+    if (!websearch_count || websearch_count < 3) {
+        missing.push({
+            id: 'insufficient_websearch',
+            severity: 'BLOCKER',
+            message: `WebSearch执行了${websearch_count||0}次，要求至少3次`,
+            required: '执行3次不同的WebSearch搜索，覆盖不同的关键词方向',
+        });
+    }
+    if (!unconventional_searched) {
+        missing.push({
+            id: 'no_unconventional_search',
+            severity: 'BLOCKER',
+            message: '未搜索非常规方案 — 只看常规做法无法跳出框架',
+            required: `搜索"${task} unconventional/alternative/novel approaches"`,
+        });
+    }
+    if (!cross_domain_searched) {
+        missing.push({
+            id: 'no_cross_domain',
+            severity: 'WARNING',
+            message: '未搜索跨领域类比 — 可能错过创新的来源',
+            required: `思考其他领域如何解决类似"${task}"的问题，搜索类比案例`,
+        });
+    }
+
+    return {
+        verdict: missing.filter(m => m.severity === 'BLOCKER').length > 0 ? 'BLOCKED' : 'WARNING',
+        message: missing.length > 0
+            ? `地平线扫描不完整，缺失${missing.length}项`
+            : '地平线扫描完成，视野已扩展',
+        missing,
+        horizon_scan_complete: missing.length === 0,
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  守卫10: 全流程合规审计
 // ═══════════════════════════════════════════════════════════════
 
 function complianceReport(state = {}) {
@@ -512,6 +555,7 @@ function main() {
         log("  memory-agent-guard   — Memory Agent checkpoints verify");
         log("  compliance-report    — Full pipeline compliance audit");
         log("  constraint-checklist — Constraint checklist");
+        log("  horizon-scan-guard   — Horizon scan check (anti-well-frog)");
         log("  engine-mode          — Engine mode selection");
         log("  all-guards           — Output all guard checklists");
         process.exit(0);
@@ -546,6 +590,9 @@ function main() {
             case "constraint-checklist":
                 output(constraintChecklist(JSON.parse(o.state || "{}")));
                 break;
+            case "horizon-scan-guard":
+                output(horizonScanGuard(JSON.parse(o.scan || "{}")));
+                break;
             case "engine-mode":
                 output(engineMode(JSON.parse(o.profile || "{}")));
                 break;
@@ -574,7 +621,7 @@ main();
 module.exports = {
     decompositionGuard, phaseEnforce, infoGapGuard,
     diversityChallenge, selfCheckGuard, memoryAgentGuard, complianceReport,
-    constraintChecklist, engineMode,
+    constraintChecklist, engineMode, horizonScanGuard,
     REQUIRED_PHASES, INFO_PRIORITY_ORDER, DIVERSITY_ANGLES, MEMORY_AGENT_CHECKPOINTS,
     CONSTRAINT_CHECKLIST,
 };
