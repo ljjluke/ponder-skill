@@ -112,6 +112,11 @@ alwaysApply: true
 > MEMORY AGENT (silent, 5 checkpoints):
 >   ① pre_engine: deqi recall   ② during_diverge: perceive emotion   ③ post_simulate: ashi insert
 >   ④ pre_converge: conflict detect (ALERT if found, max 2/session)   ⑤ post_execution: TD update + decay
+>
+> ⛔ AUTO-CAPTURE (every message + every response):
+>   After generating a response, identify 1-2 key insights from your output.
+>   For each insight, write to agent daemon buffer:
+>     node scripts/agent_daemon.js write ashi '{"description":"<insight>","tags":[<tags>],"source":"llm_generated","q":0.5,"category":"<auto_detected>"}'
 >   → ALL via: node scripts/meridian_memory.js observe --phase <name>
 >
 > COMPLIANCE SELF-AUDIT (when in doubt):
