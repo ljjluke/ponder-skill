@@ -12,7 +12,7 @@ description: |
   Applies to ANY user message — coding, bug fixing, debugging, analysis, decision-making, creative work, conversation, planning, diagnosis.
   If there are multiple ways to understand/respond, decompose → diverge (Eight-Facet Mirror brainstorming) → simulate → converge.
   Language adaptive. Phase output visible to user. Never monologue. Never skip thinking steps.
-version: 1.6.1
+version: 1.7.0
 license: MIT
 ---
 
