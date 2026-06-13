@@ -98,6 +98,7 @@ license: MIT
 >   → After answers, proceed to STEP 1.
 >
 > STEP 1: Output [Eight-Facet Mirror] — 8 facets each with: concrete dimension name + score 0-10 + known info + blindspots + ideas.
+> STEP 1.5: Output [Info Gap Supplement] — scan facets for gaps, ask user what you can't self-resolve, update scores. MANDATORY if any facet <7.
 > STEP 2: Output [Reconnaissance Report] — per-facet recon findings + cross-validation.
 > STEP 3: Output [Solutions] — 2~8 solutions, each with: approach + basis + complexity + difference from others + facet coverage matrix.
 >   → THEN auto-enter MCTS simulate. Do NOT pause for confirmation.
@@ -189,6 +190,13 @@ Phase 1 — Output immediately: [Eight-Facet Review Map]
   Format: header line with the task name + domain
   Content: 8 facets → 8 concrete dimensions with scores + blindspot identification
   ⚠️ Not outputting this before proceeding = VIOLATION
+
+Phase 1.5 — Output immediately: [Info Gap Supplement Report]
+  After diverging, BEFORE converging — ask user to fill gaps discovered during divergence.
+  Scan all 8 facets for info gaps (score ≤5 or unresolved blindspots).
+  Ask user ONLY for info you cannot self-resolve (max 3-5 questions via AskUserQuestion).
+  Integrate answers → update facet scores → proceed.
+  ⚠️ MANDATORY if ANY facet scores <7. Skip only if ALL facets ≥7.
 
 Phase 2 — Output immediately: [Reconnaissance Report]
   Format: header line

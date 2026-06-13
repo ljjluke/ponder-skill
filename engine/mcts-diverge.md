@@ -148,6 +148,53 @@ User Need
                                  │
                                  ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
+│  🔍 PHASE 1.5: INFO GAP SUPPLEMENT (MANDATORY — cannot skip)           │
+│                                                                          │
+│  After diverging, BEFORE converging — fill information gaps by asking    │
+│  the user. This is a FIRST-CLASS PHASE, not a sub-step.                 │
+│                                                                          │
+│  ⚠️ WHY THIS PHASE EXISTS:                                              │
+│  Phase 0 (constraint collection) asks about BOUNDARIES.                  │
+│  Phase 1 (diverge) REVEALS what you didn't know to ask about.           │
+│  Without this phase, those newly-discovered gaps would silently          │
+│  become assumptions — which is exactly what MCTS exists to prevent.      │
+│                                                                          │
+│  Step 1: SCAN all 8 facets for info gaps:                               │
+│    - Which facets scored ≤5? What specifically is missing?               │
+│    - Which facets have blindspots that self-search couldn't fill?        │
+│    - Which assumptions are unconfirmed?                                  │
+│                                                                          │
+│  Step 2: PRIORITIZE gaps (ask only what YOU cannot resolve):            │
+│    ① Memory/web/code already searched → skip, don't re-ask             │
+│    ② Can self-confirm from project code → skip, do it yourself          │
+│    ③ Only truly user-knowable info → ASK (max 3-5 questions)           │
+│                                                                          │
+│  Step 3: ASK the user (use AskUserQuestion, NOT free text):            │
+│    ⚠️ Question quality rules:                                           │
+│    • DO ask about: constraints, preferences, domain knowledge,          │
+│      resource availability, priority trade-offs                         │
+│    • Do NOT ask: "which solution do you prefer?" (YOUR job)             │
+│    • Do NOT ask: questions answerable by reading code/docs              │
+│    • Do NOT ask: vague "any requirements?" (be specific about gap)      │
+│                                                                          │
+│  Step 4: INTEGRATE answers into facet scores and blindspots             │
+│    - Update relevant facet scores with new info                         │
+│    - Mark resolved blindspots as [confirmed by user]                    │
+│    - If answers invalidate earlier assumptions → re-diverge those facets│
+│                                                                          │
+│  Output: [Info Gap Supplement Report]                                    │
+│    - Gaps found: X (self-resolved: Y, asked user: Z)                    │
+│    - User answers received: [list]                                       │
+│    - Updated facet scores: [before → after]                             │
+│    - Remaining assumptions (still unconfirmed): [list]                   │
+│                                                                          │
+│  ⛔ SKIP CONDITION: Only skip if ALL 8 facets score ≥7                  │
+│     (meaning no significant gaps remain). If ANY facet <7,              │
+│     this phase is MANDATORY.                                            │
+└────────────────────────────────┬─────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────────────────────────┐
 │  🗣️ DIRECTION CHECK (before converging to solutions):                     │
 │                                                         │
 │  "From the 8 facets, the key tensions I see are:        │
@@ -173,22 +220,17 @@ User Need
 │            for each retained direction                  │
 │                                                         │
 │
-│  🗣️ GRILL THE DETAILS (after direction, before culling):  │
+│  🗣️ DIRECTION CONFIRM (after direction, before culling): │
 │                                                         │
-│  Present candidate directions to the user:              │
-│  For each direction, ask about SPECIFICS only the user  │
-│  can answer: constraints, preferences, resources, risks.│
-│  Don't ask technical trivia they wouldn't know.        │
+│  Briefly confirm each candidate direction with user.    │
+│  ⚠️ MAJOR info-gap questions were already handled in    │
+│     Phase 1.5. Here you only confirm direction-level    │
+│     specifics that emerged during clustering.           │
+│  • Do NOT re-ask questions already answered in 1.5     │
+│  • Do NOT ask "选方案A还是方案B" — that is YOUR job     │
+│  • Only ask: "Direction X assumes [Y], correct?"       │
 │                                                         │
-│  **⛔ QUESTION QUALITY RULE**:                          │
-│  • Do NOT ask "选方案A还是方案B" — that is YOUR job to decide  │
-│  • Do NOT ask "你是否了解我不能做X" — that is making the user  │
-│    accept your self-imposed limitation                    │
-│  • DO ask "你有没有相关的数据源/链接可以提供？"               │
-│  • DO ask "你是否需要我搜索某个特定领域的公开数据？"          │
-│  • DO ask "你要覆盖哪些具体商品品类/国家/时间范围？"         │
-│                                                         │
-│  After confirming details → move to Final Triaging.     │
+│  After confirming directions → move to Final Triaging.  │
 └──────────────────────────┬──────────────────────────────┘
                            │
                            ▼
