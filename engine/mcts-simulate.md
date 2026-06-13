@@ -51,6 +51,8 @@ Layer 3 — Perspective Cross-Validation
 Final solution scoring:
   V_final = α × V_feasibility + β × V_robustness + γ × V_perspective
   Default weights: alpha=0.5, beta=0.3, gamma=0.2 (adjustable)
+  ⛔ VERIFY: `node scripts/mcts_guard.js simulate-layer-guard --state '{solutions:[...]}`
+     Checks each solution has V_feasibility + V_robustness + V_perspective. BLOCK if missing.
 ```
 
 ---## Core Concept

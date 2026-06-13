@@ -546,7 +546,220 @@ function phase15InfoGapGuard(state = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  守卫11: 全流程合规审计
+//  Guard 10a: Multi-Layer Simulation Validator
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Verify each solution's simulation output contains all 3 reasoning layers:
+ *   V_feasibility, V_robustness, V_perspective
+ * Default weights: alpha=0.5, beta=0.3, gamma=0.2 (must sum to 1.0)
+ *
+ * @param {object} state — { solutions: [{ name, V_feasibility, V_robustness, V_perspective, V_final }] }
+ * @returns {object} validation result per solution
+ */
+function simulateLayerGuard(state = {}) {
+    const solutions = state.solutions || [];
+    const DEFAULT_WEIGHTS = { alpha: 0.5, beta: 0.3, gamma: 0.2 };
+    const weights = state.weights || DEFAULT_WEIGHTS;
+
+    // Validate weights sum to 1.0
+    const wSum = (weights.alpha || 0.5) + (weights.beta || 0.3) + (weights.gamma || 0.2);
+    const weightsValid = Math.abs(wSum - 1.0) < 0.01;
+
+    const results = solutions.map(sol => {
+        const hasFeas = typeof sol.V_feasibility === 'number';
+        const hasRobust = typeof sol.V_robustness === 'number';
+        const hasPersp = typeof sol.V_perspective === 'number';
+        const allPresent = hasFeas && hasRobust && hasPersp;
+
+        // Compute V_final if missing
+        let V_final = sol.V_final;
+        if (allPresent && typeof V_final !== 'number') {
+            V_final = (weights.alpha || 0.5) * sol.V_feasibility
+                    + (weights.beta || 0.3) * sol.V_robustness
+                    + (weights.gamma || 0.2) * sol.V_perspective;
+        }
+
+        const missing = [];
+        if (!hasFeas) missing.push('V_feasibility');
+        if (!hasRobust) missing.push('V_robustness');
+        if (!hasPersp) missing.push('V_perspective');
+
+        return {
+            name: sol.name || 'unknown',
+            all_layers_present: allPresent,
+            missing_layers: missing,
+            V_final: V_final,
+            status: allPresent ? 'PASS' : 'VIOLATION'
+        };
+    });
+
+    const violations = results.filter(r => r.status === 'VIOLATION');
+
+    return {
+        guard: 'simulate-layer-guard',
+        total_solutions: solutions.length,
+        weights: { ...weights, valid: weightsValid, sum: wSum },
+        results,
+        violations_count: violations.length,
+        verdict: violations.length === 0 && weightsValid ? 'PASS' : 'BLOCK',
+        required_action: violations.length > 0
+            ? `Each solution MUST be simulated at 3 layers (V_feasibility, V_robustness, V_perspective). Missing in: ${violations.map(v => `${v.name}(${v.missing_layers.join(',')})`).join('; ')}`
+            : weightsValid ? 'All solutions have 3-layer simulation. Proceed.' : `Weights must sum to 1.0, current sum: ${wSum}`
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Guard 10b: Blindspot Coverage Auto-Detector
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Parse perspective coverage table, count uncovered blindspots.
+ * If >=3 perspectives uncovered by ANY solution → WARNING, return to converge.
+ * If 1-2 uncovered → NOTE, annotate in decision report.
+ *
+ * @param {object} state — { perspectives: [string], solutions: [{ name, covered_perspectives: [string] }] }
+ * @returns {object} coverage analysis + action
+ */
+function blindspotCoverageGuard(state = {}) {
+    const allPerspectives = state.perspectives || [];
+    const solutions = state.solutions || [];
+
+    // Determine uncovered perspectives
+    const coveredSet = new Set();
+    solutions.forEach(sol => {
+        (sol.covered_perspectives || []).forEach(p => coveredSet.add(p));
+    });
+    const uncovered = allPerspectives.filter(p => !coveredSet.has(p));
+
+    // Per-solution coverage detail
+    const coverageDetail = solutions.map(sol => {
+        const solCovered = sol.covered_perspectives || [];
+        const solMissing = allPerspectives.filter(p => !solCovered.includes(p));
+        return {
+            name: sol.name || 'unknown',
+            covered_count: solCovered.length,
+            missing: solMissing
+        };
+    });
+
+    let action;
+    if (uncovered.length >= 3) {
+        action = 'WARNING_COVERAGE_GAP';
+    } else if (uncovered.length >= 1) {
+        action = 'NOTE_ANNOTATE';
+    } else {
+        action = 'PASS';
+    }
+
+    return {
+        guard: 'blindspot-coverage-guard',
+        total_perspectives: allPerspectives.length,
+        covered_count: coveredSet.size,
+        uncovered,
+        uncovered_count: uncovered.length,
+        coverage_detail: coverageDetail,
+        verdict: action === 'PASS' ? 'PASS' : action === 'NOTE_ANNOTATE' ? 'NOTE' : 'BLOCK',
+        required_action: action === 'WARNING_COVERAGE_GAP'
+            ? `${uncovered.length} perspectives uncovered by ANY solution (${uncovered.join(', ')}). Return to converge, generate supplementary solutions.`
+            : action === 'NOTE_ANNOTATE'
+            ? `${uncovered.length} perspectives partially uncovered (${uncovered.join(', ')}). Annotate in decision report.`
+            : 'All perspectives covered. Proceed.'
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Guard 10c: Force-Search Guard (Facet ≤3)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * After diverge phase, check all facet scores.
+ * If any facet scores ≤3, require WebSearch evidence before allowing proceed.
+ *
+ * @param {object} state — { facets: [{ name, score, has_web_search_evidence: bool }] }
+ * @returns {object} validation result
+ */
+function forceSearchGuard(state = {}) {
+    const facets = state.facets || [];
+
+    const lowFacets = facets.filter(f => (f.score || 0) <= 3);
+    const lowWithoutEvidence = lowFacets.filter(f => !f.has_web_search_evidence);
+
+    const facetResults = facets.map(f => ({
+        name: f.name || 'unknown',
+        score: f.score,
+        is_low: (f.score || 0) <= 3,
+        has_evidence: f.has_web_search_evidence || false,
+        status: (f.score || 0) <= 3 && !f.has_web_search_evidence ? 'NEEDS_SEARCH'
+               : (f.score || 0) <= 3 ? 'SEARCH_DONE'
+               : 'OK'
+    }));
+
+    return {
+        guard: 'force-search-guard',
+        total_facets: facets.length,
+        low_scoring_facets: lowFacets.length,
+        facets_needing_search: lowWithoutEvidence.length,
+        facet_results: facetResults,
+        verdict: lowWithoutEvidence.length > 0 ? 'BLOCK' : 'PASS',
+        required_action: lowWithoutEvidence.length > 0
+            ? `${lowWithoutEvidence.length} facets score ≤3 without WebSearch evidence: ${lowWithoutEvidence.map(f => `${f.name}(score=${f.score})`).join(', ')}. MUST execute WebSearch before proceeding.`
+            : lowFacets.length > 0
+            ? `${lowFacets.length} facets score ≤3 but have search evidence. Proceed with caution.`
+            : 'All facets score >3. Proceed.'
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Guard 10d: Solution Count Enforcer
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * After culling, auto-check solution count:
+ *   <5 viable → force user notification
+ *   >8 viable → force P4 tighten to 8
+ *   5-8 → normal
+ *
+ * @param {object} state — { viable_count: number, total_before_cull: number }
+ * @returns {object} enforcement result
+ */
+function solutionCountGuard(state = {}) {
+    const viableCount = state.viable_count || 0;
+    const totalBefore = state.total_before_cull || viableCount;
+
+    let action, verdict;
+    if (viableCount < 2) {
+        action = 'RETURN_TO_DIVERGE';
+        verdict = 'BLOCK';
+    } else if (viableCount < 5) {
+        action = 'NOTIFY_USER';
+        verdict = 'NOTE';
+    } else if (viableCount > 8) {
+        action = 'TIGHTEN_TO_8';
+        verdict = 'NOTE';
+    } else {
+        action = 'PROCEED';
+        verdict = 'PASS';
+    }
+
+    return {
+        guard: 'solution-count-guard',
+        total_before_cull: totalBefore,
+        viable_count: viableCount,
+        action,
+        verdict,
+        required_action: action === 'RETURN_TO_DIVERGE'
+            ? `Only ${viableCount} viable solutions (<2). Return to diverge phase for more directions.`
+            : action === 'NOTIFY_USER'
+            ? `Only ${viableCount} viable solutions (<5). Notify user: "Only ${viableCount} viable solutions found, need more?"`
+            : action === 'TIGHTEN_TO_8'
+            ? `${viableCount} viable solutions (>8). Apply P4 compare cull to tighten to 8.`
+            : `${viableCount} solutions (5-8 range). Normal entry to MCTS simulation.`
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Guard 11: Full Pipeline Compliance Audit
 // ═══════════════════════════════════════════════════════════════
 
 function complianceReport(state = {}) {
@@ -671,6 +884,18 @@ function main() {
             case "engine-mode":
                 output(engineMode(JSON.parse(o.profile || "{}")));
                 break;
+            case "simulate-layer-guard":
+                output(simulateLayerGuard(JSON.parse(o.state || "{}")));
+                break;
+            case "blindspot-coverage-guard":
+                output(blindspotCoverageGuard(JSON.parse(o.state || "{}")));
+                break;
+            case "force-search-guard":
+                output(forceSearchGuard(JSON.parse(o.state || "{}")));
+                break;
+            case "solution-count-guard":
+                output(solutionCountGuard(JSON.parse(o.state || "{}")));
+                break;
             case "all-guards":
                 output({
                     decomposition: decompositionGuard({}),
@@ -680,6 +905,10 @@ function main() {
                     self_check: selfCheckGuard(),
                     memory_agent_checkpoints: MEMORY_AGENT_CHECKPOINTS,
                     phase_15_check: phase15InfoGapGuard({}),
+                    simulate_layer: simulateLayerGuard({}),
+                    blindspot_coverage: blindspotCoverageGuard({}),
+                    force_search: forceSearchGuard({}),
+                    solution_count: solutionCountGuard({}),
                 });
                 break;
             default:
@@ -698,6 +927,7 @@ module.exports = {
     decompositionGuard, phaseEnforce, infoGapGuard,
     diversityChallenge, selfCheckGuard, memoryAgentGuard, complianceReport,
     constraintChecklist, engineMode, horizonScanGuard, phase15InfoGapGuard,
+    simulateLayerGuard, blindspotCoverageGuard, forceSearchGuard, solutionCountGuard,
     REQUIRED_PHASES, INFO_PRIORITY_ORDER, DIVERSITY_ANGLES, MEMORY_AGENT_CHECKPOINTS,
     CONSTRAINT_CHECKLIST,
 };

@@ -337,6 +337,9 @@ Step 3: For each blindspot, determine if solution supplementation needed
       If pure backend/infrastructure → No
     → Conclusion: [Need supplement / Not needed, doesn't affect decision quality]
 
+⛔ VERIFY: `node scripts/mcts_guard.js blindspot-coverage-guard --state '{perspectives:[...],solutions:[...]}`
+   Auto-detects uncovered perspectives. >=3 uncovered = return to converge.
+
 Step 4: Blindspot Supplement Decision
 
   Case 1: All blindspots don't need supplement

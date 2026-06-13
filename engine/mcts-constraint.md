@@ -134,15 +134,15 @@ All perspectives output simultaneously in a matrix：
     ↓ 交叉关联：视角发现 ↔ Facet发现
     ↓ 产出：每个Facet的评分 + 修正后的发现
     ↓
-发散引擎→收敛→MCTS模拟→决策（正常流程）
+Diverge Engine → Converge → MCTS Simulate → Decision (normal flow)
 ```
 
-**关键：八面镜不分析每个视角**。八面镜分析的是问题本身，只是多了一副从视角矩阵借来的眼镜。视角矩阵的作用是给八面镜的盲点检测层输入。
+**Key: The Eight-Facet Mirror does NOT analyze each perspective.** The Mirror analyzes the problem itself, simply wearing "glasses" borrowed from the perspective matrix. The perspective matrix's role is to provide input to the Mirror's blindspot detection layer.
 
 ### Perspective Knowledge Rules (anti-deadlock)
 
 ```
-子agent/主流程获取视角知识时，必须遵守：
+When sub-agents/main flow acquire perspective knowledge, they MUST follow:
 
 ① 记忆系统查询（mcts-td-value-archive.md + 技能记忆）
    命中 → 直接使用，标记 source:memory → 不再触发再次查询
@@ -156,13 +156,13 @@ All perspectives output simultaneously in a matrix：
    获取到 → 经gate-check过滤后写入记忆，标记 source:external
    未获取到 → 标注【暂无公开数据】
 
-子agent判断规则：
+Sub-agent decision rules:
    if source == "memory":
-       直接使用，不触发再次查询，不写入重复记录
+       Use directly, do not re-query, do not write duplicate records
    if source == "external" or source == "context":
-       正常处理，处理后经gate-check写回记忆
+       Process normally, write back to memory via gate-check after processing
 
-Anti-duplicate: check memory for same key before writing back，有则比较timestamp保留最新的
+Anti-duplicate: check memory for same key before writing back; if exists, compare timestamps and keep the latest
 ```
 
 ---
@@ -251,9 +251,9 @@ case User answered but info incomplete:
      dependency upgrades too?"
 
 case User's "restriction" is being misinterpreted as "I shouldn't do anything":
-  ⛔ "不能编造" ≠ "只能输出空模板"。正确做法: 搜索公开数据 → 输出真实数据行 → 不确定性标注【来源待核实】
-  ⛔ "没有实时爬虫能力" ≠ "不能输出任何数据"。正确做法: 搜索已有公开数据集 → 引用可验证的公开信息
-  ⛔ "我是AI" ≠ "我什么都不能做"。正确做法: 搜索 → 查找API → 整理已有公开数据 → 给用户可用的数据
+  ⛔ "Cannot fabricate" ≠ "output empty template only". Correct: search public data → output real data rows → annotate uncertainty [source pending verification]
+  ⛔ "No live web scraping capability" ≠ "cannot output any data". Correct: search existing public datasets → cite verifiable public info
+  ⛔ "I am an AI" ≠ "I cannot do anything". Correct: search → find APIs → organize existing public data → give usable data to user
 ```
 
 ## 0.4 Dealing with Low Facet Scores in the Eight-Facet Mirror
@@ -264,7 +264,7 @@ When any facet in the Eight-Facet Mirror scores ≤3 (meaning "I know very littl
 1. This is NOT a reason to skip that dimension or output an empty template
 2. The correct response is:
    a) WebSearch for external information about the low-scoring dimension
-   b) ASK THE USER about the specific gap — "你是否有相关的数据源或API链接？"
+   b) ASK THE USER about the specific gap — "Do you have relevant data sources or API links?"
    c) ONLY after search + user confirmation, re-rate the facet
 3. ⛔ Do NOT justify "I can't do X" as a facet score without first trying to DO something about it
 4. ⛔ Do NOT use "用户自己选的方案" as an excuse to skip delivering real value

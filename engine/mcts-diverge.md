@@ -92,7 +92,7 @@ User Need
 │                                                                          │
 │  Action:                                                                   │
 │  ① Query memory (MMA deqi) + search                                        │
-│  ② 还有哪些相关的领域/技术/方案可以渗透进来？                            │
+│  ② What other related domains/technologies/solutions can penetrate in?                            │
 │  ③ Search each candidate for known pitfalls + best practices                             │
 │  Output: Knowledge breadth map + risks per candidate                                    │
 └────────────────────────────────┬─────────────────────────────────────────┘
@@ -107,7 +107,7 @@ User Need
 │  ② Worst case for each candidate?                                       │
 │  ③ No risks found? Search not deep enough                                    │
 │  Output: Risk list + mitigation plans                                              │
-│  → ⛔ "这个方案没有风险" = 你没认真找                                     │
+│  → ⛔ "This solution has no risks" = you did not search carefully enough                                     │
 └────────────────────────────────┬─────────────────────────────────────────┘
                                  │
                                  ▼
@@ -260,7 +260,10 @@ User Need
 │  ⚠️ Every dropped direction needs a specific reason.      │
 │  ⚠️ All kept solutions MUST pass the user's detail        │
 │     check first.                                          │
-│  ⚠️ If <5 viable → keep all viable, go to user:          │
+│  ⛔ CODE-ENFORCED: `node scripts/mcts_guard.js solution-count-guard --state '{viable_count:N,total_before_cull:M}`
+     <5 viable = notify user; >8 viable = force tighten; <2 = return to diverge.
+
+  ⚠️ If <5 viable → keep all viable, go to user:          │
 │     "Only X viable solutions found, need more?"           │
 │  ⚠️ If >8 viable → tighten to 8 using P4 compare cull    │
 │                                                          │
@@ -371,6 +374,9 @@ Divergence Process (multi-round iteration, until each facet is thought through):
     from that facet must cite its information source or be marked [pending verification].
     
     **NEVER produce a "template" or "empty table" as a solution when you could have searched for real data.**
+
+    ⛔ CODE-ENFORCED: `node scripts/mcts_guard.js force-search-guard --state '{facets:[{name,score,has_web_search_evidence}]}`
+       Any facet score <=3 without search evidence = BLOCK.
     
     **⛔ ADDITIONAL RULE: If ALL facets score ≤3 in the "can I do this" dimension,**
     **you MUST ask the user for specific data sources / API endpoints / reference links**
@@ -521,27 +527,27 @@ Culling Result:
     ├───────┬──────────────────────────┬──────┬───────────┤
     │ Facet │ Question                 │Score │ Evidence  │
     ├───────┼──────────────────────────┼──────┼───────────┤
-    │  F1   │Is driving force reliable?？           │ 1-10 │ [依据]    │
-    │  F2   │Are foundation conditions met?？          │ 1-10 │ [依据]    │
-    │  F3   │Still valid if conditions change?？        │ 1-10 │ [依据]    │
-    │  F4   │Can effect truly land?？        │ 1-10 │ [依据]    │
-    │  F5   │Can worst case be tolerated?？        │ 1-10 │ [依据]    │
-    │  F6   │Are outputs and dependencies clear?？│ 1-10 │ [依据]    │
-    │  F7   │Does it cross red lines?？            │ 1-10 │ [依据]    │
-    │  F8   │Can all interests be balanced?？        │ 1-10 │ [依据]    │
+    │  F1   │Is driving force reliable?？           │ 1-10 │ [Basis]    │
+    │  F2   │Are foundation conditions met?？          │ 1-10 │ [Basis]    │
+    │  F3   │Still valid if conditions change?？        │ 1-10 │ [Basis]    │
+    │  F4   │Can effect truly land?？        │ 1-10 │ [Basis]    │
+    │  F5   │Can worst case be tolerated?？        │ 1-10 │ [Basis]    │
+    │  F6   │Are outputs and dependencies clear?？│ 1-10 │ [Basis]    │
+    │  F7   │Does it cross red lines?？            │ 1-10 │ [Basis]    │
+    │  F8   │Can all interests be balanced?？        │ 1-10 │ [Basis]    │
     ├───────┴──────────────────────────┼──────┼───────────┤
-    │ 综合可推敲性得分                │ Avg  │ [评估]    │
+    │ Comprehensive Scrutability Score                │ Avg  │ [Assessment]    │
     └──────────────────────────────────────┴───────────────┘
 
   Score Guide:
-    8-10: 强（有明确依据）
-    5-7:  中（有依据但不充分）
-    1-4:  弱（依据不足或存在明显问题）
-    0:    无法评估
+    8-10: Strong (clear basis)
+    5-7:  Medium (some basis but insufficient)
+    1-4:  Weak (insufficient basis or clear issues)
+    0:    Cannot assess
 
-  综合得分 < 4 的方案 → 直接淘汰（不可推敲）
-  综合得分 4-6 的方案 → 保留但标记"需重点关注"
-  综合得分 > 6 的方案 → 正常进入MCTS模拟
+  Composite score < 4 → eliminate directly (cannot be scrutinized)
+  Composite score 4-6 → keep but mark "needs attention"
+  Composite score > 6 → normal entry to MCTS simulation
 ```
 
 ### 2.3 Converge Output
