@@ -118,6 +118,7 @@ function decompositionGuard(claim = {}) {
 const REQUIRED_PHASES = [
     { phase: 0, name: 'Constraint Collection', required: true, check: 'Has constraint list been output?' },
     { phase: 1, name: 'Eight-Facet Review Map', required: true, check: 'Has eight-facet map with scores been output?' },
+    { phase: 1.5, name: 'Info Gap Supplement', required: true, check: 'Has info gap supplement report been output? MANDATORY if any facet <7.' },
     { phase: 2, name: 'Reconnaissance Report', required: true, check: 'Has recon report been output?' },
     { phase: 3, name: 'Converged Solution List', required: true, check: 'Has solution list with coverage matrix been output?' },
     { phase: 3.5, name: 'User Ask (if tied)', required: false, check: 'If top2 are close (deltaV<0.04), was user asked?' },
@@ -475,7 +476,77 @@ function horizonScanGuard(scan = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  守卫10: 全流程合规审计
+//  守卫10: Phase 1.5 信息缺口检查 — 发散后补充缺失信息
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 检查 Phase 1.5 (Info Gap Supplement) 是否应该执行 / 已正确执行
+ * @param {object} state — { facet_scores: {F1:0~10,...}, asked_questions: [], answers_received: [] }
+ * @returns {object} 检查结果
+ */
+function phase15InfoGapGuard(state = {}) {
+    const { facet_scores = {}, asked_questions = [], answers_received = [] } = state;
+
+    // 扫描哪些 facet < 7
+    const lowFacets = [];
+    for (const [key, score] of Object.entries(facet_scores)) {
+        if (score < 7) lowFacets.push({ facet: key, score });
+    }
+
+    const needsPhase15 = lowFacets.length > 0;
+    const phase15Executed = asked_questions.length > 0;
+
+    const issues = [];
+
+    if (needsPhase15 && !phase15Executed) {
+        issues.push({
+            id: 'phase15_skipped',
+            severity: 'BLOCKER',
+            message: `Phase 1.5 被跳过，但有 ${lowFacets.length} 个 facet 评分 <7: ${lowFacets.map(f => `${f.facet}(${f.score})`).join(', ')}`,
+            required: '对低分 facet 询问用户补充信息，或通过搜索补全后再重新评分',
+        });
+    }
+
+    if (phase15Executed && asked_questions.length > 5) {
+        issues.push({
+            id: 'phase15_too_many_questions',
+            severity: 'WARNING',
+            message: `Phase 1.5 询问了 ${asked_questions.length} 个问题，超过建议上限 5 个`,
+            required: '合并相似问题，只保留用户能回答的关键缺口',
+        });
+    }
+
+    if (phase15Executed && asked_questions.length > 0 && answers_received.length === 0) {
+        issues.push({
+            id: 'phase15_no_answers',
+            severity: 'WARNING',
+            message: 'Phase 1.5 提问了但未收到回答',
+            required: '等待用户回答后再进入收敛',
+        });
+    }
+
+    const allFacetsHigh = !needsPhase15;
+    const skipReason = allFacetsHigh ? 'All facets ≥7, Phase 1.5 can be skipped' : null;
+
+    return {
+        needs_phase_15: needsPhase15,
+        low_facets: lowFacets,
+        skip_allowed: allFacetsHigh,
+        skip_reason: skipReason,
+        questions_asked: asked_questions.length,
+        answers_received: answers_received.length,
+        issues,
+        verdict: issues.some(i => i.severity === 'BLOCKER') ? 'BLOCKED'
+               : issues.some(i => i.severity === 'WARNING') ? 'WARNING'
+               : 'OK',
+        message: issues.length > 0
+            ? `Phase 1.5 检查发现 ${issues.length} 个问题`
+            : (allFacetsHigh ? 'Phase 1.5 可跳过（所有 facet ≥7）' : 'Phase 1.5 已正确执行'),
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  守卫11: 全流程合规审计
 // ═══════════════════════════════════════════════════════════════
 
 function complianceReport(state = {}) {
@@ -556,6 +627,7 @@ function main() {
         log("  compliance-report    — Full pipeline compliance audit");
         log("  constraint-checklist — Constraint checklist");
         log("  horizon-scan-guard   — Horizon scan check (anti-well-frog)");
+        log("  phase-15-guard       — Phase 1.5 info gap supplement check");
         log("  engine-mode          — Engine mode selection");
         log("  all-guards           — Output all guard checklists");
         process.exit(0);
@@ -593,6 +665,9 @@ function main() {
             case "horizon-scan-guard":
                 output(horizonScanGuard(JSON.parse(o.scan || "{}")));
                 break;
+            case "phase-15-guard":
+                output(phase15InfoGapGuard(JSON.parse(o.state || "{}")));
+                break;
             case "engine-mode":
                 output(engineMode(JSON.parse(o.profile || "{}")));
                 break;
@@ -604,6 +679,7 @@ function main() {
                     diversity_angles: DIVERSITY_ANGLES,
                     self_check: selfCheckGuard(),
                     memory_agent_checkpoints: MEMORY_AGENT_CHECKPOINTS,
+                    phase_15_check: phase15InfoGapGuard({}),
                 });
                 break;
             default:
@@ -621,7 +697,7 @@ main();
 module.exports = {
     decompositionGuard, phaseEnforce, infoGapGuard,
     diversityChallenge, selfCheckGuard, memoryAgentGuard, complianceReport,
-    constraintChecklist, engineMode, horizonScanGuard,
+    constraintChecklist, engineMode, horizonScanGuard, phase15InfoGapGuard,
     REQUIRED_PHASES, INFO_PRIORITY_ORDER, DIVERSITY_ANGLES, MEMORY_AGENT_CHECKPOINTS,
     CONSTRAINT_CHECKLIST,
 };

@@ -367,6 +367,26 @@ function main() {
                 output({ matrix, coverage_rate: coverageRate, facets });
                 break;
             }
+            case "info-gap-scan": {
+                const scores = JSON.parse(o.facet_scores || "{}");
+                const lowFacets = [];
+                for (const [key, score] of Object.entries(scores)) {
+                    if (score < 7) lowFacets.push({ facet: key, score, gap_level: score <= 3 ? 'blank' : score <= 5 ? 'partial' : 'moderate' });
+                }
+                const needsPhase15 = lowFacets.length > 0;
+                const askableGaps = lowFacets.filter(f => f.gap_level !== 'blank');
+                output({
+                    needs_phase_15: needsPhase15,
+                    skip_allowed: !needsPhase15,
+                    low_facets: lowFacets,
+                    askable_gaps: askableGaps.length,
+                    suggested_max_questions: Math.min(askableGaps.length, 5),
+                    recommendation: needsPhase15
+                        ? `Phase 1.5 required: ${lowFacets.length} facets below 7. Ask about ${Math.min(askableGaps.length, 5)} gaps.`
+                        : 'All facets ≥7, Phase 1.5 can be skipped.',
+                });
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }
