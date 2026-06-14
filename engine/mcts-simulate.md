@@ -76,10 +76,19 @@ expansion_potential → HIGH: 2-3 children | MED: 1 | LOW: 1 quick-check | NONE:
 Quick roll-out from new node to termination. Depth: simple 1-2 steps, medium 2-3, complex 3-4.
 
 **Knowledge Acquisition Priority** (execute in order, cannot skip):
-1. **Memory**: query knowledge graph + current session → evaluate credibility (HIGH→use, MED→use+mark, LOW→use+lower weight)
+1. **Memory**: query knowledge graph + current session → evaluate credibility
+   - HIGH credibility → use directly
+   - MED → use but mark for verification
+   - LOW → use with lower weight, note uncertainty
 2. **Self-learn**: check code/docs/WebSearch → need 2 sources cross-validated
+   - Can you read the project's package.json, README, or existing code?
+   - Can WebSearch find industry standards or known patterns?
 3. **Ask user**: requirement/preference/constraint uncertainty → max 2 questions, collect for batch
+   - ⛔ ONLY if ①② exhausted and you truly cannot proceed without user input
+   - Use AskUserQuestion, not free text
 4. **Assume**: last resort → annotate "Assume: XXX", variance +0.1
+   - ⛔ NEVER assume when you could have searched or asked
+   - Every assumption must be explicitly stated in output
 
 ### Recursive Divergence Depth Control
 
@@ -105,7 +114,9 @@ Each ancestor: n+=1, w+=V_leaf, V=w/n, Welford online σ²
 
 ## ⑤ KNOWLEDGE UPDATE
 
-Pre-write gate: `meridian_memory.js ashi` (gate-check built-in)
+Pre-write gate: `node scripts/mcts.js mma ashi '<entry_json>'` (gate-check built-in)
+Example: `node scripts/mcts.js mma ashi '{"description":"...","tags":["..."],"category":"...","emotion":"xi","source":"execution_result","q":0.8}'`
+→ Returns point ID (e.g., "LUN0001") — **collect for session-end tracking**
 Score <0.4 → discard | 0.4-0.59 → observe (15-day verify) | ≥0.6 → store
 
 Write when: V≥0.8 | V≤0.3 | Round%5==0 | After convergence

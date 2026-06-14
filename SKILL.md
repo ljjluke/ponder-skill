@@ -93,21 +93,24 @@ Action: [what to do next]
 | Step 3 | `engine/mcts-simulate.md` | MCTS 4-phase, UCB, mutation, body-use | `guard simulate-detail` |
 | Step 3.5-4 | `engine/mcts-converge.md` | Ranking(+body-use), self-check(+本末+動靜), blindspot(+言意), TD(+理事) | `guard converge-detail` |
 | Post-4 | `engine/td-learner.md` | TD error, value update, knowledge lifecycle | — |
-| Always | `agents/memory-agent.md` | 5 checkpoints (silent, conflict alert only) | — |
+| Always | `agents/memory-agent.md` | 6 checkpoints (direct-call, conflict alert only) | — |
 
-**⚠️ Engine files are COMPRESSED — they contain rules but NOT detailed examples/templates. When you need detailed guidance for a specific phase, call the corresponding guard command to get the full rules.**
+**⚠️ Each engine file is self-sufficient for its phase — LLM can execute that phase without calling guard commands. Guard detail commands provide extra reference for edge cases.**
 
 Shorthand: `node scripts/mcts_guard.js phase-rules --phase <0|1|2|3>`
 
 ---
 
-## 🧠 Memory Agent (silent, 6 checkpoints)
+## 🧠 Memory Agent (direct-call, 6 checkpoints)
 
-① pre_engine: deqi → ② during_diverge: emotion → ③ post_simulate: ashi + cluster
-③.5 complete: fill _needs_completion → ④ pre_converge: conflict (ALERT if found, max 2/session)
-⑤ post_execution: TD + decay → ⑥ session_end: consolidation
+LLM calls MMA commands directly. No daemon. No buffer.
 
-Full rules: `agents/memory-agent.md`
+① pre_engine: `mma deqi` → ② during_diverge: `mma observe --phase during_diverge` → ③ post_simulate: `mma ashi` + `mma cluster`
+③.5 complete: fill _needs_completion → ④ pre_converge: `mma observe --phase pre_converge` (ALERT if conflicts)
+⑤ post_execution: `mma observe --phase post_execution` (TD + decay) → ⑥ session_end: `mma session-end` with session point IDs
+
+Session tracking: LLM collects point IDs from each ashi response, passes list to session-end.
+Full rules + exact CLI syntax: `agents/memory-agent.md`
 
 ---
 

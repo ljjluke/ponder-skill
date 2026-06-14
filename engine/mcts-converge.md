@@ -38,15 +38,33 @@ Before self-check, **display MCTS conclusion to user** with ranking + best path 
 
 ## Step 3.5: Self-Check (Critical Error Prevention)
 
-① **Find flaws**: vague judgment? unverified assumption? ignored risk?
-② **Reverse thinking**: if 2nd place > 1st place, why? Likelihood? Does it change selection?
-③ **Risk assessment**: worst outcome? Can we bear it?
-④ **Root-Shift Check** (本末): 1st place violates root dimension? → conditional pass
-⑤ **動静 Mode Check**: Over-analyzing (靜→動 bias)? Under-analyzing (動→靜 bias)?
+**⛔ MANDATORY — answer ALL 5 questions before proceeding.**
+
+① **Find flaws**: Is any judgment vague? Any assumption unverified? Any risk ignored?
+   - Check each solution: does it rely on "probably fine" or "should work"?
+   - Check for wishful thinking: "the API will handle it" → really?
+
+② **Reverse thinking**: If 2nd place > 1st place, why? How likely? Does it change selection?
+   - Construct a scenario where 2nd place wins. Is it plausible?
+   - If yes → ask user about that scenario specifically
+
+③ **Risk assessment**: Worst outcome of the #1 choice? Can we bear it?
+   - What's the maximum downside? Probability? Can it be reversed?
+   - If irreversible and probability >10% → ⚠️ Risk
+
+④ **Root-Shift Check** (本末): Does 1st place violate the root dimension from 五診?
+   - Root dimension = the one that defines the problem's essence
+   - If 1st place sacrifices root for branch convenience → conditional pass only
+
+⑤ **動静 Mode Check**: Are we biased?
+   - Over-analyzing a simple problem (靜→動 bias)? → simplify, decide
+   - Under-analyzing a complex problem (動→靜 bias)? → slow down, more sim
 
 ```
-Self-Check Conclusion:
-  ✅ Pass | ⚠️ Risk (recommend user confirm) | ❌ Not passed (re-simulate)
+Self-Check Verdict:
+  ✅ Pass — all 5 questions satisfied
+  ⚠️ Risk — specific concern, recommend user confirm (use AskUserQuestion)
+  ❌ Not passed — re-simulate with adjusted assumptions
 ```
 
 Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
@@ -66,13 +84,24 @@ Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
 
 ### 言意 (Word-Meaning) Gap Detection
 
-Scan for mismatches between user statements and our interpretations:
+**⛔ Scan for 3 specific mismatches between user statements and our interpretations:**
 
-- User statement taken LITERALLY when METAPHORICAL? ("fast" = 50ms or "don't drag"?)
-- User concern interpreted METAPHORICAL when LITERAL? ("Must support IE" = really IE?)
-- Same 意 different 言 → merge (false diversity). Same 言 different 意 → keep (fundamental disagreement)
+① **Literal vs Metaphorical**: User said X literally, but we interpreted as metaphor? Or vice versa?
+   - "Make it fast" → 50ms response time? Or "don't make users wait"?
+   - "Must be robust" → 99.99% uptime? Or "shouldn't break easily"?
 
-When gap detected → annotate in report → if affects ranking → re-simulate → mark for user confirmation.
+② **Same words, different intent**: User and we use the same term but mean different things.
+   - "Simple" → few lines of code? Or easy to understand? Or quick to build?
+   - "Secure" → encrypted? Authenticated? Audited?
+
+③ **Unstated expectations**: User didn't say it, but we assumed it (or missed it).
+   - Did we assume a specific tech stack without confirmation?
+   - Did we ignore an implicit "it should work like [familiar app]"?
+
+**Resolution rules:**
+- Same 意 different 言 → merge solutions (false diversity)
+- Same 言 different 意 → keep both (fundamental disagreement, need user clarification)
+- Gap affects ranking → re-simulate → mark for user confirmation
 
 Code: `yan-yi-check --statements '<JSON>' --interpretations '<JSON>'`
 
@@ -130,9 +159,12 @@ Code: `li-shi-split --insight '<JSON>'`
  Memory Agent Checkpoints:
    ☐ pre_engine: [DONE/SKIPPED(why)]
    ☐ during_diverge: [DONE/SKIPPED(why)]
-   ☐ post_simulate: [DONE/SKIPPED(why)]
+   ☐ post_simulate: [DONE/IDs:.../SKIPPED(why)]
    ☐ pre_converge: [DONE/ALERT(what)]
    ☐ post_execution: [DONE/SKIPPED(why)]
+   ☐ session_end: [DONE/N points/SKIPPED(why)]
+
+ Session Points: [list of ashi point IDs created this session]
 
  Language Guard: `check --user-lang <lang> --output "..."` [PASS/FAIL]
 ```

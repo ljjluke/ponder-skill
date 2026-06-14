@@ -16,9 +16,44 @@ description: MCTS-TD Step 1 — Diverge Engine. Eight-Facet Mirror review + Cros
 
 ---
 
+## 0. GRILL THE USER (MANDATORY — Before Step 1.1)
+
+**⛔ This step is NOT optional. Every engine engagement MUST start with 3-step user interview.**
+
+```
+① PARAPHRASE: "我理解你要 [X]。对吗？还有其他方面需要考虑的吗？"
+② PROBE: "你之前试过或考虑过什么方案？"
+③ CONSTRAIN: Ask 2-3 most critical constraints via AskUserQuestion (NOT free text)
+   Example: "有依赖限制吗？" → [有，没有限制 / 必须用Go+gin / 完全不用外部依赖]
+```
+
+**⚠️ Do NOT skip this. The user knows things you do not.**
+**⚠️ Minimum 2 AskUserQuestion calls before proceeding to Step 1.1.**
+**⚠️ If user's answer reveals new angles → PARAPHRASE again (can loop 2-3 times).**
+
+---
+
 ## 1.1 Eight-Facet Mirror — Abstract Decision Review
 
+**⛔ MUST output the full map visibly. Not outputting = VIOLATION.**
+
 8 facets, each with: concrete dimension name + score 0-10 + known info + blindspots + ideas.
+
+**Output format (MANDATORY — show to user):**
+```
+【Eight-Facet Review Map】
+ Task: [xxx] | Domain: [xxx]
+
+ F1 ☰ 力量之源 [dimension name] — Score: [0-10]
+    Known: [...] | Blindspots: [...] | Ideas: [...]
+
+ F2 ☷ 根基承载 [dimension name] — Score: [0-10]
+    Known: [...] | Blindspots: [...] | Ideas: [...]
+
+ ... (F3-F8 same format)
+
+ Summary: Strong=[F?F?] | Weak=[F?F?] | Tension pairs=[F?↔F?]
+```
 
 | Facet | Trigram | Question |
 |-------|---------|----------|
@@ -56,6 +91,8 @@ Code: `node scripts/mcts_compute.js ti-yong-check`
 
 ## 1.3 Divergence: Iterative Review + Cross-Association + Changing-Condition
 
+**5 rounds of divergent thinking — each round MUST be visible to user.**
+
 **Round 1**: F1→F8, each facet: determine dimension, apply sub-lenses, self-rate 0-10, identify blindspots.
 
 **Round 2**: Cross-association between key pairs:
@@ -79,22 +116,65 @@ Code: `node scripts/mcts_compute.js li-shi-split --facets '<JSON>'`
 
 **Round 5**: Self-check — any facet without ideas? Idea rejected too early? Unstated assumptions? Do ideas from all 8 facets form a complete picture?
 
+### Per-Facet Action Sequences (execute during Round 1)
+
+Each facet has 3 search actions + 1 FORBIDDEN rule:
+
+| Facet | Search Actions | Output Target |
+|-------|---------------|---------------|
+| F1 Source | ① industry standard ② unconventional ③ cross-domain analogy | Industry + Unconventional + Cross-domain |
+| F2 Foundation | ① best practices ② resource constraints ③ scalability limits | Best practices + Limits |
+| F3 Change | ① risk factors ② historical precedents ③ early warning signs | Risk factors + Warning signs |
+| F4 Penetration | ① adoption strategies ② diffusion barriers ③ leverage points | Strategies + Barriers |
+| F5 Risk | ① worst cases ② failure modes ③ mitigation strategies | Worst case + Mitigation |
+| F6 Visible | ① surface dependencies ② hidden coupling ③ technical debt | Dependencies + Coupling |
+| F7 Boundary | ① compliance requirements ② hard limits ③ ethical constraints | Compliance + Hard limits |
+| F8 Convergence | ① stakeholder needs ② win-win scenarios ③ trade-off space | Needs + Trade-offs |
+
+⛔ FORBIDDEN for all facets: skip search, rely on internal knowledge only.
+
+### 诸子百家 Sub-Lenses (apply during Round 1, INTERNAL use)
+
+Each facet's sub-lenses interrogate your OWN assumptions — not user's answers:
+
+| Facet | Sub-lens 1 | Sub-lens 2 | Key question to ask yourself |
+|-------|-----------|-----------|------------------------------|
+| F1 | 兵家(strategic advantage) | 縱横家(interest alignment) | "Am I only seeing obvious forces?" |
+| F2 | 農家(fundamental resources) | 水利家(resource flow) | "Am I ignoring resource bottlenecks?" |
+| F3 | 醫家(surface vs root) | 陰陽家(opposing forces) | "Am I treating symptom as cause?" |
+| F4 | 工匠(core tools) | 禪家(strip assumptions) | "Am I adding unnecessary complexity?" |
+| F5 | 史家(historical precedent) | 道家(reverse risk of over-intervention) | "Am I creating new risks by fixing old ones?" |
+| F6 | 工匠(what makes visible) | 儒家(human values) | "Am I ignoring human dependency?" |
+| F7 | 法家(rules/enforcement) | 道家(knowing when to stop) | "Am I assuming rules are immutable?" |
+| F8 | 儒家(ethical foundation) | 縱横家(alliances) | "Am I missing a stakeholder?" |
+
 ---
 
-## Phase 1.5: Info Gap Supplement (MANDATORY)
+## Phase 1.5: Info Gap Supplement (MANDATORY — Multi-Round)
 
 After diverge, BEFORE converge — fill info gaps discovered during divergence.
 Phase 0 asks BOUNDARIES. Phase 1 REVEALS what you didn't know to ask about.
 Without this phase, newly-discovered gaps become assumptions — exactly what MCTS prevents.
 
+**⛔ This is the MOST INTERACTIVE phase. Typical session: 2-3 rounds of questions.**
+
 1. **SCAN**: facets with score ≤5, unresolved blindspots, unconfirmed assumptions
-2. **PRIORITIZE**: memory/code already searched → skip. Self-confirm from project code → do it yourself. Only truly user-knowable → ASK (max 3-5)
+2. **PRIORITIZE**: memory/code already searched → skip. Self-confirm from project code → do it yourself. Only truly user-knowable → ASK (max 3-5 per round)
 3. **ASK**: Use AskUserQuestion, NOT free text.
    - DO ask: constraints, preferences, domain knowledge, resource availability, priority trade-offs
    - Do NOT ask: "which solution do you prefer?" (YOUR job) | questions answerable by reading code/docs | vague "any requirements?"
 4. **INTEGRATE**: update facet scores, mark resolved blindspots. If answers invalidate earlier assumptions → re-diverge those facets
+5. **LOOP**: After user answers, re-scan. New gaps? → ask again (max 3 rounds total)
 
-⛔ Skip only if ALL 8 facets ≥7.
+**⛔ Minimum 1 AskUserQuestion call. Typical: 2-3 calls. Skip only if ALL 8 facets ≥7.**
+
+**Output format after each round:**
+```
+【Info Gap Round N】
+  Asked: [Q1] → [A1] | [Q2] → [A2]
+  Updated scores: F2=4→6 | F5=3→5
+  Remaining gaps: [list] / None → proceed
+```
 
 ---
 

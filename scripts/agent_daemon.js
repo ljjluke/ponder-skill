@@ -4,6 +4,10 @@
  *  MMA Memory Agent Daemon — 全程跟随后台进程
  *  "左史记言，右史记事" —《礼记》
  *
+ *  @deprecated — This daemon is no longer used. The LLM now calls
+ *  meridian_memory.js commands directly via `node scripts/mcts.js mma <command>`.
+ *  Kept for backward compatibility with older installations.
+ *
  *  零配置、零端口、零依赖。通过 hooks Setup 自动启动。
  *  通过文件系统 buffer 与主进程通信，不消耗任何端口。
  *
@@ -268,6 +272,7 @@ function processBuffer() {
 // ═══════════════════════════════════════════════════════════════
 
 function start() {
+    console.warn('[DEPRECATED] agent_daemon.js is deprecated. Use direct CLI calls: node scripts/mcts.js mma <command>');
     if (!init()) {
         console.error('[MMA Daemon] Init failed');
         process.exit(1);
