@@ -226,11 +226,10 @@ AI: ⚡ 这事有好几种做法，先让我想清楚
 ```bash
 /plugin marketplace update luke
 /plugin update luke
-/reload-plugins          # 直接生效，无需重启
-# 或者重启 Claude Code
+/reload-plugins              # 或重启 Claude Code
 ```
 
-> 两种方式均可：执行 `/reload-plugins` 或重启 Claude Code。旧版本自动清理。
+> 旧版本自动清理。
 
 ### ⚡ 记忆安全
 
