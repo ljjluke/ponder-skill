@@ -1,6 +1,6 @@
 {
   "name": "luke",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Universal thinking framework — Zhuangzi-inspired Free Wandering divergence + MCTS × TD × Eight-Facet Mirror.",
   "owner": {
     "name": "ljjluke"
@@ -10,7 +10,7 @@
       "name": "luke",
       "description": "MCTS-TD decision engine: Eight-Facet Mirror + Xuanxue/Zhanbu enhancements → MCTS simulation → converge & execute. Multi-language (zh/ja/ko/en).",
       "source": "./",
-      "version": "1.11.0",
+      "version": "1.11.1",
       "author": {
         "name": "ljjluke"
       },
