@@ -137,56 +137,32 @@ Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + 
 
 ---
 
-## 📏 OUTPUT RULES: HIGHLIGHTS FIRST, PROCESS SECOND
+## 📏 OUTPUT COMPRESSION (2 RULES)
 
-**Principle: for each step, ask "what's the most interesting finding here?" → show that. Everything else → 1-line summary or skip.**
+**Backend analysis runs fully. Only output to user is compressed.**
 
-The goal isn't to hide output — it's to make every line count. A 50-line report with 10 real insights beats a 200-line report with the same 10 insights buried in process text.
+### Rule 1: Dimensional data → table
 
-### Priority Rule
+Multi-value data (五診 scores, facet scores, MCTS ranking, solution comparison) → output as table.
+One row per item, one column per dimension. Compact, scannable.
 
 ```
-For each step:
-  S = Surprising finding? (counter-intuitive, contradicts assumption, score≥9 or ≤3)
-  I = Insightful finding? (genuinely new perspective, restructuring the problem)
-  P = Process/Procedure? (obvious result of following the method)
-
-  Output priority: S > I > P
-  - S findings → show full detail (1-3 lines)
-  - I findings → show briefly (1 line)
-  - P findings → skip, unless required for understanding S/I
+Bad:  "天=8分充分, 地=4分不足, 人=9分充分, 法=7分充分, 物=6分不足"
+Good: 天=8 地=4← 人=9 法=7 物=6←
 ```
 
-### Per-Step Output Specification
+### Rule 2: Long text → summarize to 1-2 insight lines
 
-| Step | What to output | What to skip |
-|------|---------------|--------------|
-| **Activation** | "⚡ MCTS started — [task] — [mode]" | Long banner unnecessary |
-| **五診** | Scores + only the dimensions that need asking | 本末/有无/张力 as separate sections — fuse into scores |
-| **心斋** | Assumptions user is LIKELY TO DISAGREE with | Obvious/uncontroversial assumptions |
-| **六视** | Which view gave the MOST SURPRISING insight (maybe 1-3, not all 6) | Views that confirm what's already known |
-| **八卦镜** | Facets where 六视 changed the score ≥2, OR score is extreme (≤3 or ≥9), OR reveals a blindspot | Facets where nothing surprising found |
-| **Round 2-5** | Nothing — process steps, not outputs | All internal |
-| **齐物/梦蝶** | Only if they flip a conclusion | If result is the same, skip |
-| **MCTS** | Final ranking + confidence + why #1 beats #2 | Per-round 4-phase process |
-| **自检** | "✅ Pass" or "⚠️ [concern]" or "❌ [reason]" | 5 questions individually |
-| **盲区+言意** | Gaps that affect the recommendation | Minor gaps |
-| **决策报告** | Ranking + execution plan | Verification blocks |
-| **Memory Agent** | Nothing | Never show |
+For any analysis step (心斋, 六视, 八卦镜, 齐物, 梦蝶, 自检, 盲区):
 
-### Format: "One strong line per finding"
+```
+Backend: full analysis (all assumptions, 6 perspectives, 8 facets full template)
+Output:  only the 1-2 most surprising/counter-intuitive findings per step
 
-- ❌ **Bad**: "F1 乾 from cosmic view scored 7/10 because..." (process)
-- ✅ **Good**: "从全局来看，这个需求真正驱动它的不是技术需求，是业务部门的KPI压力" (insight)
-- ❌ **Bad**: "齐物分析中朝菌之视最不舒服" (process)
-- ✅ **Good**: "如果把时间压到只剩1天，这个项目优先级最高的根本不是编码，是确认需求" (insight)
+If nothing surprising was found → output 0 lines for that step.
+```
 
-### When to go deeper
-
-- **User asks**: "tell me more about X" → expand X's full analysis
-- **Finding is truly counter-intuitive** → show the reasoning, user needs to see it to believe it
-- **MCTS ranking is tight** (deltaV < 0.05 between #1 and #2) → show why
-- **Skill author/debug** → full output, no compression<｜end▁of▁thinking｜>
+A 200-line full report becomes 20-50 lines of highlights. User can ask "tell me more about X" to expand.<｜end▁of▁thinking｜>
 
 ---
 
