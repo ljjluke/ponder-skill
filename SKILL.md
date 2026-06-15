@@ -1,8 +1,9 @@
 ---
 name: ponder
-alwaysApply: false
+alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
+  Enabled by default. Only activates on `/luke:ponder` — does NOT auto-trigger.
   Activated by /luke:ponder. Full phased output for ANY request. Every step mandatory.
 version: 1.11.0
 license: MIT
@@ -10,7 +11,7 @@ license: MIT
 
 # MCTS-TD Thinking Framework
 
-> **`/luke:ponder` triggered → Full framework engages. Every step mandatory. Every step visible.**
+> **`alwaysApply: true` only ensures the skill is enabled after install. It ONLY responds to `/luke:ponder` — never auto-triggers.**
 
 ---
 
