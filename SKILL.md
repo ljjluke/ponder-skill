@@ -137,32 +137,41 @@ Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + 
 
 ---
 
-## 📏 OUTPUT COMPRESSION (2 RULES)
+## 📏 OUTPUT RULE: SHOW THINKING, NOT PROCEDURE
 
-**Backend analysis runs fully. Only output to user is compressed.**
+**Process output is valuable — it proves the AI truly thought about the problem.**
+**But it must read as genuine thinking, not checklist-following.**
 
 ### Rule 1: Dimensional data → table
 
-Multi-value data (五診 scores, facet scores, MCTS ranking, solution comparison) → output as table.
-One row per item, one column per dimension. Compact, scannable.
+Multi-value data (五診 scores, facet comparisons, MCTS ranking) → table format.
+Not "天=8分, 地=4分, 人=9分" — comma text. Use | rows.
+
+### Rule 2: Each step outputs its KEY INSIGHT, not its procedure
+
+The difference between mechanical and genuine:
 
 ```
-Bad:  "天=8分充分, 地=4分不足, 人=9分充分, 法=7分充分, 物=6分不足"
-Good: 天=8 地=4← 人=9 法=7 物=6←
+❌ Mechanical (sounds like following instructions):
+"心斋分析: 假设1...假设2...假设3...反假设1...反假设2..."
+
+✅ Genuine thinking (sounds like a person thinking):
+"我观察到我默认了两个事实: X和Y。但如果反过来想——假设用户实际上更在意的是Z——那我的整个方向可能都错了。"
+
+❌ Mechanical:
+"六视第一视鲲鹏之视: 大尺度洞察3-5条、问题重新定义、边界外"
+
+✅ Genuine thinking:
+"从全局高度看……这个需求真正的边界不在于技术限制，而在于业务部门之间互相不信任。如果这个不解决，技术方案做再好也没用。"
 ```
 
-### Rule 2: Long text → summarize to 1-2 insight lines
+### Rule 3: If nothing interesting → skip the step
 
-For any analysis step (心斋, 六视, 八卦镜, 齐物, 梦蝶, 自检, 盲区):
+No need to output a step just because the framework requires it. If 心斋没有发现"值得用户纠正"的假设、六视没有带来新的视角、八卦镜所有卦象评分都在5-8且无跳跃——跳过，不输出，不影响后续分析。
 
-```
-Backend: full analysis (all assumptions, 6 perspectives, 8 facets full template)
-Output:  only the 1-2 most surprising/counter-intuitive findings per step
+### Rule 4: Always show the MCTS ranking and decision report
 
-If nothing surprising was found → output 0 lines for that step.
-```
-
-A 200-line full report becomes 20-50 lines of highlights. User can ask "tell me more about X" to expand.<｜end▁of▁thinking｜>
+These are the deliverables — never skip these.<｜end▁of▁thinking｜>
 
 ---
 
