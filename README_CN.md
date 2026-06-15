@@ -220,8 +220,8 @@ AI: ⚡ 这事有好几种做法，先让我想清楚
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
 /plugin install luke
 
-# Gitee (国内) — 通过 jsDelivr CDN 镜像 GitHub
-/plugin marketplace add https://cdn.jsdelivr.net/gh/ljjluke/mcts-skill@main
+# Gitee (国内) — GitHub 自动同步
+/plugin marketplace add https://gitee.com/luke2438107466/mcts-skill
 /plugin install luke
 ```
 
@@ -235,7 +235,7 @@ AI: ⚡ 这事有好几种做法，先让我想清楚
 /reload-plugins
 ```
 
-> GitHub 网络不稳定时，用 jsDelivr 源重新注册：`/plugin marketplace add https://cdn.jsdelivr.net/gh/ljjluke/mcts-skill@main`，再执行升级。
+> GitHub 网络不稳定时，用 Gitee 源重新注册：`/plugin marketplace add https://gitee.com/luke2438107466/mcts-skill`，再执行升级。
 ```
 
 > 旧版本自动清理。
