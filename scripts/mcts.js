@@ -69,6 +69,11 @@ const ENGINES = {
                    'mcts-final','self-check','decision-report','solution-list',
                    'constraint-list','dong-template'],
     },
+    tree: {
+        script: 'mcts_tree.js',
+        desc: 'MCTS真实树结构 — init/select/add-children/simulate/backprop/status/save/load',
+        commands: ['init','select','add-children','simulate','backprop','status','save','load','list','round-start'],
+    },
 };
 
 function usage() {

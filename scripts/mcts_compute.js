@@ -766,4 +766,19 @@ function main() {
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = {
+    computeUcb, computeAdaptiveC, computeShiMaturity, computeCltUcb,
+    welfordUpdate, computeTdError,
+    checkValueStability, checkHighConfidence, getMaxIterations, shouldStopIteration,
+    checkStatusTransition, getStatusWeight,
+    computeKBonus, classifyBlindspot, getConfidenceLevel,
+    rankByConvergedV, shouldAskUserAfterSimulation,
+    getFuseMode, handleSelfCheckResult,
+    enterSimulation, beginSubDiverge, endSubDiverge, resetRecursiveDepth, getDivergeDepthReport,
+    getLearningRate, getRewardSignal, getTerminalValue,
+    projectState, mutationTiebreak,
+    quickTriggerCheck, getLambdaByTraceLength,
+    getDimensions,
+};
