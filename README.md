@@ -61,26 +61,32 @@ After:  You ask → AI simulates all options internally → picks the best → e
 
 ```
 You: "Add user authentication to my app"
-AI: OK → writes code immediately
-You: "Uh, we can't use external dependencies..."
-AI: Oh → deletes and rewrites
-You: "Also, we're on MySQL only"
-AI: OK → deletes and rewrites again
+AI: OK → acts immediately
+You: "We can't use external dependencies..." → starts over
+You: "Also MySQL only" → starts over again
+
+You: "Should we expand to the European market?"
+AI: OK → recommends full expansion
+You: "Budget is tight and no local team..." → restructures entirely
+
+You: "Which treatment protocol for this patient?"
+AI: OK → prescribes standard approach
+You: "Patient has comorbidities and drug interactions..." → reconsiders
 ```
 
-> **3 rewrites. Problem? Didn't think before acting.**
+> **Same pattern across domains: acting before thinking. 3+ rewrites every time.**
 
 ### With MCTS-TD Planner
 
 ```
-You: "Add user authentication to my app"
+You: Any decision — software, business, medical, personal...
 AI: ⚡ Multiple approaches. Let me simulate first.
     → Collects constraints → Generates 3-5 solutions
     → Runs MCTS tree search on each → Picks the best
-    → Writes it right the first time. ✅
+    → Gets it right the first time. ✅
 ```
 
-> **One shot. Think first, act second.**
+> **One shot. Think first, act second — for any domain.**
 
 ---
 
@@ -202,9 +208,9 @@ Knowledge graph: `~/.claude/data/skills/mcts-td-planner/` — physically separat
 
 | User writes | Internal engine | User sees |
 |------------|----------------|-----------|
-| 中文 "帮我实现登录" | English engine | 中文 "【八面审视地图】..." |
-| 日本語 "ログインを実装" | English engine | 日本語 "【八面審視マップ】..." |
-| 한국어 "로그인 구현" | English engine | 한국어 "【팔면심사지도】..." |
+| 中文 "该选哪个方案" | English engine | 中文 "【八面审视地图】..." |
+| 日本語 "市場拡大を判断" | English engine | 日本語 "【八面審視マップ】..." |
+| 한국어 "치료 방법 선택" | English engine | 한국어 "【팔면심사지도】..." |
 
 > **Fixed labels: code-enforced (Node.js). Dynamic content: LLM translates.**
 

@@ -1,6 +1,6 @@
 ---
 name: task-policy
-description: General decision task state feature definitions, simulation output formats, scoring standards, and aggregate comparison rules. Applicable to any domain, not limited to code development.
+description: General decision task state feature definitions, simulation output formats, scoring standards, and aggregate comparison rules. Applicable to any domain.
 ---
 
 # General Decision Policy
@@ -33,11 +33,11 @@ Solutions are not thought up from thin air, must be based on one of the followin
 
 | Source | Basis Type | Credibility | Example |
 |--------|-----------|-------------|---------|
-| Existing project code | Directly see existing implementation in project | HIGH | "Project already uses gin-jwt middleware, extend on that basis" |
-| Technical documentation | Official docs or accepted best practices | HIGH | "JWT official recommends using Redis blacklist for token management" |
+| Existing materials | Directly see existing implementation in project/organization | HIGH | "Organization already uses X protocol, extend on that basis" |
+| Official documentation | Official docs or accepted best practices | HIGH | "Industry guideline recommends Y approach for this scenario" |
 | Knowledge graph (K00X) | Historical successful experience, context matches | MED-HIGH | "K003 succeeded with same pattern in similar scenario" |
-| Industry standards | Widely used but no direct docs available | MED | "Most APIs use RESTful conventions" |
-| Analogical reasoning | Derived from other domains/tech stacks | LOW | "In Go this is handled this way, analogous to Python should be similar" |
+| Industry standards | Widely used but no direct docs available | MED | "Most organizations in this sector use Z convention" |
+| Analogical reasoning | Derived from other domains/contexts | LOW | "In field A this is handled this way, analogous to field B should be similar" |
 
 ### Solution Description Format
 
@@ -61,15 +61,15 @@ Solutions must have substantial difference (must be different perspectives,
 not just different parameters).
 
 Good Example:
-  Solution A: "Extend based on project's existing gin-jwt middleware"
-    (Basis: Project code)
-  Solution B: "Switch to OAuth2, use separate auth service"
-    (Basis: Technical docs)
+  Solution A: "Extend based on organization's existing X protocol"
+    (Basis: Existing materials)
+  Solution B: "Switch to Y approach, use separate process"
+    (Basis: Official documentation)
   → Two solutions have essential difference
 
 Bad Example:
-  Solution A: "Use gin-jwt middleware"
-  Solution B: "Also use gin-jwt but add Redis"
+  Solution A: "Use X protocol"
+  Solution B: "Also use X but add Y component"
   → Essentially the same solution, just different details
   → Merge into one solution
 ```
@@ -93,7 +93,7 @@ Knowledge Injection:
 
 Step 1: [Starting Action]
   → Operation Description: [Specifically what to do]
-  → Target Files: [Involved file paths]
+  → Target: [Involved area/resource]
   → Expected Result: [Success/Partial success]
   → Difficulty: [Low/Medium/High]
   → Time Estimate: [How many steps or operations]
@@ -109,7 +109,7 @@ Step 2: [Critical Path]
 
 Step 3: [Endpoint Assessment]
   → Final Result: [Expected completion state]
-  → Side Effects: [Other modules possibly affected]
+  → Side Effects: [Other areas possibly affected]
   → Leftover Issues: [Problems solution cannot cover]
   → Rollback Cost: [If failed, difficulty to restore original state]
 
@@ -167,7 +167,7 @@ V = 0.0: Solution completely infeasible
 Variance Sources:
   - Low variance: Matches historical success pattern + Current context clear
   - Medium variance: Partial history match + Context has fuzzy points
-  - High variance: No history match + Complex context + New tech stack
+  - High variance: No history match + Complex context + Unfamiliar methodology
 ```
 
 ### Confidence Level
@@ -190,11 +190,12 @@ After all solutions simulated, output aggregate comparison table:
 ┌───────────┬───────┬────────┬────────────┬──────────────────────────┐
 │ Solution  │ Value │ Variance│ Confidence │ Key Risks                │
 ├───────────┼───────┼────────┼────────────┼──────────────────────────┤
-│ SolutionA │ 0.85  │ 0.05   │ High       │ Depends on external API  │
+│ SolutionA │ 0.85  │ 0.05   │ High       │ Depends on external      │
+│           │       │        │            │ resource                 │
 │ SolutionB │ 0.72  │ 0.18   │ Medium     │ Large change scope,      │
-│           │       │        │            │ affects 3 modules        │
-│ SolutionC │ 0.91  │ 0.08   │ High       │ Need to introduce new    │
-│           │       │        │            │ dependency               │
+│           │       │        │            │ affects 3 areas          │
+│ SolutionC │ 0.91  │ 0.08   │ High       │ Requires new             │
+│           │       │        │            │ methodology adoption     │
 └───────────┴───────┴────────┴────────────┴──────────────────────────┘
 
 CLT-UCB: `node scripts/mcts_compute.js` compute_clt_ucb
@@ -261,23 +262,23 @@ metadata:
 
 | task_type | domain | risk_level | Visits(n) | Success(w) | Mean(q) | Variance(σ²) | Confidence | Last Updated |
 |-----------|--------|-----------|----------|---------|---------|---------|------|---------|
-| BUG_FIX | WEB | LOW | 47 | 44 | 0.936 | 0.05 | HIGH | 2026-06-03 |
-| FEATURE | API | MED | 12 | 9 | 0.750 | 0.18 | MED | 2026-06-02 |
-| REFACTOR | DB | HIGH | 3 | 1 | 0.333 | 0.42 | LOW | 2026-06-01 |
+| CORRECTIVE | INTERFACE | LOW | 47 | 44 | 0.936 | 0.05 | HIGH | 2026-06-03 |
+| CONSTRUCTIVE | OPERATION | MED | 12 | 9 | 0.750 | 0.18 | MED | 2026-06-02 |
+| OPTIMIZING | STORAGE | HIGH | 3 | 1 | 0.333 | 0.42 | LOW | 2026-06-01 |
 
 ## Decision Sequence Patterns
 
 ### Success Patterns
-  - BUG_FIX|WEB: recon → read_target → edit → test → verify
-  - FEATURE|API: recon → plan → search_deps → edit_with_deps → test_all
+  - CORRECTIVE|INTERFACE: recon → read_target → apply → verify → confirm
+  - CONSTRUCTIVE|OPERATION: recon → plan → acquire_resources → execute → validate_all
 
 ### Failure Patterns
-  - DEBUG|GENERAL: Skip recon, modify directly → High probability failure
-  - FEATURE|DB: Modify all files at once → High probability conflicts
+  - DIAGNOSTIC|GENERAL: Skip recon, modify directly → High probability failure
+  - CONSTRUCTIVE|STORAGE: Modify all areas at once → High probability conflicts
 
 ## Cross-session Knowledge
-  - [2026-06-01] User preference: Prefers defensive programming style
-  - [2026-06-02] Project constraint: DB layer not allowed to use third-party libs directly
+  - [2026-06-01] Stakeholder preference: Prefers conservative/defensive approach
+  - [2026-06-02] Constraint: Storage layer not allowed to use third-party solutions directly
 ```
 
 ### Update Rules
@@ -285,10 +286,9 @@ metadata:
 ```
 After execution completes, execute TD update:
   1. Collect actual results:
-     - Did compile/test pass
-     - Did it achieve expected effect
-     - Any side effects
-     - Key tech stacks and frameworks involved
+     - Did execution achieve expected outcome
+     - Any side effects or collateral damage
+     - Key methodology and resources involved
   
   2. Calculate TD error:
      V_actual = Actual result score (0.0~1.0)
@@ -308,7 +308,7 @@ After execution completes, execute TD update:
      If no match found:
        - Create new HYPOTHESIS entry
        - Extract tags keywords from task description
-       - Record current context (tech stack, frameworks, etc.)
+       - Record current context (methodology, resources, etc.)
        - Initial values: q=V_actual, σ²=0.25, n=1
        - Assign new ID (incrementing)
   
