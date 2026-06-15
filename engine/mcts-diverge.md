@@ -380,3 +380,37 @@ Output: solution list + coverage matrix (F1-F8 × solutions).
 - Blindspot classification: `classify-blindspot --score <0-10>`
 - Ti-Yong check: `ti-yong-check` | One-Many check: `one-many-check`
 - Cull: `node scripts/mcts_compute.js cull --criteria`
+
+---
+
+## 🔁 Self-Evolution Loop
+
+The skill learns from every decision cycle. Three feedback loops:
+
+```
+① Divergence → Memory:
+   Divergence insights (心斋/六视/八卦镜 findings) → semantic knowledge
+   CLI: node scripts/mcts.js mma capture-divergence '<json>'
+
+② Five-Element Propagation:
+   Tonify/drain one point → propagate through generating/controlling chain
+   Auto-link promotes/inhibits between knowledge points
+   CLI: node scripts/mcts.js mma interact
+
+③ Knowledge Audit:
+   Periodic check: completeness / contradiction / staleness / five-element balance
+   CLI: node scripts/mcts.js mma audit [context_tags]
+```
+
+### Five Element Interactions
+
+| Relationship | Logic | Effect |
+|-------------|-------|--------|
+| Generating(相生) | wood→fire→earth→metal→water→wood | Tonify nourishes child |
+| Controlling(相克) | wood→earth, fire→metal... | Drain releases controlled |
+| Over-acting(相乘) | same as controlling, excessive | Strong controller overwhelms |
+| Insulting(相侮) | earth→wood, metal→fire... | Strong controlled counter-attacks |
+
+### Knowledge Health Score (mma audit)
+
+Score 0-100 based on: completeness, contradiction count, staleness, five-element balance.
