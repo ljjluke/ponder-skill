@@ -216,23 +216,26 @@ AI: ⚡ 这事有好几种做法，先让我想清楚
 ## 🚀 安装
 
 ```bash
-# 国际 (GitHub)
+# GitHub (国际)
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
 /plugin install luke
 
-# 国内 (Gitee)
-/plugin marketplace add https://gitee.com/luke2438107466/mcts-skill
+# Gitee (国内) — 需要先在仓库设置中开启 Gitee Pages
+/plugin marketplace add https://luke2438107466.gitee.io/mcts-skill
 /plugin install luke
 ```
 
-装好后自动生效，每条消息都会经过 MCTS-TD 引擎处理。
+两个源安装的是同一个插件，任选其一即可。
 
 ## 🔄 升级
 
 ```bash
-/plugin marketplace update luke
-/plugin install luke              # 已安装则自动更新
-/reload-plugins              # 或重启 Claude Code
+/plugin marketplace update luke     # 自动使用已注册的源
+/plugin install luke                # 已安装则自动更新
+/reload-plugins
+```
+
+> GitHub 网络不稳定时，用 Gitee Pages 源重新注册：`/plugin marketplace add https://luke2438107466.gitee.io/mcts-skill`，再执行升级。
 ```
 
 > 旧版本自动清理。

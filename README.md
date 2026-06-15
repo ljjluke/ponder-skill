@@ -177,22 +177,24 @@ User intent → Constraint Collection
 ## 🚀 Install
 
 ```bash
-# International (GitHub)
+# GitHub (International)
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
 /plugin install luke
 
-# China (Gitee)
-/plugin marketplace add https://gitee.com/luke2438107466/mcts-skill
+# Gitee (China) — requires Gitee Pages enabled in repo settings
+/plugin marketplace add https://luke2438107466.gitee.io/mcts-skill
 /plugin install luke
 ```
 
 ## 🔄 Upgrade
 
 ```bash
-/plugin marketplace update luke
-/plugin install luke              # auto-updates if already installed
-/reload-plugins              # or restart Claude Code
+/plugin marketplace update luke     # uses the registered source
+/plugin install luke                # auto-updates if already installed
+/reload-plugins
 ```
+
+> If GitHub is unreachable, re-register with Gitee Pages: `/plugin marketplace add https://luke2438107466.gitee.io/mcts-skill`, then upgrade.
 
 > Old versions auto-cleaned.
 
