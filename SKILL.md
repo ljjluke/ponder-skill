@@ -139,8 +139,11 @@ Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + 
 
 ## 📏 OUTPUT RULE: SHOW THINKING, NOT PROCEDURE
 
-**Process output is valuable — it proves the AI truly thought about the problem.**
-**But it must read as genuine thinking, not checklist-following.**
+**Backend: ALL steps execute fully — 心斋/六视/八卦镜5轮/齐物/梦蝶/MCTS/自检/盲区 — none skipped.**
+**Output: only what's worth the user's attention. Format matters as much as content.**
+
+Process output is valuable — it proves the AI truly thought about the problem.
+But it must read as genuine thinking, not checklist-following.
 
 ### Rule 1: Dimensional data → table
 
@@ -165,9 +168,12 @@ The difference between mechanical and genuine:
 "从全局高度看……这个需求真正的边界不在于技术限制，而在于业务部门之间互相不信任。如果这个不解决，技术方案做再好也没用。"
 ```
 
-### Rule 3: If nothing interesting → skip the step
+### Rule 3: If nothing interesting → skip output, not the step
 
-No need to output a step just because the framework requires it. If 心斋没有发现"值得用户纠正"的假设、六视没有带来新的视角、八卦镜所有卦象评分都在5-8且无跳跃——跳过，不输出，不影响后续分析。
+Backend: still runs the analysis.
+Output: skip that step if no surprising finding emerged.
+
+If 心斋发现假设都是显而易见的、六视没有带来新视角、八卦镜所有卦象评分都在5-8区间且无跳跃——这步不输出任何内容，但后台照做。后续步骤正常衔接。
 
 ### Rule 4: Always show the MCTS ranking and decision report
 
