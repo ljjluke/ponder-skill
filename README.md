@@ -181,8 +181,8 @@ User intent → Constraint Collection
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
 /plugin install luke
 
-# Gitee (China) — requires Gitee Pages enabled in repo settings
-/plugin marketplace add https://luke2438107466.gitee.io/mcts-skill
+# Gitee (China) — via jsDelivr CDN mirroring GitHub
+/plugin marketplace add https://cdn.jsdelivr.net/gh/ljjluke/mcts-skill@main
 /plugin install luke
 ```
 
@@ -194,7 +194,7 @@ User intent → Constraint Collection
 /reload-plugins
 ```
 
-> If GitHub is unreachable, re-register with Gitee Pages: `/plugin marketplace add https://luke2438107466.gitee.io/mcts-skill`, then upgrade.
+> If GitHub is unreachable, re-register with jsDelivr: `/plugin marketplace add https://cdn.jsdelivr.net/gh/ljjluke/mcts-skill@main`, then upgrade.
 
 > Old versions auto-cleaned.
 
