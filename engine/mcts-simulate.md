@@ -31,16 +31,67 @@ Verify: `simulate-layer-guard --state '{solutions:[...]}'`
 
 ---
 
-## Tree Node Structure
+## Tree Data Structure (REAL — persisted to disk)
+
+**⛔ MCTS now uses a real tree stored in `~/.claude/data/skills/mcts-td-planner/memory/trees/`.**
+THE IS NOT just a thought process. Every node is a real data object with CRUD operations.
+
+API: `node scripts/mcts.js tree <command>`
 
 ```
-Node = { id, description, parent, children,
+Node = { id, description, parentId, childIds[],
   n, w, V, σ²,                          // MCTS stats
-  node_type: ACTION|RISK|FALLBACK|TERMINAL,
-  is_terminal, expansion_potential: HIGH|MED|LOW|NONE,
-  mutation: [0,0,0,0,0]                  // 5-bit: [Tian 天,Di 地,Ren 人,Fa 法,Wu 物] 0=stable 1=volatile
+  nodeType: ACTION|RISK|FALLBACK|TERMINAL,
+  isTerminal, expansionPotential: HIGH|MED|LOW|NONE,
+  mutation: [0,0,0,0,0],               // 5-bit: [Tian,Di,Ren,Fa,Wu] 0=stable 1=volatile
+  solutionId, lastSelected, created
 }
 ```
+
+### MCTS Round Cycle — via Real Tree
+
+Each round MUST use the real tree CLI. No text-simulated trees.
+
+```
+Step ① SELECTION:
+  node scripts/mcts.js tree select <node-id> --session <sid>
+  → Returns UCB-ranked children. Pick the top one.
+  ⛔ UCB values are COMPUTED, not approximated by LLM.
+
+Step ② EXPANSION:
+  node scripts/mcts.js tree add-children <parent-id> \
+    --session <sid> \
+    --children '[{"description":"...", "nodeType":"ACTION"}]'
+  → Creates N real tree nodes with auto-increment IDs.
+
+Step ③ SIMULATION:
+  node scripts/mcts.js tree simulate <leaf-id> \
+    --session <sid> --v <V> --sigma2 <σ²>
+  → Records V and marks leaf as terminal.
+
+Step ④ BACKPROPAGATION:
+  node scripts/mcts.js tree backprop <leaf-id> --session <sid>
+  → Walks path to ROOT, updates n/V/σ² via Welford.
+
+Multi-round shortcut:
+  node scripts/mcts.js tree round-start --session <sid>
+  → One complete round: select + (LLM adds children) + simulate + backprop
+```
+
+### Quick Reference
+
+| Action | CLI |
+|--------|-----|
+| Init tree from solutions | `tree init --solutions '<json>'` |
+| Select child (UCB-ranked) | `tree select <node-id> --session <sid>` |
+| Add child nodes | `tree add-children <node-id> --children '<json>' --session <sid>` |
+| Record simulation | `tree simulate <leaf-id> --v <V> --session <sid>` |
+| Backpropagate | `tree backprop <leaf-id> --session <sid>` |
+| Tree status | `tree status --session <sid>` |
+| Start next round | `tree round-start --session <sid>` |
+| Persist | `tree save --session <sid>` (auto-saved) |
+| Load previous | `tree load <session-id>` |
+| All sessions | `tree list` |
 
 ---
 
@@ -48,6 +99,7 @@ Node = { id, description, parent, children,
 
 **UCB = V + c×√(ln(N_parent)/n_child) + K_bonus**, c=√2
 Code: `ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>`
+Real tree: `tree select <node-id> --session <sid>` (uses actual UCB formula)
 
 ### 奇正相生(Qi-Zheng Interplay) — Sun Tzu's Orthodox & Unorthodox (虚实篇 Xu Shi Pian)
 
