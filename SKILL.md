@@ -137,6 +137,59 @@ Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + 
 
 ---
 
+## 📏 OUTPUT RULES: HIGHLIGHTS FIRST, PROCESS SECOND
+
+**Principle: for each step, ask "what's the most interesting finding here?" → show that. Everything else → 1-line summary or skip.**
+
+The goal isn't to hide output — it's to make every line count. A 50-line report with 10 real insights beats a 200-line report with the same 10 insights buried in process text.
+
+### Priority Rule
+
+```
+For each step:
+  S = Surprising finding? (counter-intuitive, contradicts assumption, score≥9 or ≤3)
+  I = Insightful finding? (genuinely new perspective, restructuring the problem)
+  P = Process/Procedure? (obvious result of following the method)
+
+  Output priority: S > I > P
+  - S findings → show full detail (1-3 lines)
+  - I findings → show briefly (1 line)
+  - P findings → skip, unless required for understanding S/I
+```
+
+### Per-Step Output Specification
+
+| Step | What to output | What to skip |
+|------|---------------|--------------|
+| **Activation** | "⚡ MCTS started — [task] — [mode]" | Long banner unnecessary |
+| **五診** | Scores + only the dimensions that need asking | 本末/有无/张力 as separate sections — fuse into scores |
+| **心斋** | Assumptions user is LIKELY TO DISAGREE with | Obvious/uncontroversial assumptions |
+| **六视** | Which view gave the MOST SURPRISING insight (maybe 1-3, not all 6) | Views that confirm what's already known |
+| **八卦镜** | Facets where 六视 changed the score ≥2, OR score is extreme (≤3 or ≥9), OR reveals a blindspot | Facets where nothing surprising found |
+| **Round 2-5** | Nothing — process steps, not outputs | All internal |
+| **齐物/梦蝶** | Only if they flip a conclusion | If result is the same, skip |
+| **MCTS** | Final ranking + confidence + why #1 beats #2 | Per-round 4-phase process |
+| **自检** | "✅ Pass" or "⚠️ [concern]" or "❌ [reason]" | 5 questions individually |
+| **盲区+言意** | Gaps that affect the recommendation | Minor gaps |
+| **决策报告** | Ranking + execution plan | Verification blocks |
+| **Memory Agent** | Nothing | Never show |
+
+### Format: "One strong line per finding"
+
+- ❌ **Bad**: "F1 乾 from cosmic view scored 7/10 because..." (process)
+- ✅ **Good**: "从全局来看，这个需求真正驱动它的不是技术需求，是业务部门的KPI压力" (insight)
+- ❌ **Bad**: "齐物分析中朝菌之视最不舒服" (process)
+- ✅ **Good**: "如果把时间压到只剩1天，这个项目优先级最高的根本不是编码，是确认需求" (insight)
+
+### When to go deeper
+
+- **User asks**: "tell me more about X" → expand X's full analysis
+- **Finding is truly counter-intuitive** → show the reasoning, user needs to see it to believe it
+- **MCTS ranking is tight** (deltaV < 0.05 between #1 and #2) → show why
+- **Skill author/debug** → full output, no compression<｜end▁of▁thinking｜>
+
+---
+
 ## 🌐 Concept Translation Rule (MANDATORY)
 
 **Internal thinking uses cultural concept names. Output translates into user's domain language.**
