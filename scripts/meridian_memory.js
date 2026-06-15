@@ -34,6 +34,7 @@ const { decayCheck, sessionEnd, experienceReplay } = require('./mma/decay');
 const { recordCoOccurrence, clusterDetect } = require('./mma/cluster');
 const { getStatus, computeFourImages } = require('./mma/status');
 const { batchDiagnose } = require('./mma/diagnosis');
+const { fullAudit } = require('./mma/audit');
 
 function output(obj) { log(JSON.stringify(obj, null, 2)); }
 
@@ -58,6 +59,9 @@ function main() {
         log("  cluster                                 — Acupoint cluster detection");
         log("  observe   --phase <name> [--data json]   — Observe point route");
         log("  load                                    — Load KG");
+        log("  audit     [context_tags_json]            — Full knowledge audit (completeness/contradiction/staleness/five-element)");
+        log("  interact                                — Run five-element propagation across all knowledge");
+        log("  capture-divergence <insights_json>       — Store divergence insights as knowledge points");
         return;
     }
 
@@ -122,6 +126,63 @@ function main() {
             }
             case "load": {
                 output(loadMMA()); break;
+            }
+            case "audit": {
+                const kg = loadMMA();
+                const ctxTags = JSON.parse(args[1] || "[]");
+                const report = fullAudit(kg, Array.isArray(ctxTags) ? ctxTags : []);
+                saveMMA(kg); output(report); break;
+            }
+            case "interact": {
+                // 手动触发五行生克传播 + 跨知识关系维护
+                const kg = loadMMA();
+                const { linkRelatedKnowledge } = require('./mma/reinforce');
+                let totalActions = 0;
+                for (const [key, m] of Object.entries(kg.meridians)) {
+                    for (const p of m.points) {
+                        if (p.hidden) continue;
+                        linkRelatedKnowledge(kg, key, p);
+                        totalActions++;
+                    }
+                }
+                saveMMA(kg);
+                output({ status: 'interaction_complete', points_processed: totalActions });
+                break;
+            }
+            case "capture-divergence": {
+                // 发散阶段洞察 → 存储为语义知识
+                const kg = loadMMA();
+                const insights = JSON.parse(args[1] || "[]");
+                if (!Array.isArray(insights)) {
+                    output({ error: 'insights must be a JSON array' }); break;
+                }
+                const stored = [];
+                for (const ins of insights) {
+                    if (!ins.description) continue;
+                    const entry = {
+                        description: ins.description,
+                        tags: ins.tags || ['divergence', ins.phase || 'unknown'],
+                        category: 'tools_and_means',
+                        emotion: ins.emotion || 'neutral',
+                        source: ins.source || 'divergence_insight',
+                        q: ins.q || 0.6,
+                        memory_type: 'semantic',
+                        v_insight: ins.value || 0.6,
+                        divergence_phase: ins.phase || 'general',
+                        related_facet: ins.facet || null,
+                    };
+                    const result = require('./mma/ashi').ashiInsert(kg, entry);
+                    if (result && !result.rejected) {
+                        stored.push({ id: result.point.id, desc: ins.description.substring(0, 40) });
+                    }
+                }
+                if (stored.length > 0) {
+                    const { clusterDetect } = require('./mma/cluster');
+                    clusterDetect(kg);
+                    saveMMA(kg);
+                }
+                output({ stored: stored.length, points: stored });
+                break;
             }
             case "observe": {
                 // Unified observe command for Memory Agent checkpoints

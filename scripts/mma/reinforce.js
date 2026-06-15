@@ -2,7 +2,7 @@
  *  补泻手法 (Reinforce/Reduce) — 价值更新 + 五行生克
  *  "盛则泻之，虚则补之" —《灵枢·经脉》
  * ═══════════════════════════════════════════════════════════════ */
-const { SHU_LEVELS, FIVE_ELEMENT, ARCHIVE_DIR } = require('./constants');
+const { SHU_LEVELS, FIVE_ELEMENT, KNOWLEDGE_INTERACTIONS, ARCHIVE_DIR } = require('./constants');
 const { findPointById, markDirty } = require('./io');
 const { getYaoStage, yaoToStatus, yaoToShuLevel } = require('./state_machine');
 const fs = require('fs');
@@ -105,22 +105,92 @@ function updateShuLevel(point, technique, newQ) {
 function updateFiveElementRelations(kg, meridianKey, point, technique) {
     const meridian = kg.meridians[meridianKey];
     if (!meridian?.element) return;
+    const el = meridian.element;
+
     if (technique === 'tonify') {
-        const childElement = FIVE_ELEMENT.generating[meridian.element];
+        // 相生: 补此经→之子经受益
+        const childElement = FIVE_ELEMENT.generating[el];
         if (childElement) {
             for (const [key, childM] of Object.entries(kg.meridians)) {
                 if (childM.element === childElement) {
-                    point.affects_child = point.affects_child || [];
-                    point.affects_child.push({ meridian: key, effect: 'nourish', timestamp: new Date().toISOString() });
+                    addRelation(point, 'promotes', key, KNOWLEDGE_INTERACTIONS.nourish);
+                }
+            }
+        }
+        // 相侮: 补此经→被反克者减弱(此经过强反侮克我者)
+        const insultedElement = FIVE_ELEMENT.insulting[el];
+        if (insultedElement) {
+            for (const [key, otherM] of Object.entries(kg.meridians)) {
+                if (otherM.element === insultedElement) {
+                    addRelation(point, 'inhibits', key, KNOWLEDGE_INTERACTIONS.restrain);
                 }
             }
         }
     }
+
     if (technique === 'drain') {
-        const controlledElement = FIVE_ELEMENT.controlling[meridian.element];
+        // 相克: 泻此经→被克者受益(克制减弱)
+        const controlledElement = FIVE_ELEMENT.controlling[el];
         if (controlledElement) {
-            point.releases_control = point.releases_control || [];
-            point.releases_control.push({ element: controlledElement, effect: 'release_control', timestamp: new Date().toISOString() });
+            for (const [key, otherM] of Object.entries(kg.meridians)) {
+                if (otherM.element === controlledElement) {
+                    addRelation(point, 'promotes', key, null); // release from control = beneficial
+                }
+            }
+        }
+        // 相乘: 泻此经→此经虚弱被相乘者反噬
+        const overActedElement = FIVE_ELEMENT.over_acting[el];
+        if (overActedElement) {
+            for (const [key, otherM] of Object.entries(kg.meridians)) {
+                if (otherM.element === overActedElement) {
+                    addRelation(point, 'inhibits', key, null);
+                }
+            }
+        }
+    }
+
+    // 跨知识 promotes/inhibits: 基于tags重叠自动建立
+    linkRelatedKnowledge(kg, meridianKey, point);
+}
+
+function addRelation(point, type, targetMeridianKey, interaction) {
+    const field = type === 'promotes' ? 'promotes' : 'inhibits';
+    point[field] = point[field] || [];
+    const existing = point[field].find(r => r.target_meridian === targetMeridianKey);
+    if (existing) {
+        existing.strength = (existing.strength || 0) + (interaction?.weight || 0.05);
+        existing.last_updated = new Date().toISOString();
+    } else {
+        point[field].push({
+            target_meridian: targetMeridianKey,
+            strength: interaction?.weight || (type === 'promotes' ? 0.1 : -0.1),
+            type: type,
+            desc: interaction?.desc || (type === 'promotes' ? 'cross-knowledge support' : 'cross-knowledge conflict'),
+            created: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
+        });
+    }
+}
+
+function linkRelatedKnowledge(kg, meridianKey, point) {
+    if (!point.tags || point.tags.length < 2) return;
+    for (const [key, m] of Object.entries(kg.meridians)) {
+        if (key === meridianKey) continue;
+        for (const other of m.points) {
+            if (other.hidden || !other.tags) continue;
+            const overlap = point.tags.filter(t => other.tags.includes(t)).length;
+            const minLen = Math.min(point.tags.length, other.tags.length);
+            if (minLen > 0 && overlap / minLen > 0.3) {
+                // Same direction q → promote; opposite → inhibit
+                const qDiff = Math.abs((point.q || 0.5) - (other.q || 0.5));
+                if (qDiff < 0.2) {
+                    addRelation(point, 'promotes', key, KNOWLEDGE_INTERACTIONS.support);
+                    addRelation(other, 'promotes', meridianKey, KNOWLEDGE_INTERACTIONS.support);
+                } else if (qDiff > 0.4) {
+                    addRelation(point, 'inhibits', key, KNOWLEDGE_INTERACTIONS.contradict);
+                    addRelation(other, 'inhibits', meridianKey, KNOWLEDGE_INTERACTIONS.contradict);
+                }
+            }
         }
     }
 }
@@ -165,7 +235,7 @@ function computeTrigramStability(point) {
     return { ben, zhi, bian };
 }
 
-module.exports = { reinforceReduce, hidePoint, updateFiveElementRelations, getYaoStage, computeTrigramStability };
+module.exports = { reinforceReduce, hidePoint, updateFiveElementRelations, getYaoStage, computeTrigramStability, linkRelatedKnowledge, addRelation };
 
 
 /**

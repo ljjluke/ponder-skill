@@ -248,11 +248,28 @@ const EMOTION_MERIDIAN_MAP = {
     an:      'stomach',
 };
 
-// ===== 五行生克 =====
+// ===== 五行生克 (Five Element Interactions) =====
+// 相生(generating): 木生火, 火生土, 土生金, 金生水, 水生木
+// 相克(controlling): 木克土, 火克金, 土克水, 金克木, 水克火
+// 相乘(over_acting): 当克者过强→过度克制 (与相克同向, 但程度过)
+// 相侮(insulting):  当被克者过强→反克 (与相克反向)
 const FIVE_ELEMENT = {
     generating: { wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood' },
     controlling:{ wood: 'earth', fire: 'metal', earth: 'water', metal: 'wood', water: 'fire' },
+    over_acting:{ wood: 'earth', fire: 'metal', earth: 'water', metal: 'wood', water: 'fire' },
     insulting:  { earth: 'wood', metal: 'fire', water: 'earth', wood: 'metal', fire: 'water' },
+    // 逆生(counter_generating): 某行过旺会反向消耗生它者
+    counter_generating: { fire: 'wood', earth: 'fire', metal: 'earth', water: 'metal', wood: 'water' },
+};
+
+// 知识之间可能的交互类型 (用于 promotes/inhibits 关系)
+const KNOWLEDGE_INTERACTIONS = {
+    nourish:    { type: 'promote',  desc: '相生: 此知识强化彼知识', weight: 0.15 },
+    support:   { type: 'promote',  desc: '相助: 此知识支持彼知识', weight: 0.10 },
+    cross_cut: { type: 'promote',  desc: '交叉验证: 此知识佐证彼知识', weight: 0.12 },
+    restrain:  { type: 'inhibit',  desc: '相克: 此知识削弱彼知识', weight: -0.15 },
+    contradict:{ type: 'inhibit',  desc: '矛盾: 此知识与彼知识冲突', weight: -0.20 },
+    overrule:  { type: 'inhibit',  desc: '推翻: 此知识证伪彼知识', weight: -0.35 },
 };
 
 // ===== 六爻知识生命周期 (Six Yao Lifecycle) =====
@@ -465,7 +482,7 @@ module.exports = {
     HEAVENLY_STEMS, EARTHLY_BRANCHES, STEM_ELEMENT, STEM_MERIDIAN, BRANCH_MERIDIAN, BRANCH_HOUR,
     TWELVE_XIAOXI,
     HEXAGRAM_SEQUENCE,
-    EMOTION_CONSOLIDATION, EMOTION_MERIDIAN_MAP, FIVE_ELEMENT, SOURCE_RELIABILITY,
+    EMOTION_CONSOLIDATION, EMOTION_MERIDIAN_MAP, FIVE_ELEMENT, KNOWLEDGE_INTERACTIONS, SOURCE_RELIABILITY,
     getNextHexagram, getPrevHexagram,
     computeDayGanZhi, getHourBranch,
 };
