@@ -104,16 +104,16 @@ Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
 **⛔ Scan for 3 specific mismatches between user statements and our interpretations:**
 
 ① **Literal vs Metaphorical**: User said X literally, but we interpreted as metaphor? Or vice versa?
-   - "Make it fast" → 50ms response time? Or "don't make users wait"?
-   - "Must be robust" → 99.99% uptime? Or "shouldn't break easily"?
+   - "Make it fast" → faster delivery timeline? Or "don't make people wait"?
+   - "Must be robust" → zero failure tolerance? Or "shouldn't break easily"?
 
 ② **Same words, different intent**: User and we use the same term but mean different things.
-   - "Simple" → few lines of code? Or easy to understand? Or quick to build?
-   - "Secure" → encrypted? Authenticated? Audited?
+   - "Simple" → minimal steps? Easy to explain? Quick to implement?
+   - "Secure" → protected? Verified? Documented?
 
 ③ **Unstated expectations**: User didn't say it, but we assumed it (or missed it).
-   - Did we assume a specific tech stack without confirmation?
-   - Did we ignore an implicit "it should work like [familiar app]"?
+   - Did we assume a specific methodology or toolset without confirmation?
+   - Did we ignore an implicit "it should work like [familiar process]"?
 
 **Resolution rules:**
 - Same yi different yan → merge solutions (false diversity)

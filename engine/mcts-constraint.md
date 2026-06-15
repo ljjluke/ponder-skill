@@ -99,9 +99,9 @@ Code: `node scripts/mcts_compute.js dong-jing --message '<msg>' --decision-count
 
 ## 0.2 Technical Constraint Checklist
 
-Code: `node scripts/mcts_guard.js constraint-checklist` (9 items: tech_stack, dependencies, architecture, compliance, performance, security, time_budget, backward_compat, user_preference)
+Code: `node scripts/mcts_guard.js constraint-checklist` (9 items: methodology, resources_external, structure, compliance, performance, safety, time_budget, legacy_constraints, stakeholder_preference)
 
-Items with auto_detect=true → check from code. auto_detect=false → MUST ask user.
+Items with auto_detect=true → check from available materials. auto_detect=false → MUST ask user.
 
 ## 0.3 Constraint Sources (by priority)
 

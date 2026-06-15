@@ -318,15 +318,15 @@ function memoryAgentGuard(executedCheckpoints = []) {
 // ═══════════════════════════════════════════════════════════════
 
 const CONSTRAINT_CHECKLIST = [
-    { id: 'tech_stack',     category: 'hard', question: '技术栈是否明确？(语言/框架/数据库/中间件)', auto_detect: true },
-    { id: 'dependencies',   category: 'hard', question: '能否引入新的第三方依赖？有无版本/许可证限制？', auto_detect: false },
-    { id: 'architecture',   category: 'hard', question: '有无架构硬性约束？(微服务/单体/特定设计模式)', auto_detect: true },
-    { id: 'compliance',     category: 'hard', question: '有无合规/政策限制？(数据不出境/审计日志/等保)', auto_detect: false },
-    { id: 'performance',    category: 'soft', question: '有无性能要求？(响应时间/吞吐量/并发量)', auto_detect: false },
-    { id: 'security',       category: 'hard', question: '有无安全要求？(加密标准/认证方式/OWASP)', auto_detect: true },
-    { id: 'time_budget',    category: 'soft', question: '有无时间/成本限制？(截止日期/预算上限)', auto_detect: false },
-    { id: 'backward_compat',category: 'hard', question: '是否需要向后兼容？(现有API/数据结构不变)', auto_detect: true },
-    { id: 'user_preference',category: 'soft', question: '用户有无明确的偏好/倾向？(语言/风格/工具)', auto_detect: false },
+    { id: 'methodology',          category: 'hard', question: 'Is the methodology/toolset clearly defined?', auto_detect: true, auto_detect_hint: 'Check project docs, tool configs, or standards' },
+    { id: 'resources_external',   category: 'hard', question: 'Can external resources/suppliers be introduced?', auto_detect: false, auto_detect_hint: 'Check project configuration or resource lists' },
+    { id: 'structure',            category: 'hard', question: 'Are there structural/organizational hard constraints?', auto_detect: true, auto_detect_hint: 'Check project structure or organizational docs' },
+    { id: 'compliance',           category: 'hard', question: '有无合规/政策限制？(数据不出境/审计日志/等保)', auto_detect: false },
+    { id: 'performance',          category: 'soft', question: '有无性能要求？(响应时间/吞吐量/并发量)', auto_detect: false },
+    { id: 'safety',               category: 'hard', question: 'Are there safety/protection requirements?', auto_detect: true },
+    { id: 'time_budget',          category: 'soft', question: '有无时间/成本限制？(截止日期/预算上限)', auto_detect: false },
+    { id: 'legacy_constraints',   category: 'hard', question: 'Must maintain compatibility with existing systems/processes?', auto_detect: true },
+    { id: 'stakeholder_preference',category: 'soft', question: 'Are there stakeholder-specific preferences?', auto_detect: false },
 ];
 
 function constraintChecklist(state = {}) {
@@ -340,7 +340,7 @@ function constraintChecklist(state = {}) {
                 ...item,
                 status: 'unchecked',
                 guidance: item.auto_detect
-                    ? '可以从项目代码中推断，检查 package.json/go.mod/配置文件'
+                    ? 'Check from project documentation, configuration files, or standards references'
                     : '必须询问用户，不能假设',
             });
         } else if (confirmed[item.id] === undefined) {
@@ -806,7 +806,7 @@ function fiveDiagnosisDetail() {
             ],
             bad: [
                 '❌ "Who maintains the system?" (assumes software — what if user is a doctor?)',
-                '❌ "What is your tech stack?" (should read package.json/go.mod yourself)',
+                '❌ "What is your tech stack?" (should check project documentation yourself)',
                 '❌ "Any requirements?" (too vague, user does not know where to start)',
             ],
         },

@@ -96,8 +96,8 @@ Quick roll-out from new node to termination. Depth: simple 1-2 steps, medium 2-3
    - HIGH credibility → use directly
    - MED → use but mark for verification
    - LOW → use with lower weight, note uncertainty
-2. **Self-learn**: check code/docs/WebSearch → need 2 sources cross-validated
-   - Can you read the project's package.json, README, or existing code?
+2. **Self-learn**: check documents/data/WebSearch → need 2 sources cross-validated
+   - Can you read the project's documentation, configuration, or existing materials?
    - Can WebSearch find industry standards or known patterns?
 3. **Ask user**: requirement/preference/constraint uncertainty → max 2 questions, collect for batch
    - ⛔ ONLY if ①② exhausted and you truly cannot proceed without user input

@@ -24,7 +24,7 @@ description: MCTS-TD Step 1 — Diverge Engine. Eight-Facet Mirror review + Cros
 ① PARAPHRASE: "I understand you want [X]. Is that correct? Are there other aspects to consider?"
 ② PROBE: "What solutions have you tried or considered before?"
 ③ CONSTRAIN: Ask 2-3 most critical constraints via AskUserQuestion (NOT free text)
-   Example: "Any dependency constraints?" → [Yes, no restrictions / Must use Go+gin / No external dependencies]
+   Example: "Any methodology constraints?" → [Yes, no restrictions / Must follow X approved standard / No external resources allowed]
 ```
 
 **⚠️ Do NOT skip this. The user knows things you do not.**

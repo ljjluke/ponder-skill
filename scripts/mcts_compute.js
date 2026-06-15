@@ -236,35 +236,35 @@ function getLearningRate(n) {
 }
 
 const REWARD_SIGNALS = {
-    compile_pass: 1.0, partial_pass: 0.5, neutral: 0.0,
-    lint_errors: -0.3, test_failure: -0.7, compile_failure: -1.0
+    full_success: 1.0, partial_success: 0.5, neutral: 0.0,
+    minor_defect: -0.3, major_failure: -0.7, catastrophic_failure: -1.0
 };
 function getRewardSignal(type) { return REWARD_SIGNALS[type] || 0.0; }
 
 const TERMINAL_VALUES = {
-    task_complete: 1.0, partial_success: 0.5, neutral: 0.0,
-    side_effects: -0.5, task_failed: -1.0
+    goal_achieved: 1.0, partial_achievement: 0.5, neutral: 0.0,
+    collateral_damage: -0.5, goal_failed: -1.0
 };
 function getTerminalValue(type) { return TERMINAL_VALUES[type] || 0.0; }
 
 function projectState(sv) {
-    const TASK_SHORT = { BUG_FIX: 'BF', FEATURE: 'FT', REFACTOR: 'RF', DEBUG: 'DB', TEST: 'TS' };
+    const TASK_SHORT = { CORRECTIVE: 'CO', CONSTRUCTIVE: 'CN', OPTIMIZING: 'OP', DIAGNOSTIC: 'DG', VALIDATING: 'VL' };
     const RISK_SHORT = { LOW: 'L', MED: 'M', HIGH: 'H', CRITICAL: 'C' };
     const SIZE_SHORT = { SMALL: 'S', MED: 'M', LARGE: 'L' };
     const NOVEL_SHORT = { LOW: 'L', MED: 'M', HIGH: 'H' };
-    const fileCountShort = (fc) => {
-        if (fc === 1 || fc === '1') return '1';
-        const n = parseInt(fc);
-        if (isNaN(n)) return String(fc);
-        if (n <= 5) return 'M'; if (n <= 10) return 'L'; return 'XL';
+    const scopeShort = (sc) => {
+        if (sc === 1 || sc === '1' || sc === 'UNIT') return 'U';
+        const n = parseInt(sc);
+        if (isNaN(n)) return String(sc).charAt(0).toUpperCase();
+        if (n <= 5) return 'M'; if (n <= 10) return 'E'; return 'C';
     };
     const task = TASK_SHORT[sv.task_type] || sv.task_type || '?';
     const domain = sv.domain || '?';
-    const fc = fileCountShort(sv.file_count);
+    const scope = scopeShort(sv.scope || sv.file_count);
     const risk = RISK_SHORT[sv.risk_level] || sv.risk_level || '?';
     const ctx = SIZE_SHORT[sv.context_size] || sv.context_size || '?';
     const nov = NOVEL_SHORT[sv.novelty] || sv.novelty || '?';
-    return `${task}|${domain}|${fc}|${risk}|${ctx}|${nov}`;
+    return `${task}|${domain}|${scope}|${risk}|${ctx}|${nov}`;
 }
 
 function mutationTiebreak(nodes) {
@@ -426,8 +426,8 @@ function main() {
             }
             // --- Phantom commands (referenced in engine docs) ---
             case "needs-sub-diverge": {
-                const type = o.type || "tech_choice";
-                const needsSub = ["tech_choice", "architecture", "framework"].includes(type);
+                const type = o.type || "method_selection";
+                const needsSub = ["method_selection", "structure_design", "tool_selection"].includes(type);
                 output({ needs_sub_diverge: needsSub, type, reason: needsSub ? "multi-option tech decision — sub-diverge recommended" : "non-tech decision point — use knowledge tree or ask user" });
                 break;
             }
@@ -468,7 +468,7 @@ function main() {
             }
             case "identify-domain": {
                 const task = (o.task || "").toLowerCase();
-                const domainMap = { web: "WEB", api: "API", cli: "CLI", db: "DB", config: "CONFIG", test: "TEST" };
+                const domainMap = { frontend: "FRONTEND", interface: "INTERFACE", operation: "OPERATION", storage: "STORAGE", governance: "GOVERNANCE", validation: "VALIDATION", web: "FRONTEND", api: "INTERFACE", cli: "OPERATION", db: "STORAGE", config: "GOVERNANCE", test: "VALIDATION" };
                 let domain = "GENERAL";
                 for (const [kw, d] of Object.entries(domainMap)) { if (task.includes(kw)) { domain = d; break; } }
                 output({ domain, hint: "Only as reference signal, LLM makes final judgment" });

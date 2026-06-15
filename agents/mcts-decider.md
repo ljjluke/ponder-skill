@@ -31,8 +31,8 @@ Phase 4 — Output after simulation: [Decision Report]
 
 ### 0. Constraint Collection (engine/mcts-constraint.md)
 Before generating ANY solution, systematically collect constraints:
-- Tech stack, dependencies, architecture, policy/compliance, performance, security, time/cost
-- Check: can I confirm this from project code? If not, ASK THE USER.
+- Methodology, external resources, structure, policy/compliance, performance, safety, time/cost
+- Check: can I confirm this from available materials? If not, ASK THE USER.
 - Never assume "probably ok" for missing constraints.
 
 **⛔ GUARD**: If tempted to say "only one feasible approach", STOP and run:

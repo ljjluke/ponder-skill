@@ -36,14 +36,14 @@ Pass this list to ⑤ and ⑥. Context compaction may lose it — that's OK, sen
 
 | Field | Required | Example | Purpose |
 |-------|----------|---------|---------|
-| description | YES | "React cleanup prevents memory leak" | What was learned |
-| tags | YES (2+) | ["react","useEffect","cleanup"] | Recall + meridian assignment |
+| description | YES | "Quarterly reallocation achieved 12% efficiency gain" | What was learned |
+| tags | YES (2+) | ["budget","reallocation","efficiency"] | Recall + meridian assignment |
 | category | YES | "tools_and_means" | Determines meridian |
 | emotion | recommended | "xi" | Consolidation strength boost |
 | source | recommended | "execution_result" | Reliability weight |
 | q | optional (0.5) | 0.8 | Initial value estimate |
 
-Example: `node scripts/mcts.js mma ashi '{"description":"React useEffect cleanup prevents memory leak on unmount","tags":["react","useEffect","cleanup","memory-leak"],"category":"tools_and_means","emotion":"xi","source":"execution_result","q":0.8}'`
+Example: `node scripts/mcts.js mma ashi '{"description":"Quarterly budget reallocation achieved 12% efficiency gain","tags":["budget","reallocation","efficiency"],"category":"tools_and_means","emotion":"xi","source":"execution_result","q":0.8}'`
 
 ## Emotion Modulator (ashi q initial)
 

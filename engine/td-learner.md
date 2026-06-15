@@ -45,7 +45,7 @@ New expected value = Old expected value + α × TD_error
 | Formula Symbol | Inference Correspondence | Acquisition Method |
 |---------------|-------------------------|---------------------|
 | $V(s_t)$ | Success expectation at step t | Knowledge graph query (weighted voting) |
-| $r_{t+1}$ | Local feedback | Compile/test/lint results |
+| $r_{t+1}$ | Local feedback | Execution outcome vs expected outcome |
 | $V(s_{t+1})$ | Subsequent step expectation | Knowledge graph query |
 | $\alpha$ | Learning rate | Set by task type |
 | $\gamma$ | Discount factor | Set by task type |
@@ -59,13 +59,13 @@ New expected value = Old expected value + α × TD_error
 Feedback collection occurs after each step of task execution:
 
 ```
-r_t = 
-  +1.0  − Compile/test completely pass
-  +0.5  − Partial pass (compile passes but warnings)
+r_t =
+  +1.0  − Full success (all objectives met)
+  +0.5  − Partial success (main objective met, minor gaps)
    0.0  − No significant feedback
-  -0.3  − Compile warnings or lint errors
-  -0.7  − Test failure
-  -1.0  − Compile failure/introduced new bug
+  -0.3  − Minor defect (small deviation from expected)
+  -0.7  − Major failure (core objective not met)
+  -1.0  − Catastrophic failure (objective failed with severe consequences)
 
 Code: `node scripts/mcts.js compute get-reward-signal --type <type>`
 ```
@@ -74,11 +74,11 @@ Code: `node scripts/mcts.js compute get-reward-signal --type <type>`
 
 ```
 V(s_terminal) =
-  +1.0  − Task completely successful (all goals achieved)
-  +0.5  − Partial success (main function complete, edge cases unhandled)
-   0.0  − Neutral (task complete but quality mediocre)
-  -0.5  − Side effects (modified A but broke B)
-  -1.0  − Task failed/need rollback
+  +1.0  − Goal fully achieved (all objectives satisfied)
+  +0.5  − Partial achievement (main goal met, edge cases unhandled)
+   0.0  − Neutral (objective met but quality mediocre)
+  -0.5  − Collateral damage (achieved A but harmed B)
+  -1.0  − Goal failed (need alternative approach)
 
 Code: `node scripts/mcts.js compute get-terminal-value --type <type>`
 ```
@@ -188,9 +188,9 @@ Concept: Two "identical" state features should share knowledge graph query
 
 In Claude Code, state "equality" is determined by state feature vector:
   State = {
-      task_type: BUG_FIX | FEATURE | REFACTOR | DEBUG | TEST
-      domain: WEB | API | CLI | DB | CONFIG | GENERAL
-      file_count: 1 | 2-5 | 6-10 | >10
+      task_type: CORRECTIVE | CONSTRUCTIVE | OPTIMIZING | DIAGNOSTIC | VALIDATING
+      domain: FRONTEND | INTERFACE | OPERATION | STORAGE | GOVERNANCE | GENERAL
+      scope: UNIT | MODERATE | EXTENSIVE | COMPREHENSIVE
       risk_level: LOW | MED | HIGH | CRITICAL
       context_size: SMALL | MED | LARGE
       novelty: LOW | MED | HIGH
@@ -219,8 +219,8 @@ Eligibility trace solves "credit assignment" problem — when final feedback is 
 ```
 Simulation scenario:
   Step 1: Chose Solution A        ← Is this the key decision?
-  Step 2: Modified file x          ← Or here?
-  Step 3: Compile failed           ← Or here?
+  Step 2: Executed action X          ← Or here?
+  Step 3: Execution failed           ← Or here?
   
   Eligibility trace λ = 0.8 means:
     Step 1 gets 20% of credit
@@ -281,9 +281,9 @@ This is this engine's core upgrade — from "one row per feature aggregate stati
 Old mode (aggregate statistics) cannot handle scenarios:
 
 ```
-Old mode: {BUG_FIX, WEB, LOW} → q=0.85, n=30, σ²=0.05
+Old mode: {CORRECTIVE, INTERFACE, LOW} → q=0.85, n=30, σ²=0.05
 
-Problem 1: If this 0.85 was data under tech stack v1, after tech stack
+Problem 1: If this 0.85 was data under methodology/toolset v1, after methodology/toolset
            upgrades to v2, actual value drops to 0.3
            → Old mode can only average, result 0.575, neither version accurate
 
@@ -302,13 +302,13 @@ Each piece of knowledge is an independent entry with its own lifecycle:
 ```
 Knowledge Entry = {
     id: "K001",                    // Unique identifier
-    feature_key: "BUG_FIX|WEB|LOW", // State feature
+    feature_key: "CORRECTIVE|INTERFACE|LOW", // State feature
     value: 0.85,                   // Value estimate
     variance: 0.05,                // Variance
     n: 30,                         // Verification count
     status: "CONFIRMED",           // Current status (see state machine)
     context: {                     // Context where knowledge holds
-        tech_stack: "v1.0",
+        methodology_version: "v1.0",
         project_phase: "early",
         constraints: "no special constraints"
     },
@@ -488,10 +488,10 @@ Association Methods:
    → Characteristic: What surfaces is "same problem pattern", regardless of domain
 
 ③ Context Association (current context triggers related memory)
-   "This project uses Python, I remember handling similar issue in
-    Python project before"
-   → Condition: Current context matches tech stack
-   → Surfaces: Entries with same or similar tech stack
+   "This project uses established methods, I remember handling similar issue in
+    previous project before"
+   → Condition: Current context matches methodology and environment
+   → Surfaces: Entries with same or similar methodology/toolset
    → Characteristic: What surfaces is "experience from same environment"
 
 Association Output:
@@ -499,11 +499,11 @@ Association Output:
   Each knowledge piece may be complete or incomplete (remember the gist, details fuzzy).
   
   Output Format:
-    "Recalled K005: Encountered similar issue when fixing FastAPI param
+    "Recalled K005: Encountered similar issue when fixing patient intake validation
      validation before...
-     → Remember using Pydantic's validator, but specific syntax unclear"
-    "Recalled K001: Go project also had nil pointer issue...
-     → Remember it was gin middleware issue, but different tech stack,
+     → Remember using quality checkpoint system, but specific syntax unclear"
+    "Recalled K001: Previous project had similar structural failure...
+     → Remember it was structural context, but different methodology,
        uncertain if applicable"
 ```
 
@@ -542,8 +542,8 @@ Types of Incompleteness:
    → Complete: Check that entry's q value (precise value)
    → If q value also old → Mark "needs re-verification"
 
-② Context Fuzzy: "Remember it was in a Python project, but not sure if
-                   same framework"
+② Context Fuzzy: "Remember it was in a previous project, but not sure if
+                   same methodology"
    → Complete: Check that entry's context field
    → If context incomplete → Mark "context missing"
 
@@ -563,26 +563,26 @@ Types of Incompleteness:
 ```
 Method 1: Follow fragments to associate (no need to look up external resources)
 
-  "Remember it was FastAPI param validation issue..."
-  → Follow "FastAPI" association: "FastAPI uses Pydantic"
-  → Follow "param validation" association: "Pydantic has validator and
-                                            field_validator"
-  → Piece together: "Should use field_validator, but specific decorator
-                     syntax uncertain"
+  "Remember it was patient intake validation process issue..."
+  → Follow "patient intake" association: "intake uses quality checkpoints"
+  → Follow "parameter validation" association: "quality checkpoint system has primary and
+                                            secondary checkpoint"
+  → Piece together: "Should use secondary checkpoint, but specific
+                     invocation syntax uncertain"
 
   Completion Result:
-  - Core info: Known (Pydantic validation)
-  - Detail info: Incomplete (decorator syntax)
+  - Core info: Known (quality checkpoint validation)
+  - Detail info: Incomplete (checkpoint syntax)
   - Incompleteness level: Partial (doesn't affect simulation, annotate
-                              "syntax to confirm" during simulation)
+                              "checkpoint to confirm" during simulation)
 
 
 Method 2: Related knowledge completion (check other entries in knowledge graph)
 
-  "K005 is about FastAPI param validation..."
-  → Check knowledge graph for other entries with tags containing "FastAPI"
-    or "Pydantic"
-  → Find K008 is also FastAPI project, and contains specific code examples
+  "K005 is about patient intake validation process..."
+  → Check knowledge graph for other entries with tags containing "patient intake"
+    or "quality checkpoint"
+  → Find K008 is also patient intake project, and contains specific procedure examples
   → Use K008 to complete K005's details
 
   Completion Result:
@@ -601,7 +601,7 @@ Post-completion Assessment:
   
   Partially Incomplete: Core info present, details fuzzy → Annotate
                         "pending confirmation" during simulation
-    "Roughly know how to do, but specific API unclear,
+    "Roughly know how to do, but specific procedure unclear,
      annotate during simulation"
   
   Severely Incomplete: Core info missing → Enter Step 3 external verification
@@ -618,20 +618,20 @@ If still incomplete after fragment completion, or knowledge itself may be outdat
 Trigger Conditions:
   ① Still "severely incomplete" after fragment completion
   ② Knowledge is CONFIRMED but last verification >30 days (may be outdated)
-  ③ Knowledge context clearly mismatched with current context (tech stack changed)
+  ③ Knowledge context clearly mismatched with current context (methodology/toolset changed)
   ④ Contradictions between recalled knowledge pieces
 
 Verification Methods (from lowest to highest cost):
 
   Method 1: Use Claude's built-in knowledge
-    "I remember Pydantic has validator, but syntax uncertain...
-     But my training data has Pydantic docs, can confirm directly"
+    "I remember the quality checkpoint system has validators, but specific rules uncertain...
+     But my training data has the relevant reference, can confirm directly"
     → Cost: Low (no tool call needed)
     → Applicable: Common technical point detail confirmation
 
   Method 2: Check project code
-    "Not sure which gin version this project uses...
-     Just check go.mod"
+    "Not sure which version of the process this project uses...
+     Just check the configuration file"
     → Cost: Medium (need to read file)
     → Applicable: Technical details related to current project
 
@@ -680,7 +680,7 @@ When Simulate Engine discovers certain knowledge inaccurate, generate contradict
 ────────────────────────────────────────
   Value Function Contradiction Report
 ────────────────────────────────────────
-  Conflicting Knowledge: K001 (BUG_FIX|WEB|LOW, q=0.90, CONFIRMED)
+  Conflicting Knowledge: K001 (CORRECTIVE|INTERFACE|LOW, q=0.90, CONFIRMED)
   Contradiction Location: Step 2 of simulating Solution A
   Contradiction Content:
     - K001's context: Tech stack v1, no migration needed
@@ -690,7 +690,7 @@ When Simulate Engine discovers certain knowledge inaccurate, generate contradict
                              context change)
   Handling Suggestion:
     - Don't reference K001 in current simulation
-    - If tech stack v2 knowledge entry exists: Reference it
+    - If methodology/toolset v2 knowledge entry exists: Reference it
     - If not: Create new HYPOTHESIS entry K004
 ────────────────────────────────────────
 ```
@@ -733,12 +733,12 @@ Rollback Process:
        "rolled back" marker
 
 Rollback Example:
-  K001 (BUG_FIX|WEB|LOW, q=0.90, CONFIRMED, tech stack v1)
+  K001 (CORRECTIVE|INTERFACE|LOW, q=0.90, CONFIRMED, methodology/toolset v1)
     → Tech stack upgrades to v2, new knowledge K002 (q=0.30, PROVISIONAL)
       appears
     → K001 marked as DISPUTED
     → Later verified K002 was sporadic issue, K001 still applies under
-      tech stack v2
+      methodology/toolset v2
     → Rollback: K001 restored to CONFIRMED, K002 marked as REFUTED
     → Knowledge change log records this complete back-and-forth
 ```
@@ -750,22 +750,22 @@ Each knowledge entry's status change is recorded, forming complete historical tr
 ```
 Knowledge Change Log:
   # K001 Lifecycle
-  2026-05-01: K001 created (BUG_FIX|WEB|LOW, q=0.90, HYPOTHESIS)
+  2026-05-01: K001 created (CORRECTIVE|INTERFACE|LOW, q=0.90, HYPOTHESIS)
   2026-05-10: K001 → PROVISIONAL (1st verification successful)
   2026-05-20: K001 → CONFIRMED (3rd verification successful, n=3)
-  2026-06-01: K001 → DISPUTED (contradicts K002, tech stack v1 vs v2)
+  2026-06-01: K001 → DISPUTED (contradicts K002, methodology/toolset v1 vs v2)
   2026-06-05: K001 → CONFIRMED (rollback, K002 refuted)
   
   # K002 Lifecycle
-  2026-06-01: K002 created (BUG_FIX|WEB|LOW, q=0.30, HYPOTHESIS)
+  2026-06-01: K002 created (CORRECTIVE|INTERFACE|LOW, q=0.30, HYPOTHESIS)
   2026-06-02: K002 → PROVISIONAL (1st verification)
   2026-06-05: K002 → REFUTED (verified as sporadic issue, K001 restored)
 
   # Current Active Knowledge Summary
-  CONFIRMED: K001(q=0.90, tech stack v1), K003(q=0.80, general)
+  CONFIRMED: K001(q=0.90, methodology/toolset v1), K003(q=0.80, general)
   PROVISIONAL: None
   DISPUTED: None
-  REFUTED: K002(q=0.30, tech stack v2, refuted)
+  REFUTED: K002(q=0.30, methodology/toolset v2, refuted)
   HYPOTHESIS: None
 ```
 
