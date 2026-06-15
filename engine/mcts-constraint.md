@@ -15,7 +15,7 @@ description: MCTS-TD Step 0 — Constraint Collection + Xuanxue/Zhanbu Enhanceme
 
 ## 0.1 五診 (Wuzhen) Requirement Portrait
 
-5 dimensions, each scored 0-10. Any <7 → ASK user.
+5 dimensions, each scored 0-10.
 
 | Dim | Name | Abstract Probe | Generic Questions |
 |-----|------|---------------|-------------------|
@@ -29,11 +29,30 @@ description: MCTS-TD Step 0 — Constraint Collection + Xuanxue/Zhanbu Enhanceme
 
 Code: `node scripts/mcts_compute.js five-diagnosis --scores '<JSON>'`
 
+### ⛔ 五診反猜测规则 (MANDATORY)
+
+**分数必须基于来源，不能基于 LLM 的"感觉"。**
+
+| 来源情况 | 允许分数 | 必须标注 |
+|----------|---------|---------|
+| 用户明确说过这个维度的信息 | 0-10 | ✅ verified |
+| 从用户话里推断但未确认 | 0-6(含) | ⚠️ inferred |
+| 无任何用户输入，LLM 自己猜的 | **必须 ≤3** | ❓ speculative |
+| 用户没说 + 代码/文件可确认 | 0-10 | ✅ verified(code) |
+
+关键规则:
+- ❓ speculative 的维度**必须追问用户**，不能跳过
+- 任何维度给 ≥5 分但无 ✅ verified 来源 → 违规
+- 用户没说过的维度不能默认"应该没问题"给 7 分
+
+**打分原则: 宁低勿高。不确定 = 低分(追问) ≠ 中分(蒙混)。**
+
 ### Follow-up Strategy
 
 - sufficient (≥7) → record, no follow-up
 - partial (4-6) → ask 1-2 key questions
 - severe (≤3) → MUST ask with guided options (AskUserQuestion)
+- ⛔ 任何 ❓ speculative 维度 → 等同于 ≤3 → MUST ask
 - Max 3-5 questions per round. Only ask what "only the user would know".
 
 Cross-dimension validation (5 pairs from tension scan):
