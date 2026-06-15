@@ -24,6 +24,30 @@ EVERY message:
     └─ 1+ decision points → ENGINE ENGAGES
 ```
 
+### ⛔ What Counts as a "Decision Point"? (MANDATORY — read before decomposing)
+
+**A decision point exists when the user's request involves ANY of:**
+
+| Category | Description | Example |
+|----------|-------------|---------|
+| **Analysis** (分析) | Comparing options, evaluating trade-offs, weighing pros/cons | "分析一下黄金股票" → choosing which stocks to highlight IS a decision |
+| **Recommendation** (推荐) | Suggesting a course of action, picking among alternatives | "推荐什么方案" → picking one over others IS a decision |
+| **Comparison** (比较) | Ranking choices, contrasting approaches | "A和B哪个好" → choosing a winner IS a decision |
+| **Evaluation** (评估) | Judging feasibility, risk assessment, cost-benefit | "评估风险" → weighing factors IS a decision |
+| **Planning** (规划) | Designing a strategy, allocating resources | "制定计划" → sequencing steps IS a decision |
+| **Troubleshooting** (排查) | Diagnosing problems, narrowing down causes | "为什么出错了" → picking a diagnosis IS a decision |
+| **Creation** (创造) | Building, writing, designing anything non-trivial | Any non-trivial creative task |
+| **Optimization** (优化) | Improving, refining, adjusting | "优化一下" → choosing what to change IS a decision |
+
+**⛔ Engine stands by ONLY for:**
+- Pure factual lookup ("今天是几号?" / "What is the capital of France?")
+- Simple definitions ("什么是XXX?" / "What is X?")
+- Pure translation/formatting without decision-making
+- Trivial single-step actions with zero ambiguity (e.g., "打开文件X")
+
+**⛔ When in doubt → ENGINE ENGAGES. Over-engagement is harmless; missed engagement loses the entire value of this skill.**
+**⛔ "分析" (analysis/review/research) IS a decision task. If user asks you to "analyze", they expect you to COMPARE and RECOMMEND.**
+
 **When engine engages, execute this flow IN ORDER:**
 
 ```
@@ -65,10 +89,13 @@ Template: `node scripts/mcts.js template dong-template --data '<JSON>'`
 ## ⛔ FORBIDDEN
 
 - Ignoring detected decision points and answering directly
+- **Classifying analysis/recommendation/comparison/evaluation/planning tasks as "0 decision points"**
+- **Claiming "information gathering only, no decision points" for any research/analysis request — analysis IS decision-making**
 - Collapsing multiple steps into one summary
 - MCTS: outputting only final V/n/σ² without per-round detail
 - Claiming "engine not needed" when decision points exist
 - Verbose output in Dong mode (context budget exceeded = VIOLATION)
+- **Skipping the phased template output (Review Map → Recon → Solution List → MCTS → Decision Report) when engine engages**
 
 **When in doubt**: `node scripts/mcts_guard.js all-guards`
 
@@ -76,7 +103,7 @@ Template: `node scripts/mcts.js template dong-template --data '<JSON>'`
 
 ## 🔒 COMPRESSION-SAFE CORE
 
-**ALWAYS ACTIVE** | **DECOMPOSE FIRST** | **OUTPUT IN USER LANGUAGE** | **DECISION POINT → ENGINE ENGAGES** | **PHASED OUTPUT (0→0.5→0.5b→1→1.5→2→3→3.5→4)** | **Dong-Jing CHECK BEFORE ENGINE** | **Ben-Mo/You-Wu/Tension CHECK AFTER Wuzhen** | **CONTEXT BUDGET — Dong compact, Jing full**
+**ALWAYS ACTIVE** | **DECOMPOSE FIRST** | **OUTPUT IN USER LANGUAGE** | **DECISION POINT → ENGINE ENGAGES** | **PHASED OUTPUT (0→0.5→0.5b→1→1.5→2→3→3.5→4)** | **Dong-Jing CHECK BEFORE ENGINE** | **Ben-Mo/You-Wu/Tension CHECK AFTER Wuzhen** | **CONTEXT BUDGET — Dong compact, Jing full** | **ANALYSIS/COMPARISON/RECOMMENDATION = DECISION TASK → FULL ENGINE**
 
 ---
 
