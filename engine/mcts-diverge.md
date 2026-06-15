@@ -1,257 +1,318 @@
 ---
 name: mcts-diverge
-description: MCTS-TD Step 1 — Diverge Engine. Eight-Facet Mirror review + Cross-association → Cluster/Complete/Cull/Crystallize → 2~8 solutions.
+description: MCTS-TD Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangzi-inspired multi-perspective divergence + Eight-Facet Mirror × 诸子百家 sub-lenses → Cluster/Complete/Cull/Crystallize.
 ---
 
-# Step 1: Diverge Engine — Diverge × Converge
+# Step 1: Diverge Engine — 逍遥游 (Free Wandering) × 齐物 (Equalizing) × 庖丁解牛
 
 > **🔒 COMPRESSION-SAFE RULES:**
-> 1. OUTPUT in user language | 2. Phase order: Review Map → Info Gap → Recon → Solution List
-> 3. Language guard after each major output | 4. NO SKIP / NO COLLAPSE
-> 5. ANTI-SINGLE: `decomposition-guard` before "only one solution"
-> 6. DIVERSITY: if <3 solutions → `diversity-challenge`
-> 7. Compliance: `all-guards` when in doubt
-
-**Diverge = completeness. Converge = quality. Both indispensable.**
+> 1. OUTPUT in user language | 2. Phase order: 心斋→逍遥游→八卦镜→齐物→庖丁解牛→信息缺口→方案收敛
+> 3. NO SKIP / NO COLLAPSE | 4. Every perspective shift MUST be visible | 5. Domain-agnostic
+> 6. ANTI-SINGLE: `decomposition-guard` before "only one solution"
+> 7. DIVERSITY: if <3 solutions → `diversity-challenge`
 
 ---
 
-## 0. GRILL THE USER (MANDATORY — Before Step 1.1)
+## 哲学根基: 为什么常规头脑风暴不够
 
-**⛔ This step is NOT optional. Every engine engagement MUST start with 3-step user interview.**
+常规发散的问题是: 它在**同一个认知框架内**产生想法。你可以列出 100 个方案，却没有一个真正跳出原来的思维模式。
 
-```
-① PARAPHRASE: "I understand you want [X]. Is that correct? Are there other aspects to consider?"
-② PROBE: "What solutions have you tried or considered before?"
-③ CONSTRAIN: Ask 2-3 most critical constraints via AskUserQuestion (NOT free text)
-   Example: "Any methodology constraints?" → [Yes, no restrictions / Must follow X approved standard / No external resources allowed]
-```
+庄子 (Zhuangzi, 369-286 BCE) 在《逍遥游》中提供了根本不同的模型:
 
-**⚠️ Do NOT skip this. The user knows things you do not.**
-**⚠️ Minimum 2 AskUserQuestion calls before proceeding to Step 1.1.**
-**⚠️ If user's answer reveals new angles → PARAPHRASE again (can loop 2-3 times).**
+> "北冥有鱼，其名为鲲。鲲之大，不知其几千里也。化而为鸟，其名为鹏。鹏之背，不知其几千里也。怒而飞，其翼若垂天之云。"
 
----
+鲲 (Kun) — 深海巨鱼 — 化为鹏 (Peng) — 九万里高空的巨鸟。彻底的形态转换、尺度跳跃、视角革命。
 
-## 1.1 Eight-Facet Mirror — Abstract Decision Review
+**核心洞察**: 井底之蛙看不见大海，夏虫不可语冰——不是因为它们不够努力，而是因为它们**没有改变观察位置**。
 
-**⛔ MUST output the full map visibly. Not outputting = VIOLATION.**
+### 学术基础
 
-8 facets, each with: concrete dimension name + score 0-10 + known info + blindspots + ideas.
-
-**Output format (MANDATORY — show to user):**
-```
-【Eight-Facet Review Map】
- Task: [xxx] | Domain: [xxx]
-
- F1 ☰ Source of Force [dimension name] — Score: [0-10]
-    Known: [...] | Blindspots: [...] | Ideas: [...]
-
- F2 ☷ Foundation Bearer [dimension name] — Score: [0-10]
-    Known: [...] | Blindspots: [...] | Ideas: [...]
-
- ... (F3-F8 same format)
-
- Summary: Strong=[F?F?] | Weak=[F?F?] | Tension pairs=[F?↔F?]
-```
-
-Template: `node scripts/mcts.js template review-map --data '<JSON>'`
-
-| Facet | Trigram | Question |
-|-------|---------|----------|
-| F1 Source of Force | ☰ Qian | Where does the driving force come from? |
-| F2 Foundation | ☷ Kun | What is the foundation this rests on? |
-| F3 Change/Disruption | ☳ Zhen | Where might unexpected changes occur? |
-| F4 Penetration | ☴ Xun | How to make effect penetrate and spread? |
-| F5 Risk/Abyss | ☵ Kan | Where is the deepest pit? Worst case? |
-| F6 Visible/Dependent | ☲ Li | What's the surface? What depends underneath? |
-| F7 Boundary | ☶ Gen | What lines must never be crossed? |
-| F8 Convergence | ☱ Dui | How to balance all interests? |
-
-### 1.2 Facets + Cultural Sub-Lenses + 体用 Decomposition
-
-Each facet has **体**(substance: what it IS universally) + **用**(function: what it MANIFESTS AS in this case) + embedded sub-lenses:
-
-| Facet | 体(substance) | Sub-lenses |
-|-------|---------------|------------|
-| F1 | EXTERNAL IMPETUS | 兵家(strategic advantage), 縱横家(interest alignment) |
-| F2 | BASE CAPACITY | 農家(fundamental resources), 水利家(resource flow) |
-| F3 | UNCERTAINTY | 醫家(diagnosis: surface vs root), 陰陽家(opposing forces) |
-| F4 | PROPAGATION | 工匠(core tools/methods), 禪家(strip assumptions) |
-| F5 | VULNERABILITY | 史家(historical precedent), 道家(reverse risk of over-intervention) |
-| F6 | DEPENDENCY STRUCTURE | 工匠(what makes visible), 儒家(human values) |
-| F7 | CONSTRAINT BOUNDARY | 法家(rules/enforcement), 道家(knowing when to stop) |
-| F8 | STAKEHOLDER EQUILIBRIUM | 儒家(ethical foundation), 縱横家(alliances) |
-
-**Usage**: Sub-lenses are INTERNAL — interrogate own assumptions. Do NOT re-ask Wuzhen answers.
-**Ti-Yong in Converge**: same-体 different-用 → MERGE (false diversity). Different-体 same-用 → KEEP.
-**Ti-Yong in MCTS**: same-体 branches → merge nodes (prevent tree bloat).
-
-Code: `node scripts/mcts_compute.js ti-yong-check`
+| 论文 | 核心发现 |
+|------|---------|
+| **Lai (2021)** "Freedom and Agency in the Zhuangzi" — *British Journal for the History of Philosophy* | 自由不是逃离约束, 是在约束中通过认知灵活性找到最大适配 |
+| **Liu Xiaogan (2015)** "Zhuangzi's Philosophy: A Three Dimensional Reconstruction" — *Springer* | 齐物(qiwu)和不知(buzhi)是认知升维的工具——从世俗困境上升到精神自由 |
+| **Malaie, Spivey & Marghetis (2024)** "Divergent and Convergent Creativity Are Different Kinds of Foraging" — *Psychological Science* | 发散思考 = 分散式空间探索, 越分散的"觅食"产生越多创造性想法 |
+| **Dietrich (2024)** "Where in the Brain is Creativity?" — *Frontiers in Psychology* | 创造力不是一个单一模块, 是分散的认知过程集合——打破框架 = 切换探索模式 |
+| **Deckert & Scherer (2017)** "The Dao of Innovation" — *Kindai Management Review* | 创造力不能被强迫, 心必须"漫游和自发发现", 管理者要为"无用漫游"留出空间 |
 
 ---
 
-## 1.3 Divergence: Iterative Review + Cross-Association + Changing-Condition
+## Phase 0: 心斋坐忘 — 先清空，再发散
 
-**5 rounds of divergent thinking — each round MUST be visible to user.**
+**⛔ 这是最关键的一步。跳过它 = 所有后续发散都在旧框架内。不做心斋的发散是假发散。**
 
-**Round 1**: F1→F8, each facet: determine dimension, apply sub-lenses, self-rate 0-10, identify blindspots.
+庄子的"心斋" (Fasting of the Mind):
+> "若一志，无听之以耳而听之以心，无听之以心而听之以气。耳止于听，心止于符。气也者，虚而待物者也。唯道集虚。虚者，心斋也。"
 
-**Round 2**: Cross-association between key pairs:
-- Top-2 highest facets → strength pair
-- Top-2 lowest → blindspot pair
-- Score divergence >4 → tension pair
-- HOTSPOT pairs from tension scan (0.1b) → priority
-- For each pair: "How does Facet A interact with Facet B?"
-- Code: `hexagram-lookup --upper <A> --lower <B>`
+翻译为思维操作:
 
-⭐ **理事(Li-Shi) Separation** — per cross-association:
-- 理(Li): universal pattern this interaction reveals
-- 事(Shi): concrete manifestation in THIS case
-- Why: Li transfers cross-domain; Shi is immediately actionable. Both needed.
+```
+【心斋 · 清空预设】
 
-Code: `node scripts/mcts_compute.js li-shi-split --facets '<JSON>'`
+逐项回答 — 必须对用户可见:
 
-**Round 3**: Changing-condition analysis — for key pairs: which factors STABLE vs CHANGING? If changing shifts → second-order effects? Max 2-3 unstable factors per pair.
+① 关于这个任务, 我默认相信什么?
+   → 列出至少 3 条未经检验的假设
+   → 例如: "我默认这个需求应该用 X 方式解决" / "我默认预算是有限的" / "我默认用户想要的是 Y"
 
-**Round 4**: Blindspot completion — for facets <7: ① knowledge graph ② search ③ ask user. If any ≤3 → MUST WebSearch. Code: `force-search-guard`
+② 我的"常识"从哪来?
+   → 这些假设的来源: 过往经验? 行业惯例? 类似案例?
+   → 这些来源在当前场景下是否仍然有效?
 
-**Round 5**: Self-check — any facet without ideas? Idea rejected too early? Unstated assumptions? Do ideas from all 8 facets form a complete picture?
+③ 如果我所有假设都是错的, 会怎样?
+   → 如果反过来呢? 如果不需要考虑成本? 如果用户真正想要的是相反的?
+   → 至少提出 3 个"反假设"
 
-### Per-Facet Action Sequences (execute during Round 1)
+④ 坐忘: 暂时搁置一切已知方案和"最佳实践"
+   → 宣布: "我暂时不知道答案。我是一张白纸。"
+   → 这不是无知, 这是认知谦逊 (buzhi 不知) — 为真正的洞察腾出空间
+```
 
-Each facet has 3 search actions — ② expands scope, ③ uses cultural analogy to jump out of conventional thinking:
-
-| Facet | ① Standard | ② Expansion | ③ Cultural Analogy (jump out of framework) |
-|-------|-----------|-------------|-------------------------------|
-| F1 Source | industry standard | unconventional approaches | **兵法类比**(孙子·势篇: create momentum vs borrow momentum — is the force created or borrowed?) |
-| F2 Foundation | best practices | resource constraints | **農耕类比**(農家: 因地制宜 — what is suitable for this "land"?) |
-| F3 Change | risk factors | historical precedents | **醫道类比**(醫家: 治未病 — where are latent issues not yet symptomatic?) |
-| F4 Penetration | adoption strategies | diffusion barriers | **巧匠类比**(庖丁解牛: find the joint gaps, don't force through) |
-| F5 Risk | worst cases | failure modes | **史鉴类比**(以史为鉴: outcomes of similar decisions in history) |
-| F6 Visible | surface dependencies | hidden coupling | **儒法类比**(正名: do name and reality match?) |
-| F7 Boundary | compliance requirements | hard limits | **道法类比**(知止不殆: which boundaries are protective?) |
-| F8 Convergence | stakeholder needs | win-win scenarios | **縱橫类比**(合纵连横: can interests be redistributed?) |
-
-⛔ FORBIDDEN: skip ③ cultural analogy step, rely on conventional thinking only.
-📚 Full analogy methodology: `references/culture-algorithm-reference.md`
-
-### 诸子百家 Sub-Lenses (apply during Round 1, INTERNAL use)
-
-Each facet's sub-lenses interrogate your OWN assumptions with **analogy-based reasoning** (类比推演):
-
-| Facet | Sub-lens 1 + Reasoning | Sub-lens 2 + Reasoning |
-|-------|------------------------|------------------------|
-| F1 | **兵家**(strategic advantage): "Who is the enemy? Who is the ally? What is the high ground? Is what appears solid truly real?" | **縱横家**(interest alignment): "Can all parties' interests be aligned? Who can be won over? Who is immovable?" |
-| F2 | **農家**(fundamental resources): "What is this soil (team) suited to grow? Is there irrigation (funding)? Is the season (timing) right?" | **水利家**(resource flow): "Where do resources flow? Are there blockages? What are the upstream-downstream relationships?" |
-| F3 | **醫家**(surface vs root): "Is this a symptom or the root cause? Treat the surface or the root? Are there '未病' (latent diseases)?" | **陰陽家**(opposing forces): "Who is the opposing side? What is the ebb-and-flow trend? Where is the turning point of reversal?" |
-| F4 | **工匠**(core tools): "Are the core tools sufficient? Is there a simpler approach? Where is the joint gap like 庖丁解牛?" | **禪家**(strip assumptions): "What remains after stripping all decoration? Does 'emptiness' conceal possibility?" |
-| F5 | **史家**(historical precedent): "Who in history made similar mistakes? What was the outcome? What is the lesson?" | **道家**(reverse risk of over-intervention): "Is doing nothing better than acting? Does intervention create new risks?" |
-| F6 | **工匠**(what makes visible): "What makes the surface look good? What hidden structure supports it?" | **儒家**(human values): "Who is being overlooked? Are human needs obscured by technology?" |
-| F7 | **法家**(rules/enforcement): "Are the rules outdated? Who enforces them? What is the cost of violation?" | **道家**(knowing when to stop): "Where is the line that should not be crossed? Does 知止 equal protection or limitation?" |
-| F8 | **儒家**(ethical foundation): "What is the moral baseline for all parties' interests? Whose interests are being sacrificed?" | **縱横家**(alliances): "Can interests be redistributed? Who are the natural allies?" |
-
-📚 Full methodology + academic basis: `references/culture-algorithm-reference.md`
+**输出后, 用户可以看到你的预设清单。用户可以纠正: "不, 我其实没有那个预算限制" 或 "是的, 那个假设是对的"。**
 
 ---
 
-## Phase 1.5: Info Gap Supplement (MANDATORY — Multi-Round)
+## Phase 1: 逍遥游 — 六视漫游
 
-After diverge, BEFORE converge — fill info gaps discovered during divergence.
-Phase 0 asks BOUNDARIES. Phase 1 REVEALS what you didn't know to ask about.
-Without this phase, newly-discovered gaps become assumptions — exactly what MCTS prevents.
+**核心原理**: 庄子的逍遥游不是"从多个角度看问题"——那是蜻蜓点水。逍遥游是**每次彻底改变观察者的身份、尺度和时空位置**。
 
-**⛔ This is the MOST INTERACTIVE phase. Typical session: 2-3 rounds of questions.**
+就像:
+- 人类看地球 vs 外星人看地球
+- 物理学家看光 vs 诗人看光 vs 摄影师看光
+- 鲲 (深海) 看世界 vs 鹏 (九万里高空) 看世界 vs 蜩鸠 (榆枋之间) 看世界
 
-1. **SCAN**: facets with score ≤5, unresolved blindspots, unconfirmed assumptions
-2. **PRIORITIZE**: memory/code already searched → skip. Self-confirm from project code → do it yourself. Only truly user-knowable → ASK (max 3-5 per round)
-3. **ASK**: Use AskUserQuestion, NOT free text.
-   - DO ask: constraints, preferences, domain knowledge, resource availability, priority trade-offs
-   - Do NOT ask: "which solution do you prefer?" (YOUR job) | questions answerable by reading code/docs | vague "any requirements?"
-4. **INTEGRATE**: update facet scores, mark resolved blindspots. If answers invalidate earlier assumptions → re-diverge those facets
-5. **LOOP**: After user answers, re-scan. New gaps? → ask again (max 3 rounds total)
+**六种视角转换 — 每种必须独立输出:**
 
-**⛔ Minimum 1 AskUserQuestion call. Typical: 2-3 calls. Skip only if ALL 8 facets ≥7.**
-
-**Output format after each round:**
 ```
-【Info Gap Round N】
-  Asked: [Q1] → [A1] | [Q2] → [A2]
-  Updated scores: F2=4→6 | F5=3→5
-  Remaining gaps: [list] / None → proceed
+┌─────────────────────────────────────────────────────────────┐
+│                    逍遥游 · 六视漫游                          │
+│                                                             │
+│  不是"从不同角度分析同一个问题"。                              │
+│  而是"变成不同的人/存在/尺度, 重新定义什么是'问题'"。          │
+└─────────────────────────────────────────────────────────────┘
+
+视① 鲲鹏之视 [Cosmic Scale · 九万里高空]
+
+  身份: 大鹏鸟, 翼若垂天之云, 抟扶摇而上九万里
+  视角: 从宇宙尺度俯视, 看见全局, 看见边界, 看见这个"问题"在整个系统里的位置
+  问题转换:
+  - "这个问题在大尺度下还重要吗?"
+  - "从高空看, 真正的模式和趋势是什么?"
+  - "边界在哪里? 边界之外是什么?"
+  
+  ⛔ 必须输出:
+  大尺度洞察: [从高空看到的3-5个全局规律/模式]
+  问题重新定义: [以大鹏视角, 这个"问题"的本质是什么? 可能根本不同]
+  边界外: [这个问题的边界之外是什么? 有没有更大或更小的问题其实才是关键?]
+
+视② 蜩鸠之视 [Ground Scale · 榆枋之间]
+
+  身份: 蝉和小鸠, 决起而飞, 抢榆枋而止, 生活在树枝之间
+  视角: 最具体的日常体验, 触手可及的细节, 不被"大局观"干扰的具体真实
+  问题转换:
+  - "实际接触这个问题的每个瞬间是什么感觉?"
+  - "什么具体细节被宏观分析忽略了?"
+  - "如果只关注眼前这一步, 最需要解决什么?"
+  
+  ⛔ 必须输出:
+  微观洞察: [3-5个被宏观视角忽略的具体细节]
+  痛点: [每个细节如果不解决会产生什么摩擦?]
+
+视③ 朝菌之视 [Time-Compressed · 不知晦朔]
+
+  身份: 朝菌, 早上生晚上死, 生命周期只有一天, 不知有月
+  视角: 极短时间尺度, 关注即时变化, 当下瞬间
+  问题转换:
+  - "现在立刻必须做什么? 不做会怎样?"
+  - "如果把时间压缩到最短, 哪些步骤是多余的?"
+  - "一个'足够好'的即时方案是什么?"
+  
+  ⛔ 必须输出:
+  即时行动: [如果只有一天时间, 必须完成的1-2件事]
+  可放弃: [什么看似重要但在极短尺度下可以完全忽略?]
+
+视④ 冥灵之视 [Time-Expanded · 五百岁为春]
+
+  身份: 冥灵之树, 五百年为一个春天, 五百年为一个秋天
+  视角: 地质时间尺度, 不关心短期波动, 只看见根本性的缓慢变迁
+  问题转换:
+  - "五百年后, 这个决策还重要吗?"
+  - "什么基础在慢尺度下会被侵蚀? 什么永远不变?"
+  - "这个决策的长期二阶、三阶效应是什么?"
+  
+  ⛔ 必须输出:
+  长期不变: [什么基础不会变? 应该把赌注押在哪?]
+  长期后果: [这个决策在10年、50年、100年后的影响链]
+
+视⑤ 列子御风 [Flow State · 泠然善也]
+
+  身份: 列子, 御风而行, 泠然善也, 不用力、不强迫、顺势而为
+  视角: 完全放松, 让答案自然浮现, 不"用力思考"
+  问题转换:
+  - "如果不强迫, 自然会发生什么?"
+  - "哪里阻力最大? 哪里阻力最小?"
+  - "顺势而为的方案是什么? 有没有'不做'就是最好的方案?"
+  
+  ⛔ 必须输出:
+  自然趋势: [不施加任何干预, 事情会自然走向哪里?]
+  最小干预: [最小的、最顺势的动作是什么? 能不能什么也不做?]
+
+视⑥ 至人无己 [Selfless · 无己无功无名]
+
+  身份: 至人, 无己(无自我), 无功(不求功), 无名(不求名)
+  视角: 彻底去除"我"——去掉我的利益、我的立场、我的ego, 纯粹为系统而思考
+  问题转换:
+  - "如果我没有个人立场和利益, 什么是对整个系统最好的?"
+  - "我的ego/身份/角色在多大程度上扭曲了我的判断?"
+  - "谁的声音没有被听到? 谁的利益被'我的视角'遮蔽了?"
+  
+  ⛔ 必须输出:
+  被遮蔽: [哪些利益/声音/角度被"我"的立场遮蔽了?]
+  系统最优: [如果完全没有自我利益, 最优解是什么?]
 ```
 
-Template: `node scripts/mcts.js template info-gap --data '<JSON>'`
+**⛔ 六视全部输出后, 才能进入八卦镜。六视是"换眼睛", 八卦镜是"用新眼睛审视"。**
 
 ---
 
-## Direction Check (before converging)
+## Phase 2: 八卦镜 (Bagua Mirror) — 八面审视 × 诸子百家 × 文化类比
 
-"From 8 facets, the key tensions are: [A] vs [B]. Which feels more important?"
-NOT asking user to pick a solution — confirming priorities before shaping solutions.
-User may say "both are important" → that's useful too.
+**⛔ 你现在已经通过六视换了六双眼睛。用这些新眼睛来审视八卦镜。**
+
+### Round 1: F1→F8 逐卦深度分析
+
+**每卦必须独立输出完整结构。不可一行带过。**
+
+```
+┌─────────────────────────────────────────────┐
+│ F? ☰/☷/☳/☴/☵/☲/☶/☱ [卦名] — [当前任务的具体维度] │
+│                                             │
+│ 体(Ti): [通用本质 — 这个卦代表什么]            │
+│ 用(Yong): [具体表现 — 在当前任务中体现为什么]   │
+│                                             │
+│ 六视交叉: [从 Phase 1 的六视中, 哪个视的洞察改变了这个卦的评分?] │
+│                                             │
+│ 子镜① [诸子A] + 推理 (至少3句):               │
+│   → 洞察: [...]                              │
+│ 子镜② [诸子B] + 推理 (至少3句):               │
+│   → 洞察: [...]                              │
+│                                             │
+│ 文化类比 (必须跳出当前领域框架):                │
+│   类比: [具体的、跨领域的例子 — 兵法/农耕/医道/庖丁/史鉴/纵横...] │
+│   → 启示: [类比带来的新思路]                   │
+│                                             │
+│ 已知: [已掌握的3-5条关键信息]                   │
+│ 盲区: [2-3个不确定/缺失的信息]                  │
+│ 初步想法: [基于以上分析产生的2-4个构想]          │
+│ 评分: [0-10] — [六视修正前后的分数变化]         │
+└─────────────────────────────────────────────┘
+```
+
+**八卦问题 + 体用 + 子镜分配:**
+
+| 卦 | 卦名 | 核心问题 | 体(Ti) | 子镜① | 子镜② |
+|----|------|---------|--------|--------|--------|
+| F1 ☰ | 乾 力量之源 | 驱动力从哪来? 势是创造还是借来的? | EXTERNAL IMPETUS | 兵家: 敌友高地在哪? | 縱横家: 利益能否对齐? |
+| F2 ☷ | 坤 根基承载 | 承载的底盘是什么? 土壤适合什么? | BASE CAPACITY | 農家: 因地制宜 | 水利家: 资源流向? |
+| F3 ☳ | 震 变动突破 | 意想不到的变化在哪? 有未病吗? | UNCERTAINTY | 醫家: 症状vs根因 | 陰陽家: 对立面转化 |
+| F4 ☴ | 巽 渗透传播 | 如何让效果渗透扩散? 关节间隙在哪? | PROPAGATION | 工匠: 庖丁解牛 | 禪家: 剥离装饰 |
+| F5 ☵ | 坎 风险深渊 | 最深的坑在哪? 不干预是否更好? | VULNERABILITY | 史家: 以史为鉴 | 道家: 反干预风险 |
+| F6 ☲ | 离 显眼依附 | 表面底下依附什么? 谁被忽视了? | DEPENDENCY STRUCTURE | 工匠: 隐藏结构 | 儒家: 人的价值 |
+| F7 ☶ | 艮 边界止步 | 绝不能碰的线? 知止是保护还是限制? | CONSTRAINT BOUNDARY | 法家: 规则执法 | 道家: 知止不殆 |
+| F8 ☱ | 兑 汇聚共赢 | 各方利益怎么平衡? 利益能重新分配吗? | STAKEHOLDER EQUILIBRIUM | 儒家: 道德基线 | 縱横家: 合纵连横 |
+
+### Round 2: 交叉关联 — 维度对交互
+
+至少输出 3 对。每对必须包含卦象交互(hexagram-lookup) + 理事分离 + 协同/冲突分析。
+
+### Round 3: 变化条件分析
+
+对每对关联区分稳定因素 vs 变化因素 → 二阶效应推演。
+
+### Round 4: 盲区补全
+
+分数<7的卦象逐卦补全: ①知识图谱 → ②WebSearch (≤3分必须) → ③追问用户。
+
+### Round 5: 发散自检
+
+5个问题逐一回答: 未产生想法的卦象 / 过早否决的想法 / 未声明的假设 / 完整图景 / 跨界案例。
 
 ---
 
-## Step 2: Reconnaissance Report — Output Format
+## Phase 3: 齐物 — 等视所有视角
+
+**⛔ 在进入收敛之前, 必须先经过"齐物"。**
+
+庄子的"齐物论": 所有视角都有平等价值。没有哪个"正确"。
 
 ```
-【Reconnaissance Report】
- Task: [xxx]
+【齐物 · 等视】
 
- Per-Facet Findings:
-   F1 [dimension]: [key findings from WebSearch + memory + user input]
-   F2 [dimension]: [key findings]
-   ...
-   F8 [dimension]: [key findings]
+对每个视角(六视 + 八卦 + 子镜 + 文化类比), 回答:
 
- Cross-Validation:
-   F3↔F5: [interaction finding] → Li 理: [universal] | Shi 事: [specific]
-   F1↔F7: [interaction finding] → Li 理: [universal] | Shi 事: [specific]
+① 这个视角揭示了什么独特的、其他视角看不到的东西?
+② 如果只从这个视角看问题, 会错过什么?
+③ 这个视角和我最排斥/最不同意的视角之间, 有什么共同点?
 
- Explicit Assumptions:
-   "Assume [X]" ← [Confirmed? / Unconfirmed]
+然后回答:
+→ 哪些视角让我最不舒服? (不舒服 = 触及了盲区)
+→ 如果"最不舒服的视角"才是正确的, 会怎样?
 ```
-
-Template: `node scripts/mcts.js template recon-report --data '<JSON>'`
 
 ---
 
-## Phase Two: Converge (Extract Solutions)
+## Phase 4: 庄周梦蝶 — 终极翻转
 
-**① Cluster**: Group idea fragments into directions. Same direction = internal consistency; different directions = substantial difference.
+> "昔者庄周梦为蝴蝶，栩栩然蝴蝶也。自喻适志与！不知周也。俄然觉，则蘧蘧然周也。不知周之梦为蝴蝶与？蝴蝶之梦为周与？"
 
-⭐ **一多(One-Many) Coherence**: Each cluster: 1 core identity (一) + 2-4 mechanisms (多). Too loose → re-split. Too tight (false diversity) → merge.
-⭐ **Ti-Yong False Diversity Elimination**: same-体 different-用 → MERGE. Different-体 same-用 → KEEP.
-Code: `one-many-check`, `ti-yong-check`
+```
+【梦蝶翻转】
 
-**② Complete**: Missing info for a direction? Complete from diverge output or shelve.
+① 主体客体互换:
+   "如果我是'问题'本身, 我会怎么描述'解决方案'?"
+   "如果'约束'是主角, '目标'是背景, 故事会怎样?"
 
-**③ Cull**: P0~P4 criteria (Boundary→Foundation→Force→Risk→Compare). P5: min 2 remain. >8 → tighten to 8.
-Code: `node scripts/mcts_compute.js cull --criteria`
+② 成功失败互换:
+   "如果'失败'才是真正的目标, 我们能学到什么?"
+   "如果'最佳方案'会导致灾难, 灾难是什么?"
 
-**④ Crystallize**: Write complete solution with Eight-Facet Scrutable Scorecard (8 facets scored 1-10). Composite <4 → eliminate. 4-6 → keep but mark. >6 → normal.
+③ 时间顺序互换:
+   "如果从终点往回看, 哪些步骤可以跳过?"
+   "如果结果已经确定了, 过程的'选择'还重要吗?"
+```
 
 ---
 
-## Converge Output Format
+## Phase 1.5: 信息缺口补全 — 与用户打磨需求
 
-```
-【Solution List (After Convergence)】
- Solution A: [Name] | Approach: [...] | Basis: [FacetX+Y] | Complexity: S/M/L
- Solution B: ...
+发散之后的追问才真正有价值——你知道你不知道什么了。
 
- Eliminated: [Direction X: reason] [Direction Y: reason]
+**⛔ 至少 1 次 AskUserQuestion。典型 2-3 轮。**
 
- Coverage Matrix: F1-F8 × solutions (✓/-)
-```
+输出格式: `【Info Gap Round N】 Asked→Answered | 更新分数 | 剩余缺口`
 
-Template: `node scripts/mcts.js template solution-list --data '<JSON>'`
+---
+
+## Step 2: 侦查报告
+
+逐卦发现 + 交叉验证(理事分离) + 明确假设(已确认/未确认)。
+
+---
+
+## Phase Two: 收敛 — 提取方案
+
+**① 聚类**: 想法碎片 → 方向集群。一多(One-Many): 1核心+2-4机制。
+**② 体用去重**: 同体不同用→合并, 不同体同用→保留。
+**③ 裁剪**: P0~P4 五级准则。发散不限量, 收敛后 ≤10。
+**④ 结晶**: 完整方案 + 八卦可审查评分卡(8卦各1-10分)。
+
+输出: 方案列表 + 覆盖矩阵(F1-F8 × 方案)。
 
 ---
 
 ## Helper Tools
 
-- Domain hint: `identify-domain` | Facet loading: `get-dimensions`
-- Blindspot classification: `classify-blindspot --score <0-10>`
-- Learning depth: `check-learning-depth`
+- 领域提示: `identify-domain` | 卦象加载: `get-dimensions`
+- 盲区分类: `classify-blindspot --score <0-10>`
+- 体用检查: `ti-yong-check` | 一多检查: `one-many-check`
+- 裁剪: `node scripts/mcts_compute.js cull --criteria`
