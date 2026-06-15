@@ -227,6 +227,63 @@ function endSubDiverge() { if (_recursiveDepth > 0) _recursiveDepth--; }
 function resetRecursiveDepth() { _recursiveDepth = 0; }
 function getDivergeDepthReport() { return { depth: _recursiveDepth, max_depth: MAX_DEPTH, status: enterSimulation().mode }; }
 
+// ===== TD Learning Helpers =====
+function getLearningRate(n) {
+    if (n <= 5) return 0.5;
+    if (n <= 20) return 0.2;
+    if (n <= 100) return 0.1;
+    return 0.05;
+}
+
+const REWARD_SIGNALS = {
+    compile_pass: 1.0, partial_pass: 0.5, neutral: 0.0,
+    lint_errors: -0.3, test_failure: -0.7, compile_failure: -1.0
+};
+function getRewardSignal(type) { return REWARD_SIGNALS[type] || 0.0; }
+
+const TERMINAL_VALUES = {
+    task_complete: 1.0, partial_success: 0.5, neutral: 0.0,
+    side_effects: -0.5, task_failed: -1.0
+};
+function getTerminalValue(type) { return TERMINAL_VALUES[type] || 0.0; }
+
+function projectState(sv) {
+    const TASK_SHORT = { BUG_FIX: 'BF', FEATURE: 'FT', REFACTOR: 'RF', DEBUG: 'DB', TEST: 'TS' };
+    const RISK_SHORT = { LOW: 'L', MED: 'M', HIGH: 'H', CRITICAL: 'C' };
+    const SIZE_SHORT = { SMALL: 'S', MED: 'M', LARGE: 'L' };
+    const NOVEL_SHORT = { LOW: 'L', MED: 'M', HIGH: 'H' };
+    const fileCountShort = (fc) => {
+        if (fc === 1 || fc === '1') return '1';
+        const n = parseInt(fc);
+        if (isNaN(n)) return String(fc);
+        if (n <= 5) return 'M'; if (n <= 10) return 'L'; return 'XL';
+    };
+    const task = TASK_SHORT[sv.task_type] || sv.task_type || '?';
+    const domain = sv.domain || '?';
+    const fc = fileCountShort(sv.file_count);
+    const risk = RISK_SHORT[sv.risk_level] || sv.risk_level || '?';
+    const ctx = SIZE_SHORT[sv.context_size] || sv.context_size || '?';
+    const nov = NOVEL_SHORT[sv.novelty] || sv.novelty || '?';
+    return `${task}|${domain}|${fc}|${risk}|${ctx}|${nov}`;
+}
+
+function mutationTiebreak(nodes) {
+    if (!nodes || nodes.length === 0) return { sorted: [], tiebreaks: 0 };
+    const sorted = [...nodes].sort((a, b) => (b.ucb || 0) - (a.ucb || 0));
+    let tiebreaks = 0;
+    for (let i = 0; i < sorted.length - 1; i++) {
+        if (Math.abs((sorted[i].ucb || 0) - (sorted[i + 1].ucb || 0)) < 0.05) {
+            const mutA = (sorted[i].mutation || []).filter(m => m === 1).length;
+            const mutB = (sorted[i + 1].mutation || []).filter(m => m === 1).length;
+            if (mutB > mutA) {
+                [sorted[i], sorted[i + 1]] = [sorted[i + 1], sorted[i]];
+                tiebreaks++;
+            }
+        }
+    }
+    return { sorted: sorted.map(n => ({ id: n.id, ucb: n.ucb, mutation_sum: (n.mutation || []).filter(m => m === 1).length })), tiebreaks };
+}
+
 // ===== Trigger & Lambda =====
 function quickTriggerCheck(message) {
     const triggers = ["做", "实现", "开发", "写", "改", "优化", "重构", "设计", "build", "implement", "develop", "create", "fix", "refactor", "design", "help", "how", "what", "which", "best", "帮我", "怎么", "如何"];
@@ -683,6 +740,25 @@ function main() {
                     }
                 }
                 output({ merge_suggestions: merges, false_diversity_found: merges.length > 0, recommendation: merges.length > 0 ? `${merges.length} pairs share same 体 — consider merging` : 'No false diversity detected' });
+                break;
+            }
+            case "get-learning-rate":
+                output({ n: +o.n, alpha: getLearningRate(+o.n) });
+                break;
+            case "get-reward-signal":
+                output({ type: o.type, r: getRewardSignal(o.type) });
+                break;
+            case "get-terminal-value":
+                output({ type: o.type, v: getTerminalValue(o.type) });
+                break;
+            case "project-state": {
+                const sv = JSON.parse(o.state_vector || "{}");
+                output({ projection_key: projectState(sv), normalized: true });
+                break;
+            }
+            case "mutation-tiebreak": {
+                const nodes = JSON.parse(o.nodes || "[]");
+                output(mutationTiebreak(nodes));
                 break;
             }
             default: log(`Unknown: ${cmd}`); process.exit(1);

@@ -1,0 +1,168 @@
+#!/usr/bin/env node
+/**
+ * MCTS-TD Template Engine — Markdown template rendering from structured JSON.
+ * Usage: node mcts_template.js <command> --data '<JSON>' [--json]
+ * Default output: raw Markdown. --json flag: JSON wrapper.
+ */
+const { log } = console;
+
+const TRIGRAMS = { 1: '☰', 2: '☷', 3: '☳', 4: '☴', 5: '☵', 6: '☲', 7: '☶', 8: '☱' };
+const FACET_NAMES = { 1: 'Source of Force', 2: 'Foundation Bearer', 3: 'Change/Disruption', 4: 'Penetration', 5: 'Risk/Abyss', 6: 'Visible/Dependent', 7: 'Boundary', 8: 'Convergence' };
+const VERDICT_SYMBOLS = { Pass: '✅', pass: '✅', OK: '✅', Risk: '⚠️', risk: '⚠️', WARNING: '⚠️', 'Not passed': '❌', FAIL: '❌', VIOLATION: '❌' };
+
+function parseArgs(args) {
+    const r = {};
+    for (let i = 0; i < args.length; i++) {
+        if (args[i].startsWith("--")) {
+            const k = args[i].replace(/^--/, "").replace(/-/g, "_");
+            const v = args[i + 1];
+            if (v && !v.startsWith("--")) { r[k] = v; i++; }
+            else r[k] = true;
+        }
+    }
+    return r;
+}
+
+function parseData(o) {
+    if (!o.data) return {};
+    try { return JSON.parse(o.data); } catch { return {}; }
+}
+
+function emit(o, cmd, data, markdown) {
+    if (o.json === true || o.json === 'true') {
+        log(JSON.stringify({ template: cmd, markdown, data }, null, 2));
+    } else {
+        log(markdown);
+    }
+}
+
+// ===== Templates =====
+
+function renderReviewMap(d) {
+    const facets = (d.facets || []).map(f => {
+        const tri = TRIGRAMS[f.id] || '?';
+        const name = FACET_NAMES[f.id] || f.name || '';
+        const concreteName = f.name || '';
+        return ` F${f.id} ${tri} ${name} [${concreteName}] — Score: ${f.score}\n    Known: ${f.known || ''} | Blindspots: ${f.blindspots || ''} | Ideas: ${f.ideas || ''}`;
+    }).join('\n\n');
+    const s = d.summary || {};
+    return `【Eight-Facet Review Map】\n Task: ${d.task || ''} | Domain: ${d.domain || ''}\n\n${facets}\n\n Summary: Strong=${(s.strong || []).join(',') || '—'} | Weak=${(s.weak || []).join(',') || '—'} | Tension pairs=${(s.tension_pairs || []).join(',') || '—'}`;
+}
+
+function renderPortrait(d) {
+    const dims = (d.dimensions || []).map((dim, i) => {
+        const markers = { sufficient: '', partial: ' ← ask', severe: ' ← MUST ask' };
+        const mark = markers[dim.level] || '';
+        const idCap = dim.id.charAt(0).toUpperCase() + dim.id.slice(1);
+        return ` ${'①②③④⑤'[i]} ${dim.cjk || idCap} [${dim.score}/10] ${dim.level}${mark} — ${dim.detail || ''}`;
+    }).join('\n');
+    return `【Requirement Portrait · Wuzhen Integrated Assessment】\n Task: ${d.task || ''}\n${dims}\n\n Questions: ${(d.questions || []).join(' | ') || 'None'}\n Cross-dimension: ${(d.cross_dimension || []).join(' | ') || 'None'}\n Root (Ben): ${d.root || '—'} | Absence: ${(d.absence || []).join(', ') || 'None'} | Tension: ${(d.tension || []).join(', ') || 'None'}`;
+}
+
+function renderReconReport(d) {
+    const facets = (d.facets || []).map(f => `   F${f.id} [${f.name || ''}]: ${f.findings || ''}`).join('\n');
+    const cross = (d.cross_validation || []).map(cv => `   ${cv.pair}: ${cv.finding} → Li 理: ${cv.li || ''} | Shi 事: ${cv.shi || ''}`).join('\n');
+    const assumptions = (d.assumptions || []).map(a => `   "Assume ${a.assumption}" ← ${a.confirmed ? 'Confirmed' : 'Unconfirmed'}`).join('\n');
+    return `【Reconnaissance Report】\n Task: ${d.task || ''}\n\n Per-Facet Findings:\n${facets}\n\n Cross-Validation:\n${cross || '   None'}\n\n Explicit Assumptions:\n${assumptions || '   None'}`;
+}
+
+function renderInfoGap(d) {
+    const asked = (d.asked || []).map(qa => `${qa.question} → ${qa.answer || 'pending'}`).join(' | ');
+    const scores = Object.entries(d.updated_scores || {}).map(([k, v]) => `${k}=${v}`).join(' | ');
+    const gaps = d.complete ? 'None → proceed' : (d.remaining_gaps || []).join(', ');
+    return `【Info Gap Round ${d.round || 1}】\n  Asked: ${asked || 'None'}\n  Updated scores: ${scores || 'None'}\n  Remaining gaps: ${gaps}`;
+}
+
+function renderMctsRound(d) {
+    const sel = d.selection || {};
+    const exp = d.expansion || {};
+    const sim = d.simulation || {};
+    const bp = d.backprop || {};
+    const ts = d.tree_state || {};
+    const conv = d.convergence || {};
+    return `MCTS Round [${d.round}]:\n  ① Selection: ${sel.path || ''} (UCB values: ${sel.ucb_values || ''}, why: ${sel.reason || ''})\n  ② Expansion: ${exp.node || ''} (type: ${exp.type || ''}, potential: ${exp.potential || ''})\n  ③ Simulation: ${sim.rollout_path || ''} → V=${sim.v || ''} (knowledge acquired: ${sim.knowledge_acquired || ''}, assumptions: ${(sim.assumptions || []).join(', ') || 'none'})\n  ④ Backprop: ${bp.node_updates || ''}\n\nTree State: ${ts.summary || ''}\nConvergence: ${conv.check || ''}`;
+}
+
+function renderMctsFinal(d) {
+    const rank = (d.ranking || []).map(r => `${r.name} n=${r.n} V=${r.v} σ²=${r.sigma2 || ''} Conf=${r.confidence || ''}`).join(' | ');
+    return `MCTS Complete — ${d.rounds || 0} rounds, stop reason: ${d.stop_reason || ''}\nRanking: ${rank || 'None'}\nBest path: ${d.best_path || ''} | Main risk: ${d.main_risk || ''}`;
+}
+
+function renderSelfCheck(d) {
+    const sym = VERDICT_SYMBOLS[d.verdict] || '❓';
+    const items = (d.findings || []).map((f, i) => `  ${'①②③④⑤'[i]} ${f.question}: ${f.result} [${f.status}]`).join('\n');
+    return `Self-Check Verdict:\n  ${sym} ${d.verdict} — ${(d.message || 'see findings below')}\n${items}`;
+}
+
+function renderDecisionReport(d) {
+    const rankHeader = ' Rank │ Solution │ V_final │ V_feas │ V_robust │ V_persp │Body-Use│ σ² │ n │ Conf';
+    const rankRows = (d.ranking || []).map(r => `   ${r.rank}  │ ${r.solution}│ ${r.v_final}   │ ${r.v_feas}  │ ${r.v_robust}    │ ${r.v_persp}   │ ${r.body_use || ''} │${r.sigma2 || ''}│ ${r.n} │ ${r.conf || ''}`).join('\n');
+    const sc = d.self_check || {};
+    const ba = d.blindspot_audit || {};
+    const yy = d.yan_yi || {};
+    const ep = d.execution_plan || {};
+    const ku = (d.knowledge_update || []).map(k => `${k.new} [TD error: ${k.td_error}]`).join(', ');
+    const checkpoints = (d.memory_checkpoints || []).map(cp => `   ☐ ${cp.name}: ${cp.status}`).join('\n');
+    const points = (d.session_points || []).join(', ') || 'None';
+    const lg = d.language_guard || {};
+    return `【MCTS-TD Decision Report】\n Task: ${d.task || ''} | Date: ${d.date || ''} | Iterations: ${d.iterations || 0} | Solutions: ${d.solutions_count || 0}\n\n Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + Body-Use):\n${rankHeader}\n${rankRows}\n\n Self-Check: ${VERDICT_SYMBOLS[sc.verdict] || '❓'} ${sc.verdict || ''} [${sc.findings || ''}]\n Blindspot Audit: ${VERDICT_SYMBOLS[ba.verdict] || '❓'} ${ba.verdict || ''} [${ba.details || ''}]\n 言意(Yan-Yi) Gap Check: ${VERDICT_SYMBOLS[yy.verdict] || '❓'} ${yy.verdict || ''} [${yy.gaps != null ? yy.gaps + ' gaps' : ''}]\n\n Execution Plan: ${ep.solution || ''} → [${(ep.steps || []).join(', ')}] → [${ep.key_risks || ''}] | [${ep.fallback || ''}]\n\n Knowledge Update: ${ku || 'None'}\n\n Memory Agent Checkpoints:\n${checkpoints || '   None'}\n\n Session Points: ${points}\n\n Language Guard: ${lg.check || ''} [${lg.lang || ''}]`;
+}
+
+function renderSolutionList(d) {
+    const sols = (d.solutions || []).map((s, i) => ` Solution ${String.fromCharCode(65 + i)}: ${s.name} | Approach: ${s.approach || ''} | Basis: ${s.basis || ''} | Complexity: ${s.complexity || ''}`).join('\n');
+    const elim = (d.eliminated || []).map(e => ` ${e.direction}: ${e.reason}`).join('\n');
+    const cm = d.coverage_matrix || {};
+    const headers = cm.headers || [];
+    const rows = (cm.rows || []).map(r => `   ${r.name}: ${(r.coverage || []).map(c => c === 'check' ? '✓' : '-').join(' ')}`).join('\n');
+    return `【Solution List (After Convergence)】\n${sols}\n\n Eliminated:\n${elim || ' None'}\n\n Coverage Matrix: ${headers.join(' ')}\n${rows || ' None'}`;
+}
+
+function renderConstraintList(d) {
+    const items = (d.constraints || []).map(c => {
+        const mark = c.type === 'Hard' ? (c.met ? '[✓]' : '[✗]') : '[ ]';
+        return ` ${c.type}: ${mark} ${c.description} (${c.source || ''})`;
+    }).join('\n');
+    const src = Object.entries(d.sources || {}).map(([k, v]) => `${k}=${v}`).join(', ');
+    return `【Requirement Constraint List】\n Task: ${d.task || ''}\n${items}\n Sources: ${src || 'None'}`;
+}
+
+function renderDongTemplate(d) {
+    const scores = d.scores || {};
+    const scoreStr = Object.entries(scores).map(([k, v]) => `${k}=${v}${v < 7 ? '↓' : ''}`).join(' ');
+    const keyPts = (d.key_points || []).join('; ');
+    return `[${d.phase_name || 'Phase'}] Key: ${keyPts}\nScores: ${scoreStr}\nAction: ${d.action || ''}`;
+}
+
+// ===== CLI =====
+function main() {
+    const args = process.argv.slice(2);
+    const cmd = args[0];
+    const o = parseArgs(args.slice(1));
+    const d = parseData(o);
+
+    try {
+        let md = '';
+        switch (cmd) {
+            case "review-map": md = renderReviewMap(d); break;
+            case "portrait": md = renderPortrait(d); break;
+            case "recon-report": md = renderReconReport(d); break;
+            case "info-gap": md = renderInfoGap(d); break;
+            case "mcts-round": md = renderMctsRound(d); break;
+            case "mcts-final": md = renderMctsFinal(d); break;
+            case "self-check": md = renderSelfCheck(d); break;
+            case "decision-report": md = renderDecisionReport(d); break;
+            case "solution-list": md = renderSolutionList(d); break;
+            case "constraint-list": md = renderConstraintList(d); break;
+            case "dong-template": md = renderDongTemplate(d); break;
+            default:
+                log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
+                process.exit(0);
+        }
+        emit(o, cmd, d, md);
+    } catch (e) {
+        log(`Error: ${e.message}`);
+        process.exit(1);
+    }
+}
+
+main();

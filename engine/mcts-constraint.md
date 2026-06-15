@@ -8,8 +8,8 @@ description: MCTS-TD Step 0 — Constraint Collection + Xuanxue/Zhanbu Enhanceme
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user's language | 2. MUST ASK when unclear | 3. DEMAND REFINEMENT before solutions
 > 4. HARD vs SOFT constraints | 5. SOURCE TRACKING per constraint | 6. DECOMPOSITION CHECK before "single solution"
-> 7. ROOT-BRANCH after 五診 | 8. ABSENCE DETECTION per dimension | 9. RELATIONAL TENSION → diverge priority
-> 10. 动静 MODE before engine
+> 7. ROOT-BRANCH after 五診(Wuzhen) | 8. ABSENCE DETECTION per dimension | 9. RELATIONAL TENSION → diverge priority
+> 10. 动静(Dong-Jing) MODE before engine
 
 ---
 
@@ -44,7 +44,7 @@ Cross-dimension validation (5 pairs from tension scan):
 ### Portrait Output Format
 
 ```
-【Requirement Portrait · 五診合参】
+【Requirement Portrait · Wuzhen Integrated Assessment】
  Task: [xxx]
  ① 天(Tian) [7/10] sufficient — Stage: ... | Time: ... | Env: ...
  ② 地(Di)   [4/10] partial ← ask — [what's missing]
@@ -57,13 +57,15 @@ Cross-dimension validation (5 pairs from tension scan):
  Root (Ben): [dimension] | Absence: [alerts] | Tension: [hotspots]
 ```
 
+Template: `node scripts/mcts.js template portrait --data '<JSON>'`
+
 ---
 
-## 0.1b Xuanxue Enhancements (AFTER 五診, MANDATORY)
+## 0.1b Xuanxue Enhancements (AFTER Wuzhen, MANDATORY)
 
 ### 本末 (Root-Branch)
 
-After 五診 scores, identify root dimension (ben) — its constraints are super-hard.
+After Wuzhen scores, identify root dimension (ben) — its constraints are super-hard.
 Adjacent dimension violation → HARD. Peripheral → SOFT.
 
 Code: `node scripts/mcts_compute.js root-branch --scores '<JSON>'`
@@ -75,7 +77,7 @@ Abnormal absence → mark blindspot → Info Gap phase asks about it.
 
 Code: `node scripts/mcts_compute.js absence-detect --domain '<str>' --constraints '<JSON>'`
 
-### Relational Tension (六壬 Method)
+### Relational Tension (六壬(Liu-Ren) Method)
 
 Compute tension for key dimension pairs: 天↔地, 人↔物, 法↔地, 天↔人, 物↔法
 Tension = |score_A - score_B|. ≥4: HOTSPOT → diverge priority. ≤1: STABLE.
@@ -85,11 +87,11 @@ Code: `node scripts/mcts_compute.js tension-scan --scores '<JSON>'`
 ### 动静 (Movement-Stillness) — Engine Mode
 
 Before engine engages, determine mode:
-- Urgency markers ("紧急/ASAP") → **動(Dong)**: simplified engine, 3-5 MCTS rounds, skip Round 3
-- Depth markers ("重要/慎重/全面") → **靜(Jing)**: full engine, 8-10 rounds
-- No signal → judge from complexity: 1 viable option → 動, 3+ with uncertainty → 靜
+- Urgency markers ("紧急/ASAP") → **Dong**: simplified engine, 3-5 MCTS rounds, skip Round 3
+- Depth markers ("重要/慎重/全面") → **Jing**: full engine, 8-10 rounds
+- No signal → judge from complexity: 1 viable option → Dong, 3+ with uncertainty → Jing
 
-Mode switch: if 動 mode reveals hidden complexity → upgrade to 靜.
+Mode switch: if Dong mode reveals hidden complexity → upgrade to Jing.
 
 Code: `node scripts/mcts_compute.js dong-jing --message '<msg>' --decision-count <N>`
 
@@ -138,3 +140,5 @@ Hard constraint violated → eliminate solution. Soft → lower match score M.
  Soft: [ ] constraint (source, unconfirmed)
  Sources: User=N, Code=N, Inferred=N
 ```
+
+Template: `node scripts/mcts.js template constraint-list --data '<JSON>'`

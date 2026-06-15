@@ -16,15 +16,15 @@ description: MCTS-TD Step 3~3.6 — Converge Engine. CLT-UCB ranking + self-chec
 
 ### 执两用中 — Doctrine of the Mean (中庸)
 
-"执其两端，用其中于民" — 不是取平均，而是把握两端找到最优平衡点。
+"执其两端，用其中于民" — Not averaging, but finding the optimal balance by grasping both ends.
 
-Converge排名不是简单选最高V:
+Converge ranking is not simply picking the highest V:
 - V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + Body-Use bonus
-- 这是"执两用中"的量化：可行性(正) + 鲁棒性(反) → 综合最优(中)
-- 第1名V_feas高但V_robust低 → 偏端，不是"中"
-- Self-Check第④问(本末) = 检查是否偏离了"中"
+- This quantifies Zhi-Liang-Yong-Zhong: feasibility(orthodox) + robustness(unorthodox) → comprehensive optimum(mean)
+- 1st place high V_feas but low V_robust → deviant, not the "mean"
+- Self-Check ④(Ben-Mo) = check if deviating from the "mean"
 
-学术支撑: Herbert Simon "Bounded Rationality" (1956) — 最优解不可达时，满意解(中)更实际。
+Academic support: Herbert Simon "Bounded Rationality" (1956) — When optimal is unattainable, satisficing(mean) is more practical.
 
 ### Multi-Layer Ranking
 
@@ -53,7 +53,7 @@ Before self-check, **display MCTS conclusion to user** with ranking + best path 
 **⛔ MANDATORY — answer ALL 5 questions before proceeding.**
 
 ① **Find flaws** → "为人谋而不忠乎?": Is any judgment vague? Any assumption unverified? Any risk ignored?
-   - 忠=忠于问题本身，不是忠于自己的偏好。检查是否被"我擅长X"带偏了方向
+   - Zhong=loyal to the problem itself, not own preferences. Check if biased by "I'm good at X"
    - Check each solution: does it rely on "probably fine" or "should work"?
    - Check for wishful thinking: "the API will handle it" → really?
 
@@ -62,7 +62,7 @@ Before self-check, **display MCTS conclusion to user** with ranking + best path 
    - If yes → ask user about that scenario specifically
 
 ③ **Risk assessment** → "与朋友交而不信乎?": Worst outcome of the #1 choice? Can we bear it?
-   - 信=方案的承诺是否能兑现。第1名说"可行"——真的可信吗？
+   - Xin=whether the solution's promises can be fulfilled. 1st place says "feasible" — is it truly credible?
    - What's the maximum downside? Probability? Can it be reversed?
    - If irreversible and probability >10% → ⚠️ Risk
 
@@ -71,7 +71,7 @@ Before self-check, **display MCTS conclusion to user** with ranking + best path 
    - If 1st place sacrifices root for branch convenience → conditional pass only
 
 ⑤ **動静 Mode Check** → "传不习乎?": Are we biased?
-   - 习=实践检验，不是机械套用流程。是否在"走流程"而非"真思考"？
+   - Xi=practical verification, not mechanically following process. Are we "going through motions" rather than "truly thinking"?
    - Over-analyzing a simple problem (靜→動 bias)? → simplify, decide
    - Under-analyzing a complex problem (動→靜 bias)? → slow down, more sim
 
@@ -81,6 +81,8 @@ Self-Check Verdict:
   ⚠️ Risk — specific concern, recommend user confirm (use AskUserQuestion)
   ❌ Not passed — re-simulate with adjusted assumptions
 ```
+
+Template: `node scripts/mcts.js template self-check --data '<JSON>'`
 
 Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
 
@@ -114,8 +116,8 @@ Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
    - Did we ignore an implicit "it should work like [familiar app]"?
 
 **Resolution rules:**
-- Same 意 different 言 → merge solutions (false diversity)
-- Same 言 different 意 → keep both (fundamental disagreement, need user clarification)
+- Same yi different yan → merge solutions (false diversity)
+- Same yan different yi → keep both (fundamental disagreement, need user clarification)
 - Gap affects ranking → re-simulate → mark for user confirmation
 
 Code: `yan-yi-check --statements '<JSON>' --interpretations '<JSON>'`
@@ -146,8 +148,8 @@ Update: failure → knowledge graph, new constraints → list, success → full 
 
 ### 理事 (Li-Shi) Dual-Layer Write-back
 
-- **理(Li·Principle)**: universal pattern → tag `layer:principle`, cross-domain reusable, CONFIRMED after 3+ validations
-- **事(Shi·Phenomenon)**: concrete case → tag `layer:phenomenon`, same-domain reference
+- **Li(Principle)**: universal pattern → tag `layer:principle`, cross-domain reusable, CONFIRMED after 3+ validations
+- **Shi(Phenomenon)**: concrete case → tag `layer:phenomenon`, same-domain reference
 
 Code: `li-shi-split --insight '<JSON>'`
 
@@ -183,3 +185,5 @@ Code: `li-shi-split --insight '<JSON>'`
 
  Language Guard: `check --user-lang <lang> --output "..."` [PASS/FAIL]
 ```
+
+Template: `node scripts/mcts.js template decision-report --data '<JSON>'`

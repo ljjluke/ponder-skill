@@ -34,7 +34,8 @@ const ENGINES = {
                    'five-diagnosis','hexagram-lookup',
                    'root-branch','absence-detect','tension-scan','dong-jing',
                    'mutation-vector','body-use-score','li-shi-split','yan-yi-check',
-                   'one-many-check','ti-yong-check'],
+                   'one-many-check','ti-yong-check',
+                   'get-learning-rate','get-reward-signal','get-terminal-value','project-state','mutation-tiebreak'],
     },
     guard: {
         script: 'mcts_guard.js',
@@ -61,6 +62,13 @@ const ENGINES = {
         desc: '记忆文件管理(legacy) — 状态/归档/清理',
         commands: ['status','archive','cleanup'],
     },
+    template: {
+        script: 'mcts_template.js',
+        desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
+        commands: ['review-map','portrait','recon-report','info-gap','mcts-round',
+                   'mcts-final','self-check','decision-report','solution-list',
+                   'constraint-list','dong-template'],
+    },
 };
 
 function usage() {
@@ -75,6 +83,7 @@ function usage() {
     console.log("  node scripts/mcts.js guard decomposition-guard --claim '{\"task\":\"login\"}'");
     console.log("  node scripts/mcts.js mma deqi '{\"category\":\"debug\"}'");
     console.log("  node scripts/mcts.js lang detect --message 'Hello'");
+    console.log("  node scripts/mcts.js template review-map --data '<JSON>'");
     console.log("");
     console.log("Tip: Forget which sub-commands? Just type the engine name:");
     console.log("  node scripts/mcts.js mma      → lists all MMA commands");

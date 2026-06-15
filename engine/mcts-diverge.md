@@ -21,10 +21,10 @@ description: MCTS-TD Step 1 — Diverge Engine. Eight-Facet Mirror review + Cros
 **⛔ This step is NOT optional. Every engine engagement MUST start with 3-step user interview.**
 
 ```
-① PARAPHRASE: "我理解你要 [X]。对吗？还有其他方面需要考虑的吗？"
-② PROBE: "你之前试过或考虑过什么方案？"
+① PARAPHRASE: "I understand you want [X]. Is that correct? Are there other aspects to consider?"
+② PROBE: "What solutions have you tried or considered before?"
 ③ CONSTRAIN: Ask 2-3 most critical constraints via AskUserQuestion (NOT free text)
-   Example: "有依赖限制吗？" → [有，没有限制 / 必须用Go+gin / 完全不用外部依赖]
+   Example: "Any dependency constraints?" → [Yes, no restrictions / Must use Go+gin / No external dependencies]
 ```
 
 **⚠️ Do NOT skip this. The user knows things you do not.**
@@ -44,16 +44,18 @@ description: MCTS-TD Step 1 — Diverge Engine. Eight-Facet Mirror review + Cros
 【Eight-Facet Review Map】
  Task: [xxx] | Domain: [xxx]
 
- F1 ☰ 力量之源 [dimension name] — Score: [0-10]
+ F1 ☰ Source of Force [dimension name] — Score: [0-10]
     Known: [...] | Blindspots: [...] | Ideas: [...]
 
- F2 ☷ 根基承载 [dimension name] — Score: [0-10]
+ F2 ☷ Foundation Bearer [dimension name] — Score: [0-10]
     Known: [...] | Blindspots: [...] | Ideas: [...]
 
  ... (F3-F8 same format)
 
  Summary: Strong=[F?F?] | Weak=[F?F?] | Tension pairs=[F?↔F?]
 ```
+
+Template: `node scripts/mcts.js template review-map --data '<JSON>'`
 
 | Facet | Trigram | Question |
 |-------|---------|----------|
@@ -81,9 +83,9 @@ Each facet has **体**(substance: what it IS universally) + **用**(function: wh
 | F7 | CONSTRAINT BOUNDARY | 法家(rules/enforcement), 道家(knowing when to stop) |
 | F8 | STAKEHOLDER EQUILIBRIUM | 儒家(ethical foundation), 縱横家(alliances) |
 
-**Usage**: Sub-lenses are INTERNAL — interrogate own assumptions. Do NOT re-ask 五診 answers.
-**体用 in Converge**: same-体 different-用 → MERGE (false diversity). Different-体 same-用 → KEEP.
-**体用 in MCTS**: same-体 branches → merge nodes (prevent tree bloat).
+**Usage**: Sub-lenses are INTERNAL — interrogate own assumptions. Do NOT re-ask Wuzhen answers.
+**Ti-Yong in Converge**: same-体 different-用 → MERGE (false diversity). Different-体 same-用 → KEEP.
+**Ti-Yong in MCTS**: same-体 branches → merge nodes (prevent tree bloat).
 
 Code: `node scripts/mcts_compute.js ti-yong-check`
 
@@ -120,16 +122,16 @@ Code: `node scripts/mcts_compute.js li-shi-split --facets '<JSON>'`
 
 Each facet has 3 search actions — ② expands scope, ③ uses cultural analogy to jump out of conventional thinking:
 
-| Facet | ① Standard | ② Expansion | ③ Cultural Analogy (跳出框架) |
+| Facet | ① Standard | ② Expansion | ③ Cultural Analogy (jump out of framework) |
 |-------|-----------|-------------|-------------------------------|
-| F1 Source | industry standard | unconventional approaches | **兵法类比**(孙子·势篇: 造势vs借势 — force是造出来的还是借来的?) |
-| F2 Foundation | best practices | resource constraints | **農耕类比**(農家: 因地制宜 — 这块"地"适合种什么?) |
-| F3 Change | risk factors | historical precedents | **醫道类比**(醫家: 治未病 — 哪里还没出症状但已有病根?) |
-| F4 Penetration | adoption strategies | diffusion barriers | **巧匠类比**(庖丁解牛: 找关节缝隙，不硬推) |
-| F5 Risk | worst cases | failure modes | **史鉴类比**(以史为鉴: 类似决策的历史结局) |
-| F6 Visible | surface dependencies | hidden coupling | **儒法类比**(正名: 名实是否一致?) |
-| F7 Boundary | compliance requirements | hard limits | **道法类比**(知止不殆: 哪些边界是保护性的?) |
-| F8 Convergence | stakeholder needs | win-win scenarios | **縱橫类比**(合纵连横: 利益能否重新分配?) |
+| F1 Source | industry standard | unconventional approaches | **兵法类比**(孙子·势篇: create momentum vs borrow momentum — is the force created or borrowed?) |
+| F2 Foundation | best practices | resource constraints | **農耕类比**(農家: 因地制宜 — what is suitable for this "land"?) |
+| F3 Change | risk factors | historical precedents | **醫道类比**(醫家: 治未病 — where are latent issues not yet symptomatic?) |
+| F4 Penetration | adoption strategies | diffusion barriers | **巧匠类比**(庖丁解牛: find the joint gaps, don't force through) |
+| F5 Risk | worst cases | failure modes | **史鉴类比**(以史为鉴: outcomes of similar decisions in history) |
+| F6 Visible | surface dependencies | hidden coupling | **儒法类比**(正名: do name and reality match?) |
+| F7 Boundary | compliance requirements | hard limits | **道法类比**(知止不殆: which boundaries are protective?) |
+| F8 Convergence | stakeholder needs | win-win scenarios | **縱橫类比**(合纵连横: can interests be redistributed?) |
 
 ⛔ FORBIDDEN: skip ③ cultural analogy step, rely on conventional thinking only.
 📚 Full analogy methodology: `references/culture-algorithm-reference.md`
@@ -138,16 +140,16 @@ Each facet has 3 search actions — ② expands scope, ③ uses cultural analogy
 
 Each facet's sub-lenses interrogate your OWN assumptions with **analogy-based reasoning** (类比推演):
 
-| Facet | Sub-lens 1 + 推演 | Sub-lens 2 + 推演 |
-|-------|-------------------|-------------------|
-| F1 | **兵家**(strategic advantage): "谁是敌？谁是友？什么是制高点？看似坚固的是否真是实？" | **縱横家**(interest alignment): "各方利益能否对齐？谁能被拉拢？谁不可动摇？" |
-| F2 | **農家**(fundamental resources): "土壤(团队)适合种什么？有灌溉(资金)吗？季节(时机)对吗？" | **水利家**(resource flow): "资源流向哪里？有堵点吗？上游下游关系？" |
-| F3 | **醫家**(surface vs root): "这是症状还是病因？治标还是治本？有没有'未病'？" | **陰陽家**(opposing forces): "对立面是谁？消长趋势？物极必反的转折点？" |
-| F4 | **工匠**(core tools): "核心工具够用吗？有没有更简单的做法？庖丁解牛的缝隙在哪？" | **禪家**(strip assumptions): "去掉所有装饰后剩下什么？'无'中是否藏着可能？" |
-| F5 | **史家**(historical precedent): "历史上谁犯过类似错误？结局如何？教训是什么？" | **道家**(reverse risk of over-intervention): "不做比做更好吗？干预是否制造新风险？" |
-| F6 | **工匠**(what makes visible): "什么让表面看起来好？支撑它的隐藏结构是什么？" | **儒家**(human values): "谁被忽略了？人的需求是否被技术遮蔽？" |
-| F7 | **法家**(rules/enforcement): "规则是否过时？谁来执行？违规的代价？" | **道家**(knowing when to stop): "哪里是不该越的线？知止=保护还是限制？" |
-| F8 | **儒家**(ethical foundation): "各方利益的道德底线？谁的利益被牺牲？" | **縱横家**(alliances): "利益能否重新分配？谁是天然盟友？" |
+| Facet | Sub-lens 1 + Reasoning | Sub-lens 2 + Reasoning |
+|-------|------------------------|------------------------|
+| F1 | **兵家**(strategic advantage): "Who is the enemy? Who is the ally? What is the high ground? Is what appears solid truly real?" | **縱横家**(interest alignment): "Can all parties' interests be aligned? Who can be won over? Who is immovable?" |
+| F2 | **農家**(fundamental resources): "What is this soil (team) suited to grow? Is there irrigation (funding)? Is the season (timing) right?" | **水利家**(resource flow): "Where do resources flow? Are there blockages? What are the upstream-downstream relationships?" |
+| F3 | **醫家**(surface vs root): "Is this a symptom or the root cause? Treat the surface or the root? Are there '未病' (latent diseases)?" | **陰陽家**(opposing forces): "Who is the opposing side? What is the ebb-and-flow trend? Where is the turning point of reversal?" |
+| F4 | **工匠**(core tools): "Are the core tools sufficient? Is there a simpler approach? Where is the joint gap like 庖丁解牛?" | **禪家**(strip assumptions): "What remains after stripping all decoration? Does 'emptiness' conceal possibility?" |
+| F5 | **史家**(historical precedent): "Who in history made similar mistakes? What was the outcome? What is the lesson?" | **道家**(reverse risk of over-intervention): "Is doing nothing better than acting? Does intervention create new risks?" |
+| F6 | **工匠**(what makes visible): "What makes the surface look good? What hidden structure supports it?" | **儒家**(human values): "Who is being overlooked? Are human needs obscured by technology?" |
+| F7 | **法家**(rules/enforcement): "Are the rules outdated? Who enforces them? What is the cost of violation?" | **道家**(knowing when to stop): "Where is the line that should not be crossed? Does 知止 equal protection or limitation?" |
+| F8 | **儒家**(ethical foundation): "What is the moral baseline for all parties' interests? Whose interests are being sacrificed?" | **縱横家**(alliances): "Can interests be redistributed? Who are the natural allies?" |
 
 📚 Full methodology + academic basis: `references/culture-algorithm-reference.md`
 
@@ -179,6 +181,8 @@ Without this phase, newly-discovered gaps become assumptions — exactly what MC
   Remaining gaps: [list] / None → proceed
 ```
 
+Template: `node scripts/mcts.js template info-gap --data '<JSON>'`
+
 ---
 
 ## Direction Check (before converging)
@@ -202,12 +206,14 @@ User may say "both are important" → that's useful too.
    F8 [dimension]: [key findings]
 
  Cross-Validation:
-   F3↔F5: [interaction finding] → 理: [universal] | 事: [specific]
-   F1↔F7: [interaction finding] → 理: [universal] | 事: [specific]
+   F3↔F5: [interaction finding] → Li 理: [universal] | Shi 事: [specific]
+   F1↔F7: [interaction finding] → Li 理: [universal] | Shi 事: [specific]
 
  Explicit Assumptions:
    "Assume [X]" ← [Confirmed? / Unconfirmed]
 ```
+
+Template: `node scripts/mcts.js template recon-report --data '<JSON>'`
 
 ---
 
@@ -216,7 +222,7 @@ User may say "both are important" → that's useful too.
 **① Cluster**: Group idea fragments into directions. Same direction = internal consistency; different directions = substantial difference.
 
 ⭐ **一多(One-Many) Coherence**: Each cluster: 1 core identity (一) + 2-4 mechanisms (多). Too loose → re-split. Too tight (false diversity) → merge.
-⭐ **体用 False Diversity Elimination**: same-体 different-用 → MERGE. Different-体 same-用 → KEEP.
+⭐ **Ti-Yong False Diversity Elimination**: same-体 different-用 → MERGE. Different-体 same-用 → KEEP.
 Code: `one-many-check`, `ti-yong-check`
 
 **② Complete**: Missing info for a direction? Complete from diverge output or shelve.
@@ -239,6 +245,8 @@ Code: `node scripts/mcts_compute.js cull --criteria`
 
  Coverage Matrix: F1-F8 × solutions (✓/-)
 ```
+
+Template: `node scripts/mcts.js template solution-list --data '<JSON>'`
 
 ---
 

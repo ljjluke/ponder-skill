@@ -11,7 +11,7 @@ description: MCTS-TD Step 2 — MCTS Tree Search. Multi-round iteration: Selecti
 >    ⛔ NEVER jump to ④⑤ without exhausting ①②③. Verify: `info-gap-guard`
 > 4. Stop when V stable 3 rounds OR max iterations | 5. Multi-layer reasoning mandatory
 > 6. MUTATION VECTOR: 5-bit mask per node, volatile dimensions → higher exploration
-> 7. BODY-USE COMPATIBILITY: final ranking gets 体用生克 bonus
+> 7. BODY-USE COMPATIBILITY: final ranking gets 体用(Ti-Yong) Sheng-Ke bonus
 
 ---
 
@@ -38,7 +38,7 @@ Node = { id, description, parent, children,
   n, w, V, σ²,                          // MCTS stats
   node_type: ACTION|RISK|FALLBACK|TERMINAL,
   is_terminal, expansion_potential: HIGH|MED|LOW|NONE,
-  mutation: [0,0,0,0,0]                  // 5-bit: [天,地,人,法,物] 0=stable 1=volatile
+  mutation: [0,0,0,0,0]                  // 5-bit: [Tian 天,Di 地,Ren 人,Fa 法,Wu 物] 0=stable 1=volatile
 }
 ```
 
@@ -49,19 +49,19 @@ Node = { id, description, parent, children,
 **UCB = V + c×√(ln(N_parent)/n_child) + K_bonus**, c=√2
 Code: `ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>`
 
-### 奇正相生 — Sun Tzu's Orthodox & Unorthodox (虚实篇)
+### 奇正相生(Qi-Zheng Interplay) — Sun Tzu's Orthodox & Unorthodox (虚实篇 Xu Shi Pian)
 
 "凡战者，以正合，以奇胜" — 正(orthodox)=exploit known best, 奇(unorthodox)=explore unknown potential
 
-UCB本身就是奇正相生的数学表达:
-- **V项**(exploit) = 正 — 利用已验证的最优路径 (以正合)
-- **c×√(ln(N)/n)项**(explore) = 奇 — 探索访问少的分支 (以奇胜)
-- **K_bonus调节奇正比例**: CONFIRMED+高置信→加重"正"(+0.15) | PROVISIONAL/未知→加重"奇"(+0.05) | DISPUTED→减"奇"(-0.10)
+UCB itself is the mathematical expression of Qi-Zheng interplay:
+- **V term**(exploit) = 正(Zheng) — exploit verified optimal path (engage with orthodox)
+- **c×√(ln(N)/n) term**(explore) = 奇(Qi) — explore less-visited branches (win with unorthodox)
+- **K_bonus adjusts Qi-Zheng ratio**: CONFIRMED+high confidence → increase Zheng(+0.15) | PROVISIONAL/unknown → increase Qi(+0.05) | DISPUTED → reduce Qi(-0.10)
 
-OODA与MCTS的对应(Boyd受孙子兵法直接影响):
+OODA-MCTS correspondence (Boyd was directly influenced by Sun Tzu's Art of War):
 ```
-OODA:  Observe(观) → Orient(察) → Decide(谋) → Act(行)
-MCTS:  Selection(观) → Expansion(察) → Simulation(谋) → Backprop(行)
+OODA:  Observe(Guan 观) → Orient(Cha 察) → Decide(Mou 谋) → Act(Xing 行)
+MCTS:  Selection(观)    → Expansion(察)    → Simulation(谋)  → Backprop(行)
 ```
 
 **K_bonus**: `k-bonus --status <s> --n <n> --q <q>`
@@ -70,7 +70,8 @@ CONFIRMED+n≥5+q≥0.8 → +0.15 | PROVISIONAL+n<5+q≥0.7 → +0.05 | DISPUTED
 **Round 1 special**: all n=0 → use knowledge graph recommendation score for initial sort.
 
 **Mutation Vector influence**: if UCB_a - UCB_b < 0.05 AND mutation_a > mutation_b → select node_a.
-Code: `mutation-vector --nodes '<JSON>'`
+Code: `node scripts/mcts.js compute mutation-vector --nodes '<JSON>'`
+Tiebreak: `node scripts/mcts.js compute mutation-tiebreak --nodes '<JSON>'`
 
 ---
 
@@ -166,10 +167,14 @@ Convergence: [check result]
 
 ⛔ FORBIDDEN: outputting only final V/n/σ² without per-round detail | collapsing rounds
 
+Template: `node scripts/mcts.js template mcts-round --data '<JSON>'`
+
 ### Final Output
 
 ```
 MCTS Complete — [N] rounds, stop reason: [why]
 Ranking: SolutionA n=5 V=0.84 σ²=0.03 Conf=High | SolutionB ...
 Best path: [...] | Main risk: [...]
+
+Template: `node scripts/mcts.js template mcts-final --data '<JSON>'`
 ```

@@ -66,6 +66,8 @@ r_t =
   -0.3  − Compile warnings or lint errors
   -0.7  − Test failure
   -1.0  − Compile failure/introduced new bug
+
+Code: `node scripts/mcts.js compute get-reward-signal --type <type>`
 ```
 
 ### Terminal State Value
@@ -77,25 +79,27 @@ V(s_terminal) =
    0.0  − Neutral (task complete but quality mediocre)
   -0.5  − Side effects (modified A but broke B)
   -1.0  − Task failed/need rollback
+
+Code: `node scripts/mcts.js compute get-terminal-value --type <type>`
 ```
 
 ---
 
 ## Value Update Rules
 
-### 学不可以已 — Xunzi's Progressive Accumulation (劝学篇)
+### 学不可以已(Xue Bu Ke Yi Yi) — Xunzi's Progressive Accumulation (劝学篇 Quan Xue Pian)
 
-"不积跬步，无以至千里" — TD学习就是跬步积累:
-- 每次执行的TD_error就是一步跬步，单步微小但累积方向确定
-- α学习率 = 步幅大小：初学大步(α=0.5)，熟练小步(α=0.05) — "锲而不舍，金石可镂"
-- HYPOTHESIS→PROVISIONAL→CONFIRMED的积累过程 = 跬步至千里
+"不积跬步，无以至千里" — TD learning is step-by-step accumulation (Kui-Bu):
+- Each TD_error is one kui-bu (half-step), tiny individually but cumulative direction is certain
+- α learning rate = step size: large steps for beginners (α=0.5), small steps for experts (α=0.05) — "锲而不舍，金石可镂"
+- HYPOTHESIS→PROVISIONAL→CONFIRMED accumulation = kui-bu to a thousand miles
 
-"青取之于蓝而青于蓝" — 知识可以超越来源:
-- HYPOTHESIS(蓝) → PROVISIONAL(提炼) → CONFIRMED(青) = 青出于蓝
-- 但DISPUTED→REFUTED = 某些"蓝"本身有问题，需要重新审视来源的可靠性
-- Rollback机制 = "蓝"被推翻后恢复正确知识，防止错误积累
+"青取之于蓝而青于蓝" — Knowledge can surpass its source:
+- HYPOTHESIS(indigo plant) → PROVISIONAL(extraction) → CONFIRMED(beyond blue) = 青出于蓝(Qing Chu Yu Lan)
+- But DISPUTED→REFUTED = some "indigo plants" are themselves flawed, need to re-examine source reliability
+- Rollback mechanism = restoring correct knowledge after "indigo" is overturned, preventing error accumulation
 
-学术支撑: TD学习本质是增量式值函数逼近 — 每步只调整一小步(跬步)，但方向正确则收敛至最优(千里)。
+Academic support: TD learning is essentially incremental value function approximation — each step adjusts only a small amount (kui-bu), but with correct direction converges to optimum (thousand miles).
 
 ### Gamma Discounted Backpropagation
 
@@ -134,6 +138,8 @@ Traverse backwards from t=T to t=0:
 | 6-20 times | 0.2 | Medium speed |
 | 21-100 times | 0.1 | Stable learning |
 | >100 times | 0.05 | Fine-tuning, prevent oscillation |
+
+Code: `node scripts/mcts.js compute get-learning-rate --n <N>`
 
 ---
 
@@ -196,6 +202,8 @@ Query Rules:
   Exact match → Return all matching entries (may be multiple)
   Partial match → Return closest entry + mark "partial match"
   No match → Return empty (cold start)
+
+Code: `node scripts/mcts.js compute project-state --state_vector '<JSON>'`
 ```
 
 ---
