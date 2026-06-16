@@ -73,9 +73,9 @@ license: MIT
 
 ---
 
-### Step 4: 推演 (MCTS — 多轮独立子Agent模拟)
+### Step 4: 推演 (MCTS — 多场景子Agent模拟)
 
-**⛔ 每个方案必须由≥3次独立子Agent模拟。单次模拟不可信, 取分布才可信。不允许交叉污染。**
+**⛔ 每个方案必须在 3 种不同场景下模拟(乐观/现实/悲观)。场景不同结果不同才是真实分布。相同参数跑 N 次没有意义。**
 
 流程:
 
@@ -83,18 +83,19 @@ license: MIT
 ① 列出 ≥2 个方案, 写入 MCTS 树:
    node scripts/mcts.js tree init --solutions '<json>'
    
-② 每个方案跑 N 次独立模拟 (N ≥ 3):
-   Agent(mcts-simulator) — "Solution A, 第1次"
-   Agent(mcts-simulator) — "Solution A, 第2次"
-   Agent(mcts-simulator) — "Solution A, 第3次"
-   (每次模拟不知道其他次的存在)
-   
-③ 汇总每次模拟的 V 和 σ²:
-   方案A: V=[0.72, 0.68, 0.75] σ²=[0.25, 0.30, 0.22]
-   方案B: V=[0.55, 0.60, 0.52] σ²=[0.35, 0.30, 0.40]
-   → 均值 V 和 σ² 写入 MCTS 树
+② 每个方案跑 3 种场景:
+   Agent(mcts-simulator, scenario=optimistic)  — "一切顺利"
+   Agent(mcts-simulator, scenario=realistic)   — "正常波动"
+   Agent(mcts-simulator, scenario=pessimistic) — "最坏情况"
 
-④ 对比结果输出推荐: 哪个方案均值 V 高且 σ² 低
+③ 汇总:
+   方案A: 乐观V=0.85 现实V=0.72 悲观V=0.45
+   方案B: 乐观V=0.75 现实V=0.60 悲观V=0.55
+   → 方案A上限高但下限低, 方案B更稳健
+
+④ 判断:
+   用户风险偏好低 → 推荐B(悲观场景仍可用)
+   用户风险偏好高 → 推荐A(上限高, 接受下限风险)
 ```
 
 输出: 方案对比 + 推荐 + 风险(如有)。
