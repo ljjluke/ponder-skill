@@ -159,6 +159,20 @@ let loopCount = 0
 let fixContext = ''
 let lastVerdict = ''
 
+// 自适应管道权重 — 神经可塑性模拟
+// 追踪每步被验证失败的次数, 权重低=需要更多关注
+const STEP_WEIGHTS = { 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.0 }
+const STEP_FAIL_COUNT = { 2: 0, 3: 0, 4: 0, 5: 0 }
+function updateStepWeights() {
+  const totalFails = Object.values(STEP_FAIL_COUNT).reduce((a, b) => a + b, 0)
+  if (totalFails === 0) return
+  for (const s of [2, 3, 4, 5]) {
+    // 失败率越高→权重越低(需要更多关注)
+    STEP_WEIGHTS[s] = Math.max(0.3, 1.0 - STEP_FAIL_COUNT[s] / totalFails)
+  }
+  log('自适应权重: Step2=' + STEP_WEIGHTS[2].toFixed(2) + ' Step3=' + STEP_WEIGHTS[3].toFixed(2) + ' Step4=' + STEP_WEIGHTS[4].toFixed(2) + ' Step5=' + STEP_WEIGHTS[5].toFixed(2))
+}
+
 // ── 自校验主循环 ──
 do {
   loopCount++
@@ -245,6 +259,38 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
   })
 
   log('Step3完成: ' + step3.dimensions.length + '个维度, ' + step3.conflicts.length + '组冲突')
+
+  // ── DMN间歇: Default Mode Network 孵化期 ──
+  // 人脑的DMN在非任务态时才活跃, 负责远距离联想和洞见涌现
+  // Bartoli et al.(2024)证明: DMN对原创性思维有因果作用
+  // 在结构化分析(Step3)和结构化推演(Step4)之间插入非结构化联想
+  phase('DMN间歇')
+
+  const dmnInsight = await agent(`你是"自由联想师"。你的任务是: 不做任何结构化分析, 而是让思维自由扩散。
+
+这是你唯一不需要结构化输出的步骤。请你:
+
+1. 放下所有框架和方法, 像散步时脑中自然涌现的想法一样
+2. 把Step2和Step3的分析结果在脑中"挂起来", 不做评判
+3. 问自己三个问题:
+   - "如果这一切都是错的, 那真实情况可能是什么样的?"
+   - "有没有一个最简单、最明显但我一直没说的答案?"
+   - "这个问题让我想起什么完全不相干的领域的事情?"
+4. 输出你脑中自然冒出来的任何联想——不需要合理, 不需要有证据
+
+${fixContext ? '上一轮修复上下文(仅供参考, 不要被它限制自由联想): ' + fixContext.substring(0, 200) : ''}
+
+这个阶段的输出不会用于结构化分析, 而是作为Step4推演的"潜意识背景"。`, {
+    label: 'DMN: 自由联想',
+    phase: 'DMN间歇',
+    schema: { type: 'object', properties: {
+      free_associations: { type: 'array', items: { type: 'string' }, minItems: 2, description: '自然涌现的想法, 不需要合理' },
+      unexpected_connection: { type: 'string', description: '跨领域联想' },
+      gut_feeling: { type: 'string', description: '直觉感受, 不需要理由' },
+    }, required: ['free_associations', 'gut_feeling'] },
+  })
+
+  log('DMN间歇完成: ' + (dmnInsight.unexpected_connection ? '涌现洞见' : '无特别涌现'))
 
   // ── Step 4: 多场景推演（并行子Agent架构） ──
   // 4a: 从Step3维度冲突中提炼推演方向
@@ -369,9 +415,24 @@ ${JSON.stringify(step4, null, 2)}
 原始用户请求: ${userRequest}
 Step2发散: ${JSON.stringify(step2, null, 2)}
 Step3八卦镜: ${JSON.stringify(step3, null, 2)}
+DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
+
+【躯体标记信号—情绪作为决策信号】
+Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但无法做决策,
+因为缺少情绪信号来"标记"选项的好坏。
+
+在做出最终推荐前:
+1. 回顾Step1-4的所有分析, 感受每个方向的"情绪味道"
+2. 问自己: "如果选择方向A, 我的直觉感受是什么? 不安? 平静? 兴奋?"
+3. 问自己: "历史上类似的情况, 情绪记忆告诉了我什么?"
+4. 如果某个方向在推演中data_sources很少(依赖LLM自身推理而非真实数据),
+   给它一个"怀疑标记"——这不是理性的评分, 而是"信息不足的不安感"
+5. 如果有DMN自由联想的gut_feeling与理性分析矛盾, 不要忽略它,
+   在结论中标注"直觉提示: [gut_feeling], 但理性分析指向..."
 
 5.1 综合判断（用日常语言，不出现框架术语）:
 - what（结论）+ why（Step2→3→4推理链）+ what if wrong（反向假设）
+- 加入躯体标记: "这个结论给我的感觉是[情绪词], 因为[原因]"
 
 5.2 自检5问（每问必须回答，passed必须true/false）:
 ① Step2的6视角是否有过重依赖某个视角？
@@ -457,16 +518,25 @@ Step3八卦镜: ${JSON.stringify(step3, null, 2)}
     break
   }
 
-  // ── 未通过: 生成修复上下文 ──
+  // ── 未通过: 记录各步骤失败次数(自适应权重) ──
+  for (const issue of verifyResult.issues) {
+    if (issue.step >= 2 && issue.step <= 5) {
+      STEP_FAIL_COUNT[issue.step] = (STEP_FAIL_COUNT[issue.step] || 0) + 1
+    }
+  }
+  updateStepWeights()
+
   const criticalCount = verifyResult.issues.filter(i => i.severity === 'critical').length
   if (criticalCount > 0 && loopCount >= MAX_LOOPS) {
     log('⚠️ 仍有' + criticalCount + '个关键问题，已达最大修复轮次，输出带警告')
     break
   }
 
+  const weakSteps = Object.entries(STEP_WEIGHTS).filter(([s, w]) => w < 0.7).map(([s]) => 'Step' + s).join(', ')
   fixContext = '【验证Agent发现的漏洞】\n'
     + verifyResult.issues.map(i => '[' + i.severity + '] Step' + i.step + ': ' + i.detail + (i.evidence ? '\n  证据: ' + i.evidence : '')).join('\n')
     + '\n\n【遗漏维度】' + (verifyResult.what_was_missed || '无')
+    + '\n\n【自适应权重 — 薄弱步骤需要更多关注】' + (weakSteps ? '特别注意: ' + weakSteps : '各步骤均衡')
     + '\n\n【修复指示】' + (verifyResult.fix_prompt || '请增加分析深度，确保每个步骤都充分完成')
 
   log('验证未通过: ' + issueCount + '个问题, 进入第' + (loopCount + 1) + '轮修复')
@@ -501,6 +571,11 @@ return {
   step4: {
     direction_count: step4.directions.length,
     recommendation: step4.recommendation,
+  },
+  brain_features: {
+    dmn_incubation: dmnInsight?.gut_feeling ? true : false,
+    somatic_marker: step5.conclusion ? true : false,
+    adaptive_weights: Object.fromEntries(Object.entries(STEP_WEIGHTS).map(([k, v]) => ['Step' + k, v])),
   },
   memory_tags: {
     step2: step2.perspectives.filter(p => p._memory_tag).map(p => p._memory_tag),
