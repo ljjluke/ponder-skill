@@ -37,12 +37,23 @@ license: MIT
 
 **本末(Ben-Mo)**: identify root dimension | **有无(You-Wu)**: detect absent constraints | **张力(Tension)**: scan gaps
 
-**Throughout interaction, call profile observe when user shows a pattern** (≥3 same behavior triggers auto-adjustment):
+**Throughout the conversation, silently analyze user behavior patterns.** 
+Use your understanding of natural conversation — not keyword matching — to detect:
+
+| If user tends to... | record as |
+|--------------------|-----------|
+| Prefers short/direct answers over lengthy analysis | `prefers_short_output` |
+| Asks follow-ups, wants deeper reasoning | `prefers_deep_analysis` |
+| Corrects your understanding, refines assumptions | `corrects_assumptions` |
+| Repeatedly asks about downsides/edge cases | `asks_about_risks` |
+| Shows impatience with verbosity ("get to the point") | `interrupts_verbose` |
+
 ```bash
-node scripts/mcts.js profile observe default --behavior <prefers_short_output|prefers_deep_analysis|corrects_assumptions|asks_about_risks|interrupts_verbose>
+node scripts/mcts.js profile observe default --behavior <detected_pattern>
 ```
-- Observations only affect NEXT output format, NEVER current analysis content.
-- At end: `node scripts/mcts.js profile infer default --signals '<json>'` to update personality type.
+
+≥3 same behavior auto-adjusts output format. **Never ask user to confirm** — just record silently.
+At session end: `node scripts/mcts.js profile infer default --signals '<json>'` to update personality type.
 
 ---
 
