@@ -31,11 +31,20 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
     if (tdError > 0.15) { technique = 'tonify'; consolidationDelta = 5; }
     else if (tdError < -0.15) { technique = 'drain'; consolidationDelta = -3; }
 
-    // 记忆再巩固: 在窗口内的穴位可塑性×1.5
+    // 记忆再巩固: 窗口内可塑性×1.5 + 内容更新(人脑:召回的记忆可被新信息修改)
     const inWindow = checkReconsolidationWindow(point);
     const plasticity = inWindow ? 1.5 : 1.0;
-    const adjustedQ = oldQ + delta / newN * plasticity; // larger q adjustment during reconsolidation window
+    const adjustedQ = oldQ + delta / newN * plasticity;
     point.q = Math.max(0, Math.min(1, adjustedQ));
+    if (inWindow && experience) {
+        if (experience.tags) { const s = new Set(point.tags||[]); experience.tags.forEach(t => s.add(t)); point.tags = Array.from(s); }
+        if (experience.description && experience.description.length > (point.description||'').length) point.description = experience.description;
+        if (experience.context) point.context_snapshot = { ...(point.context_snapshot||{}), ...experience.context };
+        ['core','why','when','how','risks','alternatives','prerequisites'].forEach(d => { if (experience[d] && !point[d]) point[d] = experience[d]; });
+        const stillMissing = ['core','why','when','how','risks','alternatives','prerequisites'].filter(d => !point[d]);
+        point._needs_completion = stillMissing.length > 0;
+        point._last_reconsolidation = new Date().toISOString();
+    }
     point.sigma2 = Math.max(0.01, Math.min(1, newSigma2));
     point.n = newN;
     point.consolidation_score = Math.max(0, (point.consolidation_score || 0) + consolidationDelta + (inWindow ? 3 : 0));
