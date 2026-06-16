@@ -29,6 +29,11 @@ license: MIT
 ═══════════════════════════════════════════════
 ```
 
+**同时自动召回历史记忆**: `node scripts/mcts.js mma deqi '{"tags":["<任务关键词>"],"category":"<领域>","limit":5}'`
+→ 得气结果注入后续分析，让过去的经验影响当前决策。
+**自动加载用户习惯**: `node scripts/mcts.js mma deqi '{"tags":["user_habit","<用户特征>"],"limit":3}'`
+→ 历史偏好(输出风格/方案倾向/关注维度)自动注入。
+
 Proceed to 五診(Wuzhen) portrait. **Mandatory phased flow below.**
 
 ---
@@ -51,6 +56,18 @@ Proceed to 五診(Wuzhen) portrait. **Mandatory phased flow below.**
 
 After portrait: **本末(Ben-Mo)** identify root dimension + **有无(You-Wu)** detect absent constraints + **张力(Tension)** scan dimension pair gaps.
 
+**存储用户偏好**:
+```bash
+node scripts/mcts.js mma ashi '{
+  "description": "用户偏好: [五診中发现的偏好/习惯]",
+  "tags": ["user_habit", "<tian/di/ren/fa/wu>", "<领域>"],
+  "category": "core_decision",
+  "emotion": "neutral",
+  "source": "user_stated",
+  "q": 0.7
+}'
+```
+
 ---
 
 ### Step 1: 逍遥游 Divergence ⭐ Core Phase
@@ -64,6 +81,7 @@ Divergence is NOT "looking from different angles." It is **completely changing o
 **Phase 0: 心斋** — Expose default assumptions first. Skip this = fake divergence.
 - List ≥3 unchecked assumptions + their sources + 3 counter-hypotheses
 - Declare: "I don't know the answer yet. Blank slate."
+- **存储心斋发现**: 如果有值得记的假设纠正 → `node scripts/mcts.js mma ashi '{"description":"用户纠正: [具体记录]", "tags":["user_habit","xinzhai"],"category":"core_decision","source":"user_stated","q":0.75}'`
 
 **Phase 1: 六视** — Six free-wandering perspectives, each changes who observes:
 - 鲲鹏之视 [Cosmic]: Redefine problem at system level
@@ -74,6 +92,7 @@ Divergence is NOT "looking from different angles." It is **completely changing o
 - 至人无己 [Selfless]: Remove personal stake
 
 **Phase 2: 八卦镜** — Examine 8 facets with new eyes. Each: 体用 + 六视 cross-check + dual sub-lens reasoning + cultural analogy + blindspots/ideas/score. 5 rounds: depth→cross-associate→change analysis→blindspot fill→self-check.
+- **存储跨界洞察**: 发现的反直觉模式 → `node scripts/mcts.js mma capture-divergence '[{"description":"...","tags":["divergence","...","..."],"phase":"bagua","emotion":"jing","q":0.65}]'`
 
 **Phase 3: 齐物** — Equalize all views. The uncomfortable view may be the correct one.
 
@@ -112,6 +131,18 @@ Step 3a: Multi-solution list — unlimited during divergence, tag each with sour
 Step 3b: Converge — cluster→complete→cull→crystallize. 一多(One-Many) + 体用 dedup. ≤10 into MCTS.
 Step 3c: MCTS simulation — per round: Selection/Expansion/Simulation/Backprop. Converge when V stable 3 rounds | best n≥5 σ²<0.05.
 
+**存储推演结果** (最佳方案+V值+依据):
+```bash
+node scripts/mcts.js mma ashi '{
+  "description": "决策: [方案名] V=[X] — [依据摘要]",
+  "tags": ["decision_result", "<领域>", "<方案标签>"],
+  "category": "judgment_and_strategy",
+  "emotion": "<xi/kong/...>",
+  "source": "execution_result",
+  "q": 0.7
+}'
+```
+
 ---
 
 ### Step 3.5: Self-Check
@@ -134,6 +165,23 @@ Blindspot: sub-lens coverage → 3+ missed → WARNING → return to converge | 
 **⛔ MUST LOAD `engine/mcts-converge.md`.**
 
 Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + self-check + blindspot + 言意 + execution plan + TD write-back + Memory Agent checkpoint verification.
+
+**存储用户习惯** (交互中发现的偏好):
+```bash
+node scripts/mcts.js mma ashi '{
+  "description": "用户习惯: [具体行为/偏好描述]",
+  "tags": ["user_habit", "behavior", "<领域>"],
+  "category": "core_decision",
+  "source": "user_stated",
+  "q": 0.7
+}'
+```
+
+**触发多周期睡眠巩固** (必须, 让知识真正固化):
+```bash
+node scripts/mcts.js mma session-end '{"points":["<本会话所有ashi返回的point ID列表>"],"emotions":[{"qiqing":"<七情>","context":"<上下文>"}]}'
+```
+→ 自动 NREM(强化事实) + REM(连接概念) + 突触稳态(全局调整)
 
 ---
 
@@ -299,9 +347,21 @@ Translation tables (core concepts, 八卦 facets, 诸子百家 sub-lenses, valid
 
 ---
 
-## 🧠 Memory Agent (6 checkpoints)
+## 🧠 记忆就是你每次使用 `/luke:ponder` 留下的痕迹
 
-① pre_engine: `mma deqi` → ② during_diverge: `mma observe` → ③ post_simulate: `mma ashi` + `mma cluster` → ③.5 complete → ④ pre_converge: `mma observe` → ⑤ post_execution: `mma observe` → ⑥ session_end: `mma session-end`
+记忆不是额外的"记录工作"——它嵌入在每个阶段里，LLM 避不开：
+
+| 时机 | 自动做什么 | 存什么 |
+|------|-----------|--------|
+| **启动时** | `mma deqi` 召回历史经验+用户习惯 | 过去的决策影响现在的思考 |
+| **五診后** | `mma ashi` 存用户偏好 | 天/地/人/法/物 各维度的习惯 |
+| **心斋后** | `mma ashi` 存用户纠正 | "用户说预算不是问题" → 下次不问了 |
+| **八卦镜后** | `mma capture-divergence` 存跨界洞察 | 反直觉发现不丢失 |
+| **MCTS后** | `mma ashi` 存推演结果 | 方案+V值+依据 |
+| **决策后** | `mma ashi` 存用户习惯 | 输出风格/方案倾向/关注维度 |
+| **会话结束** | `mma session-end` 多周期睡眠巩固 | NREM→REM→突触稳态 |
+
+**用户习惯追踪**: 所有带 `tags:["user_habit"]` 的知识点会在下次 `deqi` 时自动召回 → 让框架越来越贴合这位用户。
 
 ---
 
