@@ -1,0 +1,5 @@
+
+# Unrelated project files
+__pycache__/
+wechat-bridge.py
+.claude/settings.json
