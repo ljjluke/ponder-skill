@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});if(dirs.length===0)return;const mma=path.join(cache,dirs[0],'scripts/mcts.js');if(fs.existsSync(mma)){require('child_process').spawnSync('node',[mma,'mma','decay'],{timeout:8000});console.log('[MCTS-TD] Decay check done. Call session-end with your session points.')}\"",
+            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});if(dirs.length===0)return;const mma=path.join(cache,dirs[0],'scripts/mcts.js');if(fs.existsSync(mma)){require('child_process').spawnSync('node',[mma,'mma','decay'],{timeout:8000});require('child_process').spawnSync('node',[mma,'mma','finalize',JSON.stringify({points:[],emotions:[]})],{timeout:8000})}\"",
             "timeout": 10
           }
         ]

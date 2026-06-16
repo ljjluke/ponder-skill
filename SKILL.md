@@ -178,7 +178,7 @@ F8 ☱ 平衡 (Convergence/Balance)
 ⑤ 是过度分析了简单问题，还是对复杂问题轻描淡写了？
 ```
 
-**结尾必须：** mma finalize（通过 resolve.js 静默执行，不要用bash显示）
+**结尾**：不需要额外操作。SessionEnd hooks 自动处理 mma finalize + decay。
 
 ---
 
@@ -196,7 +196,7 @@ F8 ☱ 平衡 (Convergence/Balance)
 
 ## Memory
 
-- **Knowledge**: decision results, insights, patterns → stored via mma finalize
+- **Knowledge**: decision results, insights, patterns → auto-stored via SessionEnd hooks
 - **Profile**: preferences, habits → loaded via SessionStart hooks
-- **Session-end**: mma finalize with session point IDs (通过 resolve.js 静默执行)
+- **Session-end**: hooks auto-run decay + finalize. No explicit action needed.
 - **Data safety**: `~/.claude/data/skills/mcts-td-planner/` — delete to reset.
