@@ -291,6 +291,27 @@ function saveTree(tree) {
     try { const fd = fs.openSync(tmp, 'r+'); fs.fsyncSync(fd); fs.closeSync(fd); } catch (e) {}
     if (fs.existsSync(fp)) fs.copyFileSync(fp, bp);
     fs.renameSync(tmp, fp);
+    // 自动同步到MMA记忆: 将终态叶子节点存为知识
+    try {
+        const terminalNodes = Object.values(tree.nodes).filter(n => n.isTerminal && n.V > 0);
+        if (terminalNodes.length > 0) {
+            const mmaAshi = require('./mma/ashi');
+            const io = require('./mma/io');
+            const kg = io.loadMMA();
+            for (const n of terminalNodes) {
+                mmaAshi.ashiInsert(kg, {
+                    description: `MCTS: ${n.description} V=${n.V}`,
+                    tags: ['mcts_result', n.solutionId || 'unknown'].filter(Boolean),
+                    category: 'judgment_and_strategy',
+                    source: 'execution_result',
+                    q: n.V,
+                    sigma2: n.sigma2 || 0.25,
+                    n: n.n || 1,
+                });
+            }
+            io.saveMMA(kg);
+        }
+    } catch (e) { /* MMA sync non-blocking */ }
     return { saved: tree.sessionId, nodes: Object.keys(tree.nodes).length };
 }
 

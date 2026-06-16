@@ -108,7 +108,11 @@ node scripts/mcts.js profile observe default --behavior <detected_pattern>
 ```
 
 ≥3 same behavior auto-adjusts output format. **Never ask user to confirm** — just record silently.
-At session end: `node scripts/mcts.js profile infer default --signals '<json>'` to update personality type.
+**At session end, auto-infer personality** (based on observed behaviors):
+```bash
+node scripts/mcts.js profile infer default --signals '<json>'
+node scripts/mcts.js profile info default  # user sees updated profile
+```
 
 ---
 
