@@ -58,29 +58,49 @@ const STEP3_SCHEMA = {
   }, required: ['dimensions', 'conflicts', 'key_finding']
 }
 
-const SCENARIO = {
+// ── 方向提取 Schema (Step 4a: 从Step3冲突中提炼方向) ──
+const DIRECTION_PLAN_SCHEMA = {
   type: 'object', properties: {
-    probability: { type: 'string' },
-    path: { type: 'string', minLength: 30 },
-    signal: { type: 'string' },
-    break_point: { type: 'string' },
-  }, required: ['probability', 'path', 'signal']
+    directions: { type: 'array', items: { type: 'object', properties: {
+      name: { type: 'string', description: '方向名称' },
+      conflict_source: { type: 'string', description: '基于Step3的哪个维度冲突' },
+      focus_area: { type: 'string', description: '这个方向聚焦的领域' },
+    }, required: ['name', 'conflict_source'] }, minItems: 2, maxItems: 3 },
+  }, required: ['directions']
 }
 
-const DIRECTION = {
+// ── 单方向推演 Schema (Step 4b: 每个方向独立推演，必须基于真实数据) ──
+// 每个推演Agent是独立的，不知道其他方向的存在
+// probability不允许出现——推演必须有真实依据，不是LLM随口标概率
+const REAL_SCENARIO = {
+  type: 'object', properties: {
+    trigger_conditions: { type: 'string', minLength: 30, description: '这个场景发生必须满足的真实条件' },
+    path: { type: 'string', minLength: 50, description: '基于数据的具体推演路径' },
+    evidence: { type: 'string', minLength: 30, description: '支持这个场景的真实数据/历史案例引用—必须来自WebSearch或用户提供' },
+    signal: { type: 'string', description: '这个场景正在发生的可观察信号' },
+    break_point: { type: 'string', description: '这个场景中第一个会断裂的假设' },
+    data_source: { type: 'string', description: '本次推演依赖的具体数据来源URL或引用' },
+  }, required: ['trigger_conditions', 'path', 'evidence', 'data_source']
+}
+
+const SINGLE_DIRECTION_SCHEMA = {
   type: 'object', properties: {
     name: { type: 'string' },
     conflict_source: { type: 'string' },
-    optimistic: SCENARIO, realistic: SCENARIO, pessimistic: SCENARIO,
-  }, required: ['name', 'conflict_source', 'optimistic', 'realistic', 'pessimistic']
+    optimistic: REAL_SCENARIO, realistic: REAL_SCENARIO, pessimistic: REAL_SCENARIO,
+    data_sources: { type: 'array', items: { type: 'string' }, minItems: 1, description: '本次推演使用的全部真实数据来源' },
+    _memory_tag: { type: 'string', description: 'new:关键词 — 标记这个方向产生的可存储知识' },
+  }, required: ['name', 'data_sources', 'optimistic', 'realistic', 'pessimistic']
 }
 
-const STEP4_SCHEMA = {
+// ── 跨方向汇总 Schema (Step 4c) ──
+const STEP4_AGGREGATE_SCHEMA = {
   type: 'object', properties: {
-    directions: { type: 'array', items: DIRECTION, minItems: 2 },
-    comparison: { type: 'string', minLength: 40 },
-    recommendation: { type: 'string', minLength: 30 },
-  }, required: ['directions', 'comparison', 'recommendation']
+    comparison: { type: 'string', minLength: 60, description: '跨方向对比——每个场景下哪个方向表现最好？' },
+    common_ground: { type: 'string', minLength: 40, description: '所有方向共同指向的结论（即使在分歧中也有共识）' },
+    key_risks: { type: 'array', items: { type: 'string' }, minItems: 2, description: '所有方向共有的关键风险' },
+    recommendation: { type: 'string', minLength: 40, description: '基于用户风格的最终推荐' },
+  }, required: ['comparison', 'common_ground', 'key_risks', 'recommendation']
 }
 
 const SELF_CHECK_ITEM = {
@@ -127,7 +147,7 @@ const pluginPath = args?.plugin_path || ''
 const memoryContext = args?.memory_context || '(无历史记忆上下文)'
 
 const memoryRecallNote = pluginPath
-  ? `【记忆参与说明】\n在开始分析前，运行以下命令召回历史相关经验:\n  node ${pluginPath}/scripts/mcts.js mma deqi '{"tags":["<分析相关关键词>"],"limit":3}'\n将召回结果作为本步骤分析的参考输入。\n完成分析后，在你的输出中标记最有记忆价值的洞见（_memory_tag字段）。\n当前已有记忆上下文: ${memoryContext}\n`
+  ? `【记忆召回规则 - 不能自己编造】\n前置步骤: 运行以下命令查询历史经验:\n  node ${pluginPath}/scripts/mcts.js mma deqi '{"tags":["<分析相关关键词>"],"limit":3}'\n\n情况A: 查询返回结果 > 0 → 将历史记忆融入当前分析，引用具体记忆内容\n情况B: 查询返回结果 = 0 或无明显相关 → 绝对不能自己编造一个"记忆"来冒充\n  → 必须使用 WebSearch 搜索真实资料/数据/案例作为分析依据\n  → 将搜索到的真实信息标记为: _memory_tag = "new:关键词"\n  → 这是新知识的唯一合法来源\n\n完成分析后，在输出中标记最有价值的洞见（_memory_tag字段）。\n当前已有记忆上下文: ${memoryContext}\n`
   : ''
 
 log('用户请求: ' + userRequest)
@@ -226,36 +246,115 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 
   log('Step3完成: ' + step3.dimensions.length + '个维度, ' + step3.conflicts.length + '组冲突')
 
-  // ── Step 4: 多场景推演 ──
+  // ── Step 4: 多场景推演（并行子Agent架构） ──
+  // 4a: 从Step3维度冲突中提炼推演方向
+  // 4b: 每个方向由独立子Agent推演（并行），互不知道其他方向的存在
+  // 4c: 全部完成后汇总
   phase('多场景推演')
 
-  const step4 = await agent(`你是MCTS-TD框架的"推演师"。你的任务是执行多场景推演。
+  const directionPlan = await agent(`你是"推演规划师"。基于Step3的维度冲突，确定需要推演的方向。
 
-${memoryRecallNote}
-${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
+${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n' : ''}
 输入（来自Step3八卦镜结果）:
 ${JSON.stringify(step3, null, 2)}
 
 原始用户请求: ${userRequest}
 
-基于Step3的维度冲突，提炼出至少2个方向，每个方向做3场景推演。
-每个方向必须引用来源的Step3维度冲突。
-
-场景结构:
-- 乐观(20-30%): 成功路径 + 前置信号 + 假设条件
-- 现实(40-50%): 预期路径 + 关键变量
-- 悲观(20-30%): 第一个断裂点 + 止损信号
-
-约束:
-- 至少2个方向，每个3场景
-- 每个场景含: 概率、路径(30字+)、信号、断裂假设
-- 最后给出跨方向对比和风险偏好推荐`, {
-    label: 'Step4: 多场景推演',
+从Step3的维度冲突中提炼出2-3个逻辑上自洽的方向。每个方向应该:
+1. 基于至少1组Step3的维度冲突（conflict_source字段）
+2. 代表真实可行的路径（不是幻想）
+3. 方向之间必须有本质差异`, {
+    label: 'Step4a: 方向提取',
     phase: '多场景推演',
-    schema: STEP4_SCHEMA,
+    schema: DIRECTION_PLAN_SCHEMA,
   })
 
-  log('Step4完成: ' + step4.directions.length + '个方向')
+  log('Step4a: ' + directionPlan.directions.length + '个方向待推演')
+
+  // 4b: 每个方向独立推演（并行）
+  const directionResults = await parallel(
+    directionPlan.directions.map(d => () => agent(`你是独立的推演分析师。你的任务是: 对 "${d.name}" 这个方向做真实推演。
+
+IMPORTANT: 你不知道其他推演分析师的存在。你的分析完全独立。
+
+${memoryRecallNote}
+冲突来源: ${d.conflict_source}
+聚焦领域: ${d.focus_area || d.name}
+原始用户请求: ${userRequest}
+Step3分析摘要: ${JSON.stringify(step3, null, 2)}
+
+【核心规则 — 必须遵守】
+1. 推演必须基于真实数据，不是LLM凭感觉编概率
+2. 第一步: 用 WebSearch 搜索与这个方向相关的真实数据/案例/指标
+3. 第二步: 基于搜索到的真实资料做推演
+4. 每个场景的 evidence 字段必须引用真实数据来源
+5. data_sources 字段必须列出你用到的每个数据来源
+6. 不允许出现 "概率30%" 这类无依据的数字——推演质量取决于分析深度，不是标签
+
+推演结构（每个场景）:
+乐观场景:
+  - trigger_conditions: 这个场景发生必须满足的真实条件是什么？
+  - path: 基于数据的具体演化路径（50字以上）
+  - evidence: 引用支持这个场景的真实数据或历史案例
+  - signal: 这个场景正在发生的可观察信号
+  - data_source: 你从哪里得到的数据？
+
+现实场景:
+  - 同上结构
+
+悲观场景:
+  - 同上结构`, {
+      label: `推演: ${d.name}`,
+      phase: '多场景推演',
+      schema: SINGLE_DIRECTION_SCHEMA,
+    }))
+  )
+
+  // Filter out any null results (failed agents)
+  const validResults = directionResults.filter(Boolean)
+  log('Step4b: ' + validResults.length + '个方向推演完成')
+
+  // 4c: 汇总所有方向推演结果
+  const step4Agg = await agent(`你是"推演汇总师"。综合所有独立推演的结果，输出跨方向对比。
+
+${fixContext ? '【本轮是修复重做】\n' : ''}
+原始用户请求: ${userRequest}
+
+各方向推演结果:
+${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
+数据来源: ${r.data_sources.join(', ')}
+乐观场景触发条件: ${r.optimistic.trigger_conditions}
+乐观场景路径: ${r.optimistic.path}
+现实场景路径: ${r.realistic.path}
+悲观场景触发条件: ${r.pessimistic.trigger_conditions}
+悲观场景路径: ${r.pessimistic.path}
+`).join('\n')}
+
+你的任务:
+1. 比较所有方向——在哪种条件下哪个方向最合理？
+2. 找出所有方向的共同结论（共识）
+3. 识别跨方向的共有关键风险
+4. 基于用户风格给出推荐
+
+约束:
+- comparison 至少60字
+- common_ground 至少40字
+- key_risks 至少2个
+- recommendation 至少40字`, {
+    label: 'Step4c: 汇总',
+    phase: '多场景推演',
+    schema: STEP4_AGGREGATE_SCHEMA,
+  })
+
+  // 组装完整step4
+  var step4 = {
+    directions: validResults,
+    comparison: step4Agg.comparison,
+    common_ground: step4Agg.common_ground,
+    key_risks: step4Agg.key_risks,
+    recommendation: step4Agg.recommendation,
+  }
+  log('Step4完成: ' + step4.directions.length + '个方向, 汇总完毕')
 
   // ── Step 5: 收敛与自检 ──
   phase('收敛自检')
@@ -313,7 +412,9 @@ Step3八卦镜: ${JSON.stringify(step3, null, 2)}
 6. 3个最常见的死因:
    - Step2的6个视角实际上只有3-4个真正不同，其他是重复的
    - Step3的8维分析流于表面，没有真正交叉引用Step2
-   - 推演中的场景概率无依据，"乐观/现实/悲观"只是三段标签
+   - 推演中的场景概率无依据，乐观/现实/悲观'只是三段标签
+   - 推演中的场景无真实数据支撑，evidence字段无真实来源引用
+   - 每个方向的 data_sources 必须包含真实来源，否则视为伪造推演，"乐观/现实/悲观"只是三段标签
 
 分析报告（来自Step2-5的汇总）:
 ---
