@@ -1,16 +1,16 @@
 {
   "name": "luke",
-  "version": "1.12.3",
-  "description": "Universal thinking framework — Zhuangzi-inspired Free Wandering divergence + MCTS × TD × Eight-Facet Mirror.",
+  "version": "1.13.0",
+  "description": "Universal thinking framework — Zhuangzi-inspired Free Wandering divergence + MCTS × TD × Eight-Facet Mirror. Brain-inspired hierarchical cognitive pipeline.",
   "owner": {
     "name": "ljjluke"
   },
   "plugins": [
     {
       "name": "luke",
-      "description": "MCTS-TD decision engine: Eight-Facet Mirror + Xuanxue/Zhanbu enhancements → MCTS simulation → converge & execute. Multi-language (zh/ja/ko/en).",
+      "description": "Brain-inspired cognitive pipeline: MMA memory + predictive coding + multi-perspective divergence + self-correcting loop + sleep consolidation.",
       "source": "./",
-      "version": "1.12.3",
+      "version": "1.13.0",
       "author": {
         "name": "ljjluke"
       },
