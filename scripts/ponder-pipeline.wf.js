@@ -402,6 +402,88 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
   }
   log('Step4完成: ' + step4.directions.length + '个方向, 汇总完毕')
 
+  // ── 社会认知: 多立场辩论 (Social Cognition / Theory of Mind) ──
+  // 人脑的社会认知核心: 不同的"他人"视角相互碰撞
+  // 不是"多角度看问题", 而是"不同立场的人争论"
+  phase('社会认知辩论')
+
+  const debateArgs = await Promise.all([
+    agent(`你是辩论方A: "乐观推进者"。你的立场是: 找机会, 推方案, 看正面。
+
+阅读Step2-4的分析结果, 写一份辩论陈词(200字内)。
+你的任务: 为最积极的方向辩护, 指出悲观分析中的漏洞。
+${JSON.stringify(step2, null, 2)}
+${JSON.stringify(step3, null, 2)}
+${JSON.stringify(step4, null, 2)}`, {
+      label: '辩方A: 乐观',
+      phase: '社会认知辩论',
+      schema: { type: 'object', properties: {
+        stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
+        attack_weakness: { type: 'string', description: '你反驳的对方论点' },
+      }, required: ['argument'] },
+    }),
+    agent(`你是辩论方B: "风险警告者"。你的立场是: 找问题, 防风险, 看负面。
+
+阅读Step2-4的分析结果, 写一份辩论陈词(200字内)。
+你的任务: 为最保守的方向辩护, 指出乐观分析中的风险。
+${JSON.stringify(step2, null, 2)}
+${JSON.stringify(step3, null, 2)}
+${JSON.stringify(step4, null, 2)}`, {
+      label: '辩方B: 悲观',
+      phase: '社会认知辩论',
+      schema: { type: 'object', properties: {
+        stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
+        attack_weakness: { type: 'string', description: '你反驳的对方论点' },
+      }, required: ['argument'] },
+    }),
+    agent(`你是辩论方C: "异见者"。你的立场与A和B都不同——你提出第三个方向。
+
+阅读Step2-4的分析结果, 写一份辩论陈词(200字内)。
+你的任务: 提出A和B都没看到的第三条路, 指出双方的共同盲区。
+${JSON.stringify(step2, null, 2)}
+${JSON.stringify(step3, null, 2)}
+${JSON.stringify(step4, null, 2)}`, {
+      label: '辩方C: 异见',
+      phase: '社会认知辩论',
+      schema: { type: 'object', properties: {
+        stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
+        blindspot: { type: 'string', description: 'A和B共同的盲区' },
+      }, required: ['argument'] },
+    }),
+  ])
+
+  log('社会认知辩论完成: 3方陈词')
+
+  // 辩论回应: A和B听完对方后反驳
+  const debateRebuttals = await Promise.all([
+    agent(`你听到了B(风险警告者)和C(异见者)的论点。回应他们, 然后修正或强化你的立场。
+
+你的原始陈词: ${debateArgs[0].argument}
+B的陈词: ${debateArgs[1].argument}
+C的陈词: ${debateArgs[2].argument}`, {
+      label: 'A回应',
+      phase: '社会认知辩论',
+      schema: { type: 'object', properties: {
+        rebuttal: { type: 'string', minLength: 30 },
+        revised_stance: { type: 'string' },
+      }, required: ['rebuttal', 'revised_stance'] },
+    }),
+    agent(`你听到了A(乐观推进者)和C(异见者)的论点。回应他们, 然后修正或强化你的立场。
+
+你的原始陈词: ${debateArgs[1].argument}
+A的陈词: ${debateArgs[0].argument}
+C的陈词: ${debateArgs[2].argument}`, {
+      label: 'B回应',
+      phase: '社会认知辩论',
+      schema: { type: 'object', properties: {
+        rebuttal: { type: 'string', minLength: 30 },
+        revised_stance: { type: 'string' },
+      }, required: ['rebuttal', 'revised_stance'] },
+    }),
+  ])
+
+  log('辩论回应完成')
+
   // ── Step 5: 收敛与自检 ──
   phase('收敛自检')
 
@@ -416,6 +498,18 @@ ${JSON.stringify(step4, null, 2)}
 Step2发散: ${JSON.stringify(step2, null, 2)}
 Step3八卦镜: ${JSON.stringify(step3, null, 2)}
 DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
+社会认知辩论:
+  A(乐观): ${debateArgs[0].argument.substring(0, 200)}
+  B(悲观): ${debateArgs[1].argument.substring(0, 200)}
+  C(异见): ${debateArgs[2].argument.substring(0, 200)}
+  A回应: ${debateRebuttals[0].rebuttal.substring(0, 150)}
+  B回应: ${debateRebuttals[1].rebuttal.substring(0, 150)}
+社会认知辩论:
+  A(乐观): ${JSON.stringify(debateArgs[0].argument).substring(0,200)}
+  B(悲观): ${JSON.stringify(debateArgs[1].argument).substring(0,200)}
+  C(异见): ${JSON.stringify(debateArgs[2].argument).substring(0,200)}
+  A回应: ${JSON.stringify(debateRebuttals[0].rebuttal).substring(0,150)}
+  B回应: ${JSON.stringify(debateRebuttals[1].rebuttal).substring(0,150)}
 
 【躯体标记信号—情绪作为决策信号】
 Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但无法做决策,
@@ -428,6 +522,12 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
 4. 如果某个方向在推演中data_sources很少(依赖LLM自身推理而非真实数据),
    给它一个"怀疑标记"——这不是理性的评分, 而是"信息不足的不安感"
 5. 如果有DMN自由联想的gut_feeling与理性分析矛盾, 不要忽略它,
+社会认知辩论:
+  A(乐观): ${JSON.stringify(debateArgs[0].argument).substring(0,200)}
+  B(悲观): ${JSON.stringify(debateArgs[1].argument).substring(0,200)}
+  C(异见): ${JSON.stringify(debateArgs[2].argument).substring(0,200)}
+  A回应: ${JSON.stringify(debateRebuttals[0].rebuttal).substring(0,150)}
+  B回应: ${JSON.stringify(debateRebuttals[1].rebuttal).substring(0,150)}
    在结论中标注"直觉提示: [gut_feeling], 但理性分析指向..."
 
 5.1 综合判断（用日常语言，不出现框架术语）:
@@ -451,10 +551,50 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
 
   log('Step5完成: 自检' + (step5.all_clear ? '全部通过' : '有风险'))
 
+  // ── 层级预测: Top-Down Prediction Pass (Hierarchical Predictive Coding) ──
+  // 人脑新皮层是层级化的: 高级层(前额叶)预测低级层(感知)的模式
+  // 预测不匹配→预测误差向上传播→更新模型
+  // 当前管道已经走完bottom-up: 数据→发散→检查→推演→收敛
+  // 现在做top-down: 从Step5结论反推"预期中Step2-4应该有什么"
+  // 然后计算预测误差
+  phase('层级预测')
+
+  const topDown = await agent(`你是"层级预测师"。你的任务是: 从结论反向验证分析链条。
+
+你已经有了结论(Step5)。现在从结论出发, 做两件事:
+
+1. 生成预期: 如果结论是正确的, 那么Step2(发散)中哪些视角最应该被印证?
+   Step3(八卦镜)中哪些维度应该表现最突出?
+   Step4(推演)中哪个方向应该最强势?
+
+2. 对比实际: 阅读Step2-4的实际输出, 找出与"预期"不符的地方
+   这个不一致就是"预测误差"——它提示信息在层级传递中丢失了
+
+结论: ${step5.conclusion}
+推理链: ${step5.reasoning_chain}
+
+实际Step2发散: ${JSON.stringify(step2, null, 2)}
+实际Step3八卦镜: ${JSON.stringify(step3, null, 2)}
+实际Step4推演: ${JSON.stringify(step4, null, 2)}`, {
+    label: '层级预测: top-down',
+    phase: '层级预测',
+    schema: { type: 'object', properties: {
+      predicted_step2_focus: { type: 'array', items: { type: 'string' }, description: '结论预测Step2应关注的视角' },
+      predicted_step3_peak: { type: 'array', items: { type: 'string' }, description: '结论预测Step3应突出的维度' },
+      prediction_errors: { type: 'array', items: { type: 'string' }, minItems: 1, description: '预期vs实际的差异——预测误差' },
+      error_severity: { type: 'string', enum: ['low', 'medium', 'high'], description: '预测误差的严重程度' },
+      layer_gap: { type: 'string', description: '哪个层级之间信息丢失最严重' },
+    }, required: ['prediction_errors', 'error_severity'] },
+  })
+
+  log('层级预测完成: ' + topDown.prediction_errors.length + '个预测误差, 严重度=' + topDown.error_severity)
+
+  // 如果误差严重, 增加修复上下文
+  if (topDown.error_severity === 'high') {
+    fixContext = (fixContext ? fixContext + '\n' : '') + '【层级预测误差】\n' + topDown.prediction_errors.join('\n') + '\n' + (topDown.layer_gap ? '信息断裂层级: ' + topDown.layer_gap : '')
+  }
+
   // ── Step 5.5: 独立验证（fresh context，主动找茬） ──
-  // 这是关键创新：验证Agent是全新的独立上下文
-  // 它不知道Steps 2-5是怎么做的，只看最终输出
-  // 它的任务是主动证明分析有漏洞，不是检查格式
   phase('独立验证')
 
   const verifyResult = await agent(`你是独立的分析验证审查员。你的唯一任务是: **主动找出下面这份分析报告的漏洞**。
@@ -515,6 +655,34 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
   // ── 判断是否通过验证 ──
   if (verifyResult.all_clear) {
     log('✅ 独立验证通过 — 分析可靠')
+
+    // ── 具身认知: 行动建议 (Embodied Cognition / Action Loop) ──
+    // 人脑的认知不是为了"思考"而存在, 而是为了"行动"
+    // Varela(1991): 认知通过行动生成(enaction), 不是对世界的表征
+    // 分析完成后, 提出具体行动建议, 等待观察结果→更新模型
+    phase('具身行动')
+    const actionPlan = await agent(`你是"行动规划师"。分析已经完成并验证通过。现在需要提出一个具体的可执行行动。
+
+分析结论: ${step5.conclusion}
+推荐: ${step4.recommendation}
+Step3关键发现: ${step3.key_finding}
+
+你的任务: 提出1个具体、可执行、可观察结果的行动建议。
+这个行动应该是用户看完分析后可以直接做的。
+如果用户执行了, 应该观察什么结果来判断分析是否正确？`, {
+      label: '行动建议',
+      phase: '具身行动',
+      schema: { type: 'object', properties: {
+        proposed_action: { type: 'string', minLength: 30, description: '具体可执行行动' },
+        expected_outcome: { type: 'string', description: '如果分析正确, 行动后应观察到的结果' },
+        observation_signal: { type: 'string', description: '应关注的具体信号, 判断分析是否正确' },
+        update_condition: { type: 'string', description: '什么情况下需要更新分析模型' },
+      }, required: ['proposed_action', 'expected_outcome', 'observation_signal'] },
+    })
+    log('具身行动建议: ' + actionPlan.proposed_action.substring(0, 80))
+
+    // 将行动计划存入args供主LLM呈现
+    args._action_plan = actionPlan
     break
   }
 
@@ -575,8 +743,12 @@ return {
   brain_features: {
     dmn_incubation: dmnInsight?.gut_feeling ? true : false,
     somatic_marker: step5.conclusion ? true : false,
+    debate_social: debateArgs?.length === 3 ? true : false,
+    hierarchical_prediction: topDown?.error_severity || 'none',
+    action_plan: args?._action_plan ? true : false,
     adaptive_weights: Object.fromEntries(Object.entries(STEP_WEIGHTS).map(([k, v]) => ['Step' + k, v])),
   },
+  action_plan: args?._action_plan || null,
   memory_tags: {
     step2: step2.perspectives.filter(p => p._memory_tag).map(p => p._memory_tag),
     step3: step3.dimensions.filter(d => d._memory_tag).map(d => d._memory_tag),

@@ -52,11 +52,49 @@ function decayCheck(kg) {
 }
 
 /**
+ * 慢波修剪 (Slow Wave Pruning) — NREM Stage 3-4 深度睡眠
+ * 人脑机制: 深度NREM期间, 突触强度全局下调, 弱连接被清除
+ * (Tonomi & Cirelli, 2014: 突触稳态假说)
+ * 功能: 清除低于阈值的弱知识, 防止记忆饱和
+ */
+function slowWavePrune(kg) {
+  const pruned = []
+  for (const [key, m] of Object.entries(kg.meridians)) {
+    for (let i = m.points.length - 1; i >= 0; i--) {
+      const p = m.points[i]
+      if (p.hidden) continue
+      // 弱知识: 低巩固分 + 低访问次数 + 非可靠状态
+      const isWeak = (p.consolidation_score || 0) < 2 && (p.n || 0) < 2
+        && !['CONFIRMED', 'ACTIVE', 'MATURE'].includes(p.status)
+      const isStale = p.status === 'SLEEPING' && (p.consolidation_score || 0) < 1
+      if (isWeak || isStale) {
+        hidePoint(kg, key, p.id)
+        pruned.push({ point_id: p.id, meridian: key, reason: isWeak ? 'weak' : 'stale' })
+      }
+    }
+  }
+  // 第二遍: 清理经脉中空穴位保留的related_points
+  for (const [, m] of Object.entries(kg.meridians)) {
+    for (const p of m.points) {
+      if (!p.related_points) continue
+      p.related_points = p.related_points.filter(rp => {
+        for (const [, m2] of Object.entries(kg.meridians)) {
+          if (m2.points.some(pp => pp.id === rp.id && !pp.hidden)) return true
+        }
+        return false
+      })
+    }
+  }
+  return pruned
+}
+
+/**
  * 多周期睡眠回放 (Multi-Cycle Sleep Replay)
  * 模拟人脑 NREM→REM 多周期睡眠 (每个周期90分钟, 每夜4-6周期)
- * NREM期: 强化事实 — 增加巩固分, 降低方差
- * REM期:  连接概念 — 建立跨经脉 promotes, 情感再处理
- * 终末:    突触稳态 — 全局微调, 情绪衰减
+ * Phase 1 - 慢波修剪(NREM深睡): 清除弱连接 ← 新增
+ * Phase 2 - NREM期: 强化事实 — 增加巩固分, 降低方差
+ * Phase 3 - REM期: 连接概念 — 建立跨经脉 promotes, 情感再处理
+ * Phase 4 - 终末: 突触稳态 — 全局微调, 情绪衰减
  *
  * @param {object} kg
  * @param {array} sessionPoints — 本会话涉及的所有穴位ID列表
@@ -70,6 +108,10 @@ function sessionEnd(kg, sessionPoints = [], sessionEmotions = [], cycles = 4) {
 
     // 收集本会话点
     const pointIds = sessionPoints.filter(id => findPointById(kg, id));
+
+    // ── Phase 0: 慢波修剪 (每次睡眠前执行一次) ──
+    const pruned = slowWavePrune(kg);
+    results.pruned = pruned.length;
 
     // ── 多周期循环 ──
     for (let cycle = 1; cycle <= cycles; cycle++) {
@@ -164,6 +206,7 @@ function sessionEnd(kg, sessionPoints = [], sessionEmotions = [], cycles = 4) {
     return {
         cycles: cycles,
         replayed: pointIds.length,
+        pruned: results.pruned || 0,
         nrem_consolidations: totalNrem,
         rem_associations: totalRem,
         synaptic_scaling: scaled,
