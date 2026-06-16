@@ -25,13 +25,15 @@ license: MIT
    - Global knowledge (cross-user) feeds into current analysis
 5. Output activation banner.
 
-**Streaming output: each step outputs its crystallization as it completes. Do NOT wait for all steps to finish.**
-   - 五診 → output immediately (show scores + what needs asking)
-   - If user answers → continue
-   - Divergence → output 1 key finding if surprising
-   - MCTS → output ranking when ready
-   - Step 4 → output final recommendation
-   - User sees analysis building, not waiting
+**Streaming output: each step outputs its crystallization as it completes.**
+   - 五診(scores + what needs asking) → output immediately
+   - 心斋(assumption contradiction found) → output if surprising
+   - 六视(counter-intuitive finding) → output if any
+   - 八卦镜(most abnormal facet) → output if striking
+   - 齐物/梦蝶(perspective flip) → output if flips conclusion
+   - MCTS(detailed comparison, no numbers) → output when ready
+   - Final recommendation + risk → last output
+   - User answers → wait for input, then continue
 
 ---
 
@@ -71,8 +73,7 @@ At session end: `node scripts/mcts.js profile infer default --signals '<json>'` 
 
 Not "looking from different angles." **Completely changing observer identity, scale, position.**
 
-**Internal only (no user output)**: 心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶
-User only sees: the one most surprising finding per phase (if any), at step 4.
+**Each sub-phase outputs 1 finding if surprising, skips if not**: 心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶
 
 **Store key divergence insights as knowledge**:
 ```bash
@@ -87,11 +88,13 @@ node scripts/mcts.js mma capture-divergence '[{"description":"...","tags":["dive
 
 ---
 
-### Steps 2-3.6: Internal Processing (no direct output)
+### Steps 2-3: Recon → MCTS
 
-**⛔ MUST LOAD `engine/mcts-simulate.md` and `engine/mcts-converge.md`.**
+**⛔ MUST LOAD `engine/mcts-simulate.md`.**
 
-Full backend execution: Reconnaissance → Converge → MCTS tree search → Self-check → Blindspot audit → 言意 check. All internal.
+Full backend execution: Reconnaissance → Converge → MCTS tree search. MCTS outputs ranking when done.
+
+**Step 3.5-3.6 自检/盲区/言意**: All internal, only output if genuine risk uncovered.
 
 **Store simulation results**:
 ```bash
@@ -100,27 +103,10 @@ node scripts/mcts.js mma ashi '{"description":"Decision: [name] V=[X] — [summa
 
 ---
 
-### Step 4: Crystalline Output (streaming)
-
-**Output each step's crystallization as it completes — user sees the analysis build step by step.**
-Each internal step may produce 0-1 crystallized insight. Output format — no numbers, no weights, no V/σ².
-
-Flow:
-```
-五診 → 立即输出 (分数 + 需要追问)
-用户回答 → 继续
-心斋发现 → 立即输出 (如果反直觉)
-MCTS排名 → 完成即输出 (推理路径, 不是数字)
-最终建议 → 输出 (结论 + 风险)
-```
+### Step 4: Memory + Session End
 
 For format rules: `node scripts/mcts.js template output-spec`
 For anti-guessing rules: `node scripts/mcts.js template anti-guessing`
-
-**Store final user habits** (current session only, not knowledge base):
-```bash
-node scripts/mcts.js profile observe default --behavior <observed_behavior>
-```
 
 **Finalize memory consolidation**:
 ```bash
