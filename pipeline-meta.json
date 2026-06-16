@@ -1,0 +1,93 @@
+{
+  "version": "2.0.0",
+  "description": "自进化认知管道元配置 — 每次分析后可能被修改",
+  "meta_rules": {
+    "不变": "最小化自由能（预测误差）",
+    "可变": "步骤权重、prompt内容、模块增减、拓扑连接"
+  },
+  "steps": {
+    "diverge": {
+      "label": "6尺度发散",
+      "weight": 1.0,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "bagua": {
+      "label": "八卦镜8维",
+      "weight": 1.0,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "dmn": {
+      "label": "DMN间歇",
+      "weight": 0.5,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "simulate": {
+      "label": "多场景推演",
+      "weight": 1.0,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "debate": {
+      "label": "社会认知辩论",
+      "weight": 0.7,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "converge": {
+      "label": "收敛自检",
+      "weight": 1.0,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "hierarchy": {
+      "label": "层级预测",
+      "weight": 0.6,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "verify": {
+      "label": "独立验证",
+      "weight": 1.0,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    },
+    "action": {
+      "label": "具身行动",
+      "weight": 0.4,
+      "enabled": true,
+      "fitness": { "pass_count": 0, "fail_count": 0, "avg_score": 0.5, "last_free_energy": 0 },
+      "mutation_history": []
+    }
+  },
+  "topology": {
+    "type": "sequential",
+    "order": ["diverge", "bagua", "dmn", "simulate", "debate", "converge", "hierarchy", "verify", "action"],
+    "parallel_groups": [],
+    "mutation_count": 0
+  },
+  "free_energy": {
+    "current": 0,
+    "history": [],
+    "threshold": 0.4,
+    "last_mutation_cycle": 0
+  },
+  "evolution": {
+    "generation": 0,
+    "last_mutation": null,
+    "mutation_types_available": [
+      "weight_adjust", "prompt_tweak", "disable_step",
+      "insert_step", "change_order", "parallelize"
+    ]
+  }
+}

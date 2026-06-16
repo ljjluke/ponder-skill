@@ -721,11 +721,46 @@ log('║  循环轮次: ' + loopCount + '                               ║')
 log('║  最终裁定: ' + lastVerdict + '                           ║')
 log('╚═══════════════════════════════════════════╝')
 
+// ── 自由能计算 (Free Energy) ──
+// Friston FEP: 自由能 = 预测误差的总和
+// 当前架构的"预测误差"来自: 验证失败率 + 自检失败率 + 层级预测误差
+const verifyFailRate = verifyResult?.issues?.length ? Math.min(1, verifyResult.issues.length / 5) : 0
+const selfCheckFailRate = step5?.self_check ? (5 - step5.self_check.filter(s => s.passed).length) / 5 : 0
+const predErrorScore = topDown?.error_severity === 'high' ? 0.7 : topDown?.error_severity === 'medium' ? 0.3 : 0
+const freeEnergy = Math.round((verifyFailRate * 0.4 + selfCheckFailRate * 0.3 + predErrorScore * 0.3) * 100) / 100
+
+// ── 进化建议 (Evolution Suggestions) ──
+// 基于自由能和各步骤验证失败率, 输出可能的拓扑变异方向
+const stepFitness = {
+  diverge: STEP_WEIGHTS[2] || 1.0,
+  bagua: STEP_WEIGHTS[3] || 1.0,
+  simulate: STEP_WEIGHTS[4] || 1.0,
+  converge: STEP_WEIGHTS[5] || 1.0,
+}
+const lowestFitnessStep = Object.entries(stepFitness).sort((a, b) => a[1] - b[1])[0]
+const evolutionSuggestions = []
+if (freeEnergy > 0.4) {
+  evolutionSuggestions.push({
+    type: 'weight_adjust',
+    target: lowestFitnessStep[0],
+    reason: '自由能=' + freeEnergy + ', ' + lowestFitnessStep[0] + '适应度最低=' + lowestFitnessStep[1],
+    action: '降低权重或修改prompt'
+  })
+}
+if (freeEnergy > 0.6) {
+  evolutionSuggestions.push({
+    type: 'structural_change',
+    target: 'topology',
+    reason: '自由能超过0.6，当前拓扑可能不再适合',
+    action: '考虑并行化或插入新步骤'
+  })
+}
+
 return {
   user_request: userRequest,
-  loop_count: loopCount,
-  final_verdict: lastVerdict,
-  verified: lastVerdict === 'PASS',
+  free_energy: freeEnergy,
+  evolution_suggestions: evolutionSuggestions,
+  step_fitness: stepFitness,
   step2: {
     perspective_count: step2.perspectives.length,
     contradictions: step2.contradictions,

@@ -121,9 +121,9 @@ node $P/scripts/mcts.js mma deqi '{"tags":["<与用户请求相关的关键词>"
 
 ---
 
-### Step 2-5: 启动强制管道
+### Step 2-5: 启动强制管道 + 自进化
 
-Step 1 完成后，用 Workflow 工具启动管道。**必须传入插件路径和记忆上下文**——管道内各步骤需要它们来参与记忆系统。
+Step 1 完成后，用 Workflow 工具启动管道。
 
 ```
 Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
@@ -133,6 +133,34 @@ Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
   memory_context: '<deqi召回的结果摘要>'
 }})
 ```
+
+### Step 6: 自进化评估
+
+Workflow 返回后，除了呈现结果给用户，还做一件事：**评估当前架构的自由能，决定是否进化**。
+
+```
+① 读取 free_energy 和 evolution_suggestions
+② 读取 pipeline-meta.json 中当前各步骤的适应度
+③ 如果 free_energy > 0.4（阈值）:
+   - 更新 pipeline-meta.json 中对应步骤的 fail_count 和 fitness
+   - 根据 evolution_suggestions 的类型执行变异:
+     weight_adjust → 修改 pipeline-meta.json 中该步骤的 weight
+     prompt_tweak → 修改 pipeline-meta.json 中步骤记录
+     structural_change → 修改 topology.order 或 parallel_groups
+   - 将变异记录写入 mutation_history
+   - 自增 generation
+④ 如果 free_energy <= 0.4:
+   - 仅更新步骤的 pass_count
+   - 不需要变异
+⑤ 保存 pipeline-meta.json
+```
+
+**自进化的方向**不是预设的——它由自由能驱动。每次变异都是"降低预测误差"这个方向的尝试。如果某次变异后续让自由能下降了，那个变异就是"适应"的。
+
+这对应了三个理论支柱:
+- 自由能原理: 自由能 > 阈值 → 必须改变架构
+- HyperNEAT拓扑进化: weight_adjust / structural_change / parallelize 都是拓扑变异
+- 易经: 自由能 = "变易"的驱动信号,"最小化自由能" = "不易"的元规则
 
 管道内部结构：
 - `phase('6尺度发散')` — 子Agent执行6视角发散，受 STEP2_SCHEMA 约束（6视角 × 每视角20+40字）
