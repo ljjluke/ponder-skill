@@ -21,9 +21,7 @@ license: MIT
 2. Determine mode: **动(Dong)** compact | **静(Jing)** full
 3. **Load user profile**: `node scripts/mcts.js profile info default` → user sees "I remember you like concise output"
    - Only affects output format, never divergence engine
-4. **Recall memories**: `node scripts/mcts.js mma deqi '{"tags":["<keywords>"],"category":"<domain>","limit":5}' --context '{"task_type":"<type>","domain":"<domain>","emotion":"<emotion>"}'`
-   - Context-aware recall (Tulving 1983): same context → higher retrieval
-   - Emotion-congruent recall (Bower 1981): same mood → biased retrieval
+4. **Smart recall**: `node scripts/mcts.js mma recall '{"tags":["<keywords>"],"limit":5}' — context+emotion auto-matched
 5. **Output activation banner** (user must see the skill is running):
 ```
 ═══════════════════════════════════════════════
@@ -81,24 +79,23 @@ Run MCTS tree search using the corrected scores.
 node scripts/mcts.js compute predict-propagate --correction '<json>'
 ```
 
-### Phase E: Output + Memory
+### Phase E: Output + Finalize
 
-Final recommendation in plain language. Store results.
-
+Final recommendation in plain language. **One command to finalize everything**:
 ```bash
-node scripts/mcts.js mma session-end '{"points":["<IDs>"],"emotions":[{"qiqing":"<emotion>","context":"<context>"}]}'
+node scripts/mcts.js mma finalize '{"points":["<IDs>"],"emotions":[{"qiqing":"<emotion>","context":"<context>"}]}'
 ```
+→ session-end + profile infer + MMA save in one call.
 
 ---
 
 ## OUTPUT
 
-Non-technical, natural language. No framework terms. The user should see analysis, not methodology.
+Non-technical, natural language. No framework terms.
 
-For format rules: `node scripts/mcts.js template output-spec`
+For all format rules: `node scripts/mcts.js template all-rules`
 
-**Throughout the conversation, silently analyze user behavior patterns.** 
-Use your understanding of natural conversation — not keyword matching — to detect:
+**Observe user patterns silently:**
 
 | If user tends to... | record as |
 |--------------------|-----------|
@@ -109,33 +106,20 @@ Use your understanding of natural conversation — not keyword matching — to d
 | Shows impatience with verbosity ("get to the point") | `interrupts_verbose` |
 
 ```bash
-node scripts/mcts.js profile observe default --behavior <detected_pattern>
+node scripts/mcts.js mma remember --behavior <detected_pattern>
 ```
+≥3 same → auto-adjust output format. Silent, never ask.
 
-≥3 same behavior auto-adjusts output format. **Never ask user to confirm** — just record silently.
-**At session end, auto-infer personality** (based on observed behaviors):
+**Store results** (knowledge + divergence insights):
 ```bash
-node scripts/mcts.js profile infer default --signals '<json>'
-node scripts/mcts.js profile info default  # user sees updated profile
-```
-
----
-
-**Store simulation results**:
-```bash
-node scripts/mcts.js mma ashi '{"description":"Decision: [name] V=[X] — [summary]","tags":["decision_result","<domain>"],"category":"judgment_and_strategy","source":"execution_result","q":0.7}'
-```
-
-**Store divergence insights**:
-```bash
-node scripts/mcts.js mma capture-divergence '[{"description":"...","tags":["divergence","..."],"phase":"bagua","q":0.65}]'
+node scripts/mcts.js mma remember '{"description":"...","tags":["..."],"category":"...","q":0.7}'
 ```
 
 ---
 
 ## FORBIDDEN
 
-`node scripts/mcts.js template forbidden-check` — apply all rules.
+`node scripts/mcts.js template all-rules` — sections: output-spec, forbidden-check, anti-guessing, interview-script, translate-guide.
 **When in doubt**: `node scripts/mcts_guard.js all-guards`
 
 ---
