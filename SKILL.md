@@ -8,14 +8,19 @@ version: 2.0.0
 license: MIT
 ---
 
-# MCTS-TD Thinking Framework
+# MCTS-TD Thinking Framework — Your Local Cognitive Infant
 
-> **`/luke:ponder` = Step 1 (you do, interactive) → Pipeline (Workflow-enforced) → Present results**
-> Steps 2-5 are enforced by the workflow script — LLM cannot skip them.
+> **`/luke:ponder` = Like teaching a baby: you use it, it grows, it learns your patterns.**
+> Step 1 (you do, interactive) → Pipeline (Workflow-enforced) → Self-evolve
 
-## ⚙️ Architecture
+## ⚙️ Architecture Philosophy
 
-Step 1 is interactive (you ask the user). Steps 2-5 are executed by `scripts/ponder-pipeline.wf.js` as a sub-agent pipeline.
+This framework starts like an infant — a minimal cognitive architecture with the capacity to grow. Every time you use it, it learns:
+- **Your thinking patterns** (via MMA memory — what types of analysis you prefer)
+- **What works and what doesn't** (via free energy — which pipeline steps produce reliable results)
+- **How to change itself** (via data-driven evolution — mutations based on historical success, not LLM guesses)
+
+It is NOT trained on other users' data. It grows from YOUR usage, locally, like a brain developing through experience.
 
 **Pipeline enforcement:**
 - Each step runs as an independent sub-agent, output constrained by JSON Schema
@@ -189,8 +194,16 @@ After Workflow returns, do TWO things: present results + evaluate free energy.
 
 This maps to three theoretical pillars:
 - Free Energy Principle: free_energy > threshold → must change architecture
-- HyperNEAT topology evolution: weight_adjust / structural_change / parallelize are all topology mutations
+- **Data-driven evolution**: mutation decisions come from historical statistics (`pipeline.js recommend-mutation`), NOT from LLM judgment. This mirrors how the brain selects learning strategies based on past reinforcement, not conscious deliberation.
 - Yijing (易经/I Ching): free_energy = "change" (变易) signal, "minimize free energy" = "unchanging" (不易) meta-rule
+
+**Critical rule — LLM does NOT decide mutations:**
+The LLM's job is to *analyze*, not to *evolve*. When free_energy > threshold:
+1. LLM records the result via `pipeline.js record-mutation`
+2. LLM calls `pipeline.js recommend-mutation` to get the statistically optimal mutation type
+3. LLM executes the recommended mutation
+4. All mutation outcomes are stored in MMA for future reference
+This prevents the "LLM pretending to evolve" problem.
 
 **Pipeline structure:**
 - `phase('6-scale divergence')` — sub-agent executes 6-perspective divergence, constrained by STEP2_SCHEMA (6 perspectives × 20+40 chars each)

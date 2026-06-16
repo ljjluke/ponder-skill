@@ -108,14 +108,98 @@ function main() {
       console.log('🔄 order → ' + order.join(' → '))
       break
     }
+    // ═══ 数据驱动的自进化命令 ═══
+    case 'record-mutation': {
+      // node scripts/pipeline.js record-mutation <type> <step> <fe_before> <fe_after>
+      const meta = readMeta()
+      const type = args[1]; const step = args[2]
+      const feBefore = parseFloat(args[3]); const feAfter = parseFloat(args[4])
+      if (!type || !step) { console.error('Usage: record-mutation <type> <step> <fe_before> <fe_after>'); process.exit(1) }
+      const record = { type, step, fe_before: feBefore, fe_after: feAfter, delta: feAfter - feBefore, at: new Date().toISOString(), generation: meta.evolution.generation }
+      meta.topology.mutation_count = (meta.topology.mutation_count || 0) + 1
+      meta.evolution.last_mutation = record
+      meta.evolution.generation = (meta.evolution.generation || 0) + 1
+      meta.free_energy.history.push({ value: feAfter, at: record.at, mutation: type })
+      // 写入MMA记忆
+      const MMA = path.join(path.dirname(DATA_DIR), '..', 'plugins', 'cache', 'luke', 'luke')
+      const mmaScript = path.join(MMA, 'scripts', 'mcts.js')
+      writeMeta(meta)
+      if (fs.existsSync(mmaScript)) {
+        const mmaCmd = `node "${mmaScript}" mma ashi '{"description":"Mutation: ${type} on ${step}, free_energy ${feBefore}→${feAfter} (delta=${(feAfter-feBefore).toFixed(2)})","tags":["evolution","mutation","${type}"],"category":"zangxiang","emotion":"${feAfter < feBefore ? 'xi' : 'nu'}","q":0.85}'`
+        require('child_process').spawnSync('node', [mmaScript, 'mma', 'ashi', JSON.stringify({
+          description: `Mutation: ${type} on ${step}, free_energy ${feBefore}→${feAfter} (delta=${(feAfter-feBefore).toFixed(2)})`,
+          tags: ['evolution', 'mutation', type],
+          category: 'zangxiang',
+          emotion: feAfter < feBefore ? 'xi' : 'nu',
+          q: 0.85,
+        })], { timeout: 5000 })
+        console.log('  写入MMA进化记忆')
+      }
+      console.log(`📊 变异记录: ${type} on ${step}, 自由能 ${feBefore} → ${feAfter} (${feAfter < feBefore ? '改善' : '恶化'})`)
+      break
+    }
+    case 'recommend-mutation': {
+      // 基于历史数据推荐最优变异类型
+      const meta = readMeta()
+      const history = meta.free_energy.history || []
+      if (history.length < 2) {
+        // 没有历史数据 → 用默认顺序尝试
+        console.log('📋 推荐: weight_adjust (无历史数据, 从最安全的变异开始)')
+        break
+      }
+      // 分析历史变异的效果
+      const mutationEffects = {}
+      for (const record of (meta.evolution_history || [])) {
+        if (!mutationEffects[record.type]) mutationEffects[record.type] = { count: 0, totalDelta: 0, successes: 0 }
+        mutationEffects[record.type].count++
+        mutationEffects[record.type].totalDelta += record.delta
+        if (record.delta < 0) mutationEffects[record.type].successes++
+      }
+      // 找成功率最高的变异类型
+      let bestType = null; let bestRate = -1
+      for (const [type, stats] of Object.entries(mutationEffects)) {
+        const rate = stats.successes / stats.count
+        if (rate > bestRate) { bestRate = rate; bestType = type }
+      }
+      if (!bestType) { console.log('📋 推荐: weight_adjust (历史数据不足)'); break }
+      console.log(`📋 推荐: ${bestType} (历史成功率 ${(bestRate*100).toFixed(0)}%, ${mutationEffects[bestType].count}次尝试)`)
+      break
+    }
+    case 'rollback': {
+      // 回滚到上一个稳定版本
+      const meta = readMeta()
+      const history = meta.free_energy.history || []
+      if (history.length < 2) { console.log('没有可回滚的历史记录'); break }
+      const lastTwo = history.slice(-2)
+      if (lastTwo[1].value > lastTwo[0].value) {
+        console.log(`⚠️  自由能从 ${lastTwo[0].value} 升到 ${lastTwo[1].value}, 建议回滚`)
+        console.log('  执行: git revert 或修改 pipeline-meta.json 恢复上次权重')
+      } else {
+        console.log(`✅ 自由能趋势良好: ${lastTwo[0].value} → ${lastTwo[1].value}`)
+      }
+      break
+    }
+    case 'mutation-history': {
+      const meta = readMeta()
+      console.log('变异历史:')
+      for (const h of (meta.evolution_history || [])) {
+        const icon = h.delta < 0 ? '✅' : '⛔'
+        console.log(`  ${icon} gen=${h.generation} ${h.type} on ${h.step} 自由能 ${h.fe_before}→${h.fe_after} (${h.delta > 0 ? '+' : ''}${h.delta.toFixed(2)})`)
+      }
+      break
+    }
     default:
       console.log('Usage: node scripts/pipeline.js <command>')
-      console.log('  init              — Init meta to data dir')
-      console.log('  status            — Show meta status')
-      console.log('  disable <step>    — Disable a step')
-      console.log('  enable <step>     — Enable a step')
-      console.log('  set-weight <s> <v> — Set step weight (0-1)')
-      console.log('  reorder <s1,s2..>  — Change step order')
+      console.log('  init                 — Init meta to data dir')
+      console.log('  status               — Show meta status')
+      console.log('  disable <step>       — Disable a step')
+      console.log('  enable <step>        — Enable a step')
+      console.log('  set-weight <s> <v>   — Set step weight (0-1)')
+      console.log('  reorder <s1,s2..>    — Change step order')
+      console.log('  record-mutation <t> <s> <fb> <fa> — Record mutation result')
+      console.log('  recommend-mutation   — Recommend best mutation type from history')
+      console.log('  rollback             — Check if rollback needed')
+      console.log('  mutation-history     — Show mutation history with success/fail')
   }
 }
 

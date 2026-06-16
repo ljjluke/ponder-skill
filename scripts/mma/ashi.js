@@ -91,7 +91,9 @@ function ashiInsert(kg, entry) {
         tags: entry.tags || [],
         keywords: entry.keywords || [],
         category: entry.category || '',
-        q: entry.q || 0.5, sigma2: entry.sigma2 || 0.25, n: entry.n || 0,
+        // 情绪门控: 有情绪的知识初始q更高, 无情绪的知识更难进入系统
+        // 模仿人脑: 情感唤醒是记忆巩固的前置条件
+        q: entry.q || (entry.emotion ? 0.6 : 0.3), sigma2: entry.sigma2 || 0.25, n: entry.n || 0,
         status: entry.status || 'HYPOTHESIS',
         consolidation_score: baseConsolidation + elaborationLevel.consolidation_bonus,
         shu_level: entry.shu_level || 'ying',

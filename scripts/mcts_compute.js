@@ -329,13 +329,27 @@ function getDimensions(domainHint = null) {
  */
 function computeAttentionGate(dimensions) {
     if (!dimensions || dimensions.length === 0) return [];
-    return dimensions.map(d => {
+    // Phase 1: Compute raw priority (information gain potential)
+    const scored = dimensions.map(d => {
         const uncertainty = 1 - (d.score || 5) / 10;
         const criticality = d.criticality !== undefined ? d.criticality : 0.5;
         const entropy_bonus = d.score < 5 ? 0.2 : 0.05 * uncertainty;
         const priority = uncertainty * criticality + entropy_bonus;
         return { name: d.name, score: d.score, criticality, uncertainty, priority: Math.round(priority * 100) / 100 };
     }).sort((a, b) => b.priority - a.priority);
+
+    // Phase 2: Competitive inhibition — actively suppress lower-priority dimensions
+    // The brain's thalamic reticular nucleus doesn't just rank — it inhibits
+    // Top 1 gets full weight, others get progressively suppressed
+    const result = scored.map((d, i) => {
+        if (i === 0) return { ...d, inhibition: 0, effective_priority: d.priority };
+        // Inhibition grows quadratically with rank: 2nd→20% loss, 3rd→50% loss, 4th→80% loss
+        const inhibition = Math.min(0.95, Math.pow((i) / scored.length, 1.5));
+        const effective = d.priority * (1 - inhibition);
+        return { ...d, inhibition: Math.round(inhibition * 100) / 100, effective_priority: Math.round(effective * 100) / 100 };
+    });
+
+    return result;
 }
 
 // ===== CLI =====
