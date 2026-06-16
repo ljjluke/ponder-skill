@@ -5,13 +5,15 @@ description: TDL (Temporal Difference Learning) Engine's core inference rules. B
 
 # TD Learning Engine
 
-> **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):**
+> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+
+> **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):****
 > 1. **KNOWLEDGE LIFECYCLE**: HYPOTHESIS(0.1) → PROVISIONAL(0.3) → CONFIRMED(1.0) → DISPUTED(0.2) → REFUTED(0.0). SLEEPING(0.15) after 30d unused, ARCHIVED after 90d.
 > 2. **GATE BEFORE STORE**: New knowledge MUST pass gate-check (reusability + density + novelty + reliability). Discard if score < 0.4.
 > 3. **RECALL HIERARCHY**: ①Associative recall (most relevant first) → ②Fragment completion (fill gaps from memory) → ③External verification (web/user). Don't trust recalled knowledge blindly — verify when uncertain.
 > 4. **⛔ MEMORY AGENT**: 6 checkpoints MUST execute via direct CLI calls (no daemon):
 >    pre_engine→during_diverge→post_simulate→complete→pre_converge→post_execution→session_end
->    Run `node scripts/mcts_guard.js memory-agent-guard` to verify.
+>    Run `node $P/scripts/mcts_guard.js memory-agent-guard` to verify.
 >    **⛔ ENFORCEMENT**: After Decision Report, MUST output checkpoint verification block.
 >    Collect ashi point IDs throughout session, pass to session-end at end.
 
@@ -67,7 +69,7 @@ r_t =
   -0.7  − Major failure (core objective not met)
   -1.0  − Catastrophic failure (objective failed with severe consequences)
 
-Code: `node scripts/mcts.js compute get-reward-signal --type <type>`
+Code: `node $P/scripts/mcts.js compute get-reward-signal --type <type>`
 ```
 
 ### Terminal State Value
@@ -80,7 +82,7 @@ V(s_terminal) =
   -0.5  − Collateral damage (achieved A but harmed B)
   -1.0  − Goal failed (need alternative approach)
 
-Code: `node scripts/mcts.js compute get-terminal-value --type <type>`
+Code: `node $P/scripts/mcts.js compute get-terminal-value --type <type>`
 ```
 
 ---
@@ -139,7 +141,7 @@ Traverse backwards from t=T to t=0:
 | 21-100 times | 0.1 | Stable learning |
 | >100 times | 0.05 | Fine-tuning, prevent oscillation |
 
-Code: `node scripts/mcts.js compute get-learning-rate --n <N>`
+Code: `node $P/scripts/mcts.js compute get-learning-rate --n <N>`
 
 ---
 
@@ -173,7 +175,7 @@ Variance Update (batch, for eligibility trace backpropagation):
 
 ```
 Variance→Confidence mapping:
-  `node scripts/mcts_compute.js` get_confidence_level
+  `node $P/scripts/mcts_compute.js` get_confidence_level
   σ²<0.1→High | 0.1~0.3→Medium | ≥0.3→Low
 ```
 
@@ -203,7 +205,7 @@ Query Rules:
   Partial match → Return closest entry + mark "partial match"
   No match → Return empty (cold start)
 
-Code: `node scripts/mcts.js compute project-state --state_vector '<JSON>'`
+Code: `node $P/scripts/mcts.js compute project-state --state_vector '<JSON>'`
 ```
 
 ---
@@ -232,7 +234,7 @@ Simulation scenario:
 
 ```
 Eligibility trace decay: Step t's eligibility = λ^(T-t)
-Recommended λ: `node scripts/mcts_compute.js get-lambda --steps <N>`
+Recommended λ: `node $P/scripts/mcts_compute.js get-lambda --steps <N>`
 → 1-3 steps: 0.0 | 4-8 steps: 0.5 | 9+ steps: 0.8
 ```
 
@@ -396,8 +398,8 @@ Each knowledge entry undergoes following state transitions in its lifecycle:
 ### State Transition Rules
 
 State transitions calculated by code engine:
-`node scripts/mcts_compute.js check_status_transition`
-Weight query: `node scripts/mcts_compute.js get-status-weight --status <status>`
+`node $P/scripts/mcts_compute.js check_status_transition`
+Weight query: `node $P/scripts/mcts_compute.js get-status-weight --status <status>`
 
 Core rules:
   HYPOTHESIS→(verified 1 time)→PROVISIONAL/REFUTED |
@@ -776,6 +778,6 @@ Memory file stores complete knowledge graph. **Knowledge divided into "active" a
 #### Storage and Management
 
 Archive/recall/cleanup operations:
-`node scripts/manage_memory.js archive|recall|cleanup|status`
+`node $P/scripts/mcts.js mma status`
 Storage path: `~/.claude/data/skills/mcts-td-planner/memory/`
 (physically isolated from skill code)

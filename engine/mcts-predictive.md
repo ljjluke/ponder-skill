@@ -5,6 +5,8 @@ description: Predictive Coding Engine — transforms linear pipeline into recurs
 
 # Predictive Coding Engine
 
+> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+
 > The brain is not a passive input processor. It is a prediction machine: it continuously generates predictions, tests them against input, computes prediction error, and propagates corrections upward. This is Friston's Free Energy Principle (2010).
 
 The core loop:
@@ -93,7 +95,7 @@ Correction propagation:
   → Divergence that depended on this assumption needs re-run
   → MCTS solutions that assumed this constraint need re-scoring
 
-CLI: node scripts/mcts.js compute predict-propagate --correction '<json>'
+CLI: node $P/scripts/mcts.js compute predict-propagate --correction '<json>'
 ```
 
 ## Dual-Process Gating (System 1 / System 2)
@@ -117,14 +119,14 @@ This mirrors Kahneman (2011): System 1 first, System 2 when needed.
 
 ```bash
 # Generate initial prediction
-node scripts/mcts.js compute predict-generate --task '<json>'
+node $P/scripts/mcts.js compute predict-generate --task '<json>'
 
 # Test prediction against user input
-node scripts/mcts.js compute predict-test --prediction '<json>' --user-input '<json>'
+node $P/scripts/mcts.js compute predict-test --prediction '<json>' --user-input '<json>'
 
 # Propagate correction through pipeline
-node scripts/mcts.js compute predict-propagate --correction '<json>'
+node $P/scripts/mcts.js compute predict-propagate --correction '<json>'
 
 # Check if fast path (System 1) applies
-node scripts/mcts.js compute fast-path-check --query '<json>'
+node $P/scripts/mcts.js compute fast-path-check --query '<json>'
 ```

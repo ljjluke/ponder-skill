@@ -5,6 +5,8 @@ description: MCTS-TD Step 3~3.6 — Converge Engine. CLT-UCB ranking + self-chec
 
 # Step 3~3.6: Converge Engine
 
+> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. Phases: Aggregate → Self-Check → Blindspot → Decision Report
 > 3. Rank ALL solutions (not just top 3) with n/V/σ²/confidence + multi-layer breakdown
@@ -82,7 +84,7 @@ Self-Check Verdict:
   ❌ Not passed — re-simulate with adjusted assumptions
 ```
 
-Template: `node scripts/mcts.js template self-check --data '<JSON>'`
+Template: `node $P/scripts/mcts.js template self-check --data '<JSON>'`
 
 Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
 
@@ -186,4 +188,4 @@ Code: `li-shi-split --insight '<JSON>'`
  Language Guard: `check --user-lang <lang> --output "..."` [PASS/FAIL]
 ```
 
-Template: `node scripts/mcts.js template decision-report --data '<JSON>'`
+Template: `node $P/scripts/mcts.js template decision-report --data '<JSON>'`

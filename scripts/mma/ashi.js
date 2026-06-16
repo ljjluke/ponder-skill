@@ -189,9 +189,14 @@ function establishPairedConnection(kg, meridianKey, position, newPoint) {
     if (!paired || !paired.points[position]) return;
     const pp = paired.points[position];
     newPoint.related_points = newPoint.related_points || [];
-    newPoint.related_points.push({ id: pp.id, relation: 'paired_meridian', position });
+    // 防止重复：检查是否已建立该配对连接
+    if (!newPoint.related_points.some(r => r.id === pp.id && r.relation === 'paired_meridian')) {
+        newPoint.related_points.push({ id: pp.id, relation: 'paired_meridian', position });
+    }
     pp.related_points = pp.related_points || [];
-    pp.related_points.push({ id: newPoint.id, relation: 'paired_meridian', position });
+    if (!pp.related_points.some(r => r.id === newPoint.id && r.relation === 'paired_meridian')) {
+        pp.related_points.push({ id: newPoint.id, relation: 'paired_meridian', position });
+    }
 }
 
 /**

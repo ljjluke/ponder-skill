@@ -407,10 +407,9 @@ function replayAndApplyWAL(kg) {
             const walPoints = entry.data.points;
             if (!walPoints || walPoints.length === 0) continue;
 
-            // 简单策略：WAL 记录的是完整分片快照，取最新的 WAL entry 覆盖
+            // 按顺序重放所有WAL条目（每条是完整分片快照，覆盖之前状态）
             targetMeridian.points = walPoints;
             replayCount++;
-            break; // 只取最新一条 WAL（同分片按时间追加）
         }
     }
 

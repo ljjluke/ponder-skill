@@ -7,18 +7,19 @@ model: inherit
 # Memory Agent — Court Historian + Remonstrance Official
 
 Direct-call observer. LLM calls MMA commands directly — no daemon, no buffer.
+**Path**: Set `$P` = plugin path from `[MCTS-TD] Plugin:` log. Use `node $P/scripts/mcts.js` (absolute path, works on all OS).
 
 ## Checkpoints — Exact CLI Commands
 
 | # | When | CLI Call | Output |
 |---|------|----------|--------|
-| ① PRE_ENGINE | Before engine | `node scripts/mcts.js mma deqi '{"tags":["<tags>"],"category":"<cat>","limit":5}'` | Silent — note V_predicted for TD loop |
-| ② DURING_DIVERGE | Diverge phase | `node scripts/mcts.js mma observe --phase during_diverge --data '{"emotion":"<qiqing>"}'` | Silent |
-| ③ POST_SIMULATE | After MCTS sim | `node scripts/mcts.js mma ashi '<entry_json>'` then `mma cluster` | Silent — **collect returned point ID** |
-| ③.5 COMPLETE | After deqi recall | `node scripts/mcts.js mma reinforce '<point_id>' 0 '{"v_actual":<q>,"source":"inference"}'` | Silent |
-| ④ PRE_CONVERGE | Before converge | `node scripts/mcts.js mma observe --phase pre_converge` | **ALERT if conflicts** (max 2/session) |
-| ⑤ POST_EXECUTION | After execution | `node scripts/mcts.js mma observe --phase post_execution --data '{"td_updates":[{"point_id":"<id>","td_error":<val>}],"session_points":["<id1>","<id2>"]}'` | Silent |
-| ⑥ SESSION_END | Session end | `node scripts/mcts.js mma session-end '{"points":["<id1>","<id2>"],"emotions":[{"qiqing":"<name>","context":"<desc>"}]}'` | Silent |
+| ① PRE_ENGINE | Before engine | `node $P/scripts/mcts.js mma deqi '{"tags":["<tags>"],"category":"<cat>","limit":5}'` | Silent — note V_predicted for TD loop |
+| ② DURING_DIVERGE | Diverge phase | `node $P/scripts/mcts.js mma observe --phase during_diverge --data '{"emotion":"<qiqing>"}'` | Silent |
+| ③ POST_SIMULATE | After MCTS sim | `node $P/scripts/mcts.js mma ashi '<entry_json>'` then `mma cluster` | Silent — **collect returned point ID** |
+| ③.5 COMPLETE | After deqi recall | `node $P/scripts/mcts.js mma reinforce '<point_id>' 0 '{"v_actual":<q>,"source":"inference"}'` | Silent |
+| ④ PRE_CONVERGE | Before converge | `node $P/scripts/mcts.js mma observe --phase pre_converge` | **ALERT if conflicts** (max 2/session) |
+| ⑤ POST_EXECUTION | After execution | `node $P/scripts/mcts.js mma observe --phase post_execution --data '{"td_updates":[{"point_id":"<id>","td_error":<val>}],"session_points":["<id1>","<id2>"]}'` | Silent |
+| ⑥ SESSION_END | Session end | `node $P/scripts/mcts.js mma session-end '{"points":["<id1>","<id2>"],"emotions":[{"qiqing":"<name>","context":"<desc>"}]}'` | Silent |
 
 ## Session Point Tracking
 
@@ -43,7 +44,7 @@ Pass this list to ⑤ and ⑥. Context compaction may lose it — that's OK, sen
 | source | recommended | "execution_result" | Reliability weight |
 | q | optional (0.5) | 0.8 | Initial value estimate |
 
-Example: `node scripts/mcts.js mma ashi '{"description":"Quarterly budget reallocation achieved 12% efficiency gain","tags":["budget","reallocation","efficiency"],"category":"tools_and_means","emotion":"xi","source":"execution_result","q":0.8}'`
+Example: `node $P/scripts/mcts.js mma ashi '{"description":"Quarterly budget reallocation achieved 12% efficiency gain","tags":["budget","reallocation","efficiency"],"category":"tools_and_means","emotion":"xi","source":"execution_result","q":0.8}'`
 
 ## Emotion Modulator (ashi q initial)
 
@@ -77,4 +78,4 @@ Remonstrance Alert:
    Invalid skip reasons: "forgot" / "too long" / "not needed"
 4. **TD CLOSED LOOP**: V_predicted (①) vs V_actual (⑤). This is how skill learns.
 5. **COLD START OK**: Empty knowledge graph is fine.
-6. **NO DAEMON**: Call `node scripts/mcts.js mma <command>` directly. No agent_daemon.js, no agent_buffer.json.
+6. **NO DAEMON**: Call `node $P/scripts/mcts.js mma <command>` directly ($P from SessionStart log). No agent_daemon.js, no agent_buffer.json.

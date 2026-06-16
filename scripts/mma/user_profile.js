@@ -61,11 +61,19 @@ function loadProfile(userId) {
     try {
         if (fs.existsSync(fp)) {
             const profile = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+            // 跨会话追踪：距上次可见超过1小时算新会话
+            const now = Date.now();
+            const last = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
+            if (now - last > 3600000) {
+                profile.session_count = (profile.session_count || 0) + 1;
+            }
             profile.last_seen = new Date().toISOString();
             return profile;
         }
     } catch (e) { /* corrupted → reset */ }
     const profile = defaultProfile(userId);
+    profile.session_count = 1;
+    profile.last_seen = new Date().toISOString();
     saveProfile(profile);
     return profile;
 }
@@ -76,7 +84,6 @@ function loadProfile(userId) {
 function saveProfile(profile) {
     ensureDir();
     const fp = userFilePath(profile.user_id);
-    profile.session_count = (profile.session_count || 0) + 1;
     profile.last_seen = new Date().toISOString();
     const tmp = fp + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(profile, null, 2), 'utf-8');

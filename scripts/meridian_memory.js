@@ -266,7 +266,7 @@ function main() {
     }
 }
 
-main();
+if (require.main === module) main();
 
 /**
  * 一键观察点路由 — Memory Agent 5 checkpoints

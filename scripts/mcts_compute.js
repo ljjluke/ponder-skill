@@ -139,7 +139,8 @@ function shouldStopIteration(rootNodes, taskType, currentRound, vHistory) {
 }
 
 // ===== State Machine =====
-const STATUS_WEIGHTS = { CONFIRMED: 1.0, PROVISIONAL: 0.3, DISPUTED: 0.2, REFUTED: 0.0, HYPOTHESIS: 0.1, SLEEPING: 0.15 };
+const SM = require('./mma/state_machine');
+const STATUS_WEIGHTS = SM.STATUS_WEIGHTS;
 
 function checkStatusTransition(currentStatus, n, hasContradiction = false, contradictionCount = 0) {
     if (currentStatus === "PROVISIONAL" && n >= 3 && !hasContradiction) return "CONFIRMED";
@@ -149,7 +150,7 @@ function checkStatusTransition(currentStatus, n, hasContradiction = false, contr
     return null;
 }
 
-function getStatusWeight(status) { return STATUS_WEIGHTS[status] || 0; }
+function getStatusWeight(status) { return SM.getStatusWeight(status); }
 
 // ===== KBonus & Helpers =====
 function computeKBonus(kgMatch, nChild) {
@@ -315,6 +316,27 @@ function getDimensions(domainHint = null) {
     };
 }
 
+// ===== Attention Gate =====
+/**
+ * 注意力门控 — 丘脑TRN选择性抑制的算法类比
+ * 在发散前评估各维度的信息熵与不确定性，优先处理高增益维度
+ *
+ * Input: dimension scores array, each { name, score (0-10, lower = more uncertain), criticality (0-1) }
+ * Output: ranked dimensions with attention priority score
+ *   priority = (1 - score/10) * criticality + entropy_bonus
+ *   entropy_bonus = 0.2 if score < 5 else 0.05 * (1 - score/10)
+ */
+function computeAttentionGate(dimensions) {
+    if (!dimensions || dimensions.length === 0) return [];
+    return dimensions.map(d => {
+        const uncertainty = 1 - (d.score || 5) / 10;
+        const criticality = d.criticality !== undefined ? d.criticality : 0.5;
+        const entropy_bonus = d.score < 5 ? 0.2 : 0.05 * uncertainty;
+        const priority = uncertainty * criticality + entropy_bonus;
+        return { name: d.name, score: d.score, criticality, uncertainty, priority: Math.round(priority * 100) / 100 };
+    }).sort((a, b) => b.priority - a.priority);
+}
+
 // ===== CLI =====
 function parseArgs(args) {
     const r = {};
@@ -373,6 +395,11 @@ function main() {
             case "get-status-weight": output({ status: o.status, weight: getStatusWeight(o.status) }); break;
             case "trigger-check": output(quickTriggerCheck(o.message || "")); break;
             case "get-dimensions": output(getDimensions(o.domain_hint || null)); break;
+            case "attention-gate": {
+                const dims = JSON.parse(o.dimensions || "[]");
+                output({ ranked: computeAttentionGate(dims), recommendation: computeAttentionGate(dims).filter(d => d.priority > 0.3).slice(0, 3) });
+                break;
+            }
             case "enter-simulation": output(enterSimulation()); break;
             case "begin-sub-diverge": output(beginSubDiverge()); break;
             case "end-sub-diverge": endSubDiverge(); output({ depth: _recursiveDepth }); break;
@@ -827,7 +854,7 @@ function main() {
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }
 }
 
-main();
+if (require.main === module) main();
 
 module.exports = {
     computeUcb, computeAdaptiveC, computeShiMaturity, computeCltUcb,
@@ -841,5 +868,5 @@ module.exports = {
     getLearningRate, getRewardSignal, getTerminalValue,
     projectState, mutationTiebreak,
     quickTriggerCheck, getLambdaByTraceLength,
-    getDimensions,
+    getDimensions, computeAttentionGate,
 };

@@ -5,6 +5,8 @@ description: MCTS-TD Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangz
 
 # Step 1: Diverge Engine — 逍遥游 (Free Wandering) × 齐物 (Equalizing) × 庖丁解牛
 
+> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. Phase order: 心斋→逍遥游→八卦镜→齐物→庖丁解牛→Info Gap→方案收敛
 > 3. NO SKIP / NO COLLAPSE | 4. Every perspective shift MUST be visible | 5. Domain-agnostic
@@ -160,6 +162,37 @@ Output each item — MUST be visible to user:
 ```
 
 **After output, user sees your assumption list. User can correct: "No, budget isn't the issue — time is."**
+
+---
+
+## Phase 0.5: Attention Gate — Selective Focus (Thalamic Gating)
+
+**Core insight from neuroscience (Halassa et al., 2024 Nature Neuroscience):** The prefrontal cortex relies on the thalamus (not sensory cortices) to modulate selective attention. The thalamic reticular nucleus (TRN) suppresses ~99% of incoming information — the brain does NOT process everything equally. It gates, selects, and prioritizes.
+
+**Apply here:** After exposing assumptions but BEFORE diverging into 6 perspectives, calculate which dimensions will yield the highest INFORMATION GAIN.
+
+```
+【Attention Gate · Selective Focus】
+
+① List all dimensions from constraints (五诊: 天/地/人/法/物) + any domain-specific facets.
+   → For each: current score (0-10, lower = less known) + criticality (0-1, how important)
+
+② Compute attention priority:
+   node $P/scripts/mcts.js compute attention-gate --dimensions '<JSON>'
+   → Returns ranked dimensions by priority = uncertainty × criticality + entropy_bonus
+
+③ Select TOP 2-3 dimensions to focus on (highest priority).
+   → These get full depth during 逍遥游 divergence.
+   → Remaining dimensions get 1 insight minimum, not full depth.
+
+④ Output:
+   ┌─ Focus: [dimension A] (priority: X) — high uncertainty, high criticality
+   ├─ Focus: [dimension B] (priority: Y) — moderate uncertainty, high criticality
+   └─ Background: [dimension C, D...] — well understood, low priority
+
+⛔ This is NOT "skip the easy ones." This is "allocate cognitive resources
+   where they yield the most new information."
+```
 
 ---
 
@@ -379,7 +412,7 @@ Output: solution list + coverage matrix (F1-F8 × solutions).
 - Domain hint: `identify-domain` | Facet loading: `get-dimensions`
 - Blindspot classification: `classify-blindspot --score <0-10>`
 - Ti-Yong check: `ti-yong-check` | One-Many check: `one-many-check`
-- Cull: `node scripts/mcts_compute.js cull --criteria`
+- Cull: `node $P/scripts/mcts_compute.js cull --criteria`
 
 ---
 
@@ -390,16 +423,16 @@ The skill learns from every decision cycle. Three feedback loops:
 ```
 ① Divergence → Memory:
    Divergence insights (心斋/六视/八卦镜 findings) → semantic knowledge
-   CLI: node scripts/mcts.js mma capture-divergence '<json>'
+   CLI: node $P/scripts/mcts.js mma capture-divergence '<json>'
 
 ② Five-Element Propagation:
    Tonify/drain one point → propagate through generating/controlling chain
    Auto-link promotes/inhibits between knowledge points
-   CLI: node scripts/mcts.js mma interact
+   CLI: node $P/scripts/mcts.js mma interact
 
 ③ Knowledge Audit:
    Periodic check: completeness / contradiction / staleness / five-element balance
-   CLI: node scripts/mcts.js mma audit [context_tags]
+   CLI: node $P/scripts/mcts.js mma audit [context_tags]
 ```
 
 ### Five Element Interactions

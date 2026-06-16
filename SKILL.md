@@ -24,8 +24,17 @@ license: MIT
 ═══════════════════════════════════════════════
 ```
 
-Load profile: `node scripts/mcts.js profile info default`
-Recall memory: `node scripts/mcts.js mma recall '{"tags":["<keywords>"],"limit":5}'`
+Note: Profile loading and memory recall happen silently via SessionStart hooks. Do NOT execute shell commands for these.
+
+---
+
+## Running CLI Commands
+
+When running `scripts/mcts.js` commands:
+- Read `[MCTS-TD] Plugin: <path>` from SessionStart log — `<path>` is the plugin root directory
+- Use absolute path: `node <path>/scripts/mcts.js <args>`
+- Do NOT use `cd` to change directory — `cd` breaks on Windows Git Bash (path format mismatch)
+- For most steps, the hooks already handle automatic execution — only run commands explicitly listed as required
 
 ---
 
@@ -85,7 +94,7 @@ Output: comparison + recommendation + key risk.
 
 Plain language. No framework terms. User must follow the reasoning.
 
-Store: `node scripts/mcts.js mma finalize '{"points":["<IDs>"],"emotions":[]}'`
+Store: mma finalize with session point IDs
 
 ---
 
@@ -98,11 +107,14 @@ Store: `node scripts/mcts.js mma finalize '{"points":["<IDs>"],"emotions":[]}'`
 - Framework terms in output (user must understand)
 - Merged steps (each step independent output)
 
-**When in doubt**: `node scripts/mcts_guard.js all-guards`
+**When in doubt**: run all-guards check (via resolve.js)
 
 ---
 
 ## Engine Routing
+
+Before reading any engine file: extract plugin path from `[MCTS-TD] Plugin:` shown at session start.
+Save as `$P` for use with commands below. Never use `cd` to change directory.
 
 | Step | File | Rule |
 |------|------|------|

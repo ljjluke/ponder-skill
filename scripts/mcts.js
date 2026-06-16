@@ -35,7 +35,8 @@ const ENGINES = {
                    'mutation-vector','body-use-score','li-shi-split','yan-yi-check',
                    'one-many-check','ti-yong-check',
                    'get-learning-rate','get-reward-signal','get-terminal-value','project-state','mutation-tiebreak',
-                   'predict-generate','predict-test','predict-propagate','fast-path-check'],
+                   'predict-generate','predict-test','predict-propagate','fast-path-check',
+                   'attention-gate'],
     },
     guard: {
         script: 'mcts_guard.js',

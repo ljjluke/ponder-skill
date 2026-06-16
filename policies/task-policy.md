@@ -198,14 +198,14 @@ After all solutions simulated, output aggregate comparison table:
 │           │       │        │            │ methodology adoption     │
 └───────────┴───────┴────────┴────────────┴──────────────────────────┘
 
-CLT-UCB: `node scripts/mcts_compute.js` compute_clt_ucb
+CLT-UCB: `node $P/scripts/mcts_compute.js` compute_clt_ucb
 φ⁻¹(N): N=2→1.5, 3→1.0, 4→0.8, 5→0.7, n_i is solution simulation count
 ```
 
 ### Handling Close Rankings
 
 ```
-Close ranking: `node scripts/mcts_compute.js handle_close_ranking`
+Close ranking: `node $P/scripts/mcts_compute.js handle_close_ranking`
 UCB diff <0.05 → Detailed comparison (V/σ²), diff <0.02 → Suggest user decision
 ```
 

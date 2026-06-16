@@ -5,6 +5,8 @@ description: MCTS-TD Step 2 — MCTS Tree Search. Multi-round iteration: Selecti
 
 # Step 2: MCTS Tree Search Simulation
 
+> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. 4 phases per round visible to user
 > 3. Knowledge acquisition: ① Diverge handoff ② Memory ③ Web ④ Ask user ⑤ Assume (+0.1)
@@ -36,7 +38,7 @@ Verify: `simulate-layer-guard --state '{solutions:[...]}'`
 **⛔ MCTS now uses a real tree stored in `~/.claude/data/skills/mcts-td-planner/memory/trees/`.**
 THE IS NOT just a thought process. Every node is a real data object with CRUD operations.
 
-API: `node scripts/mcts.js tree <command>`
+API: `node $P/scripts/mcts.js tree <command>`
 
 ```
 Node = { id, description, parentId, childIds[],
@@ -54,27 +56,27 @@ Each round MUST use the real tree CLI. No text-simulated trees.
 
 ```
 Step ① SELECTION:
-  node scripts/mcts.js tree select <node-id> --session <sid>
+  node $P/scripts/mcts.js tree select <node-id> --session <sid>
   → Returns UCB-ranked children. Pick the top one.
   ⛔ UCB values are COMPUTED, not approximated by LLM.
 
 Step ② EXPANSION:
-  node scripts/mcts.js tree add-children <parent-id> \
+  node $P/scripts/mcts.js tree add-children <parent-id> \
     --session <sid> \
     --children '[{"description":"...", "nodeType":"ACTION"}]'
   → Creates N real tree nodes with auto-increment IDs.
 
 Step ③ SIMULATION:
-  node scripts/mcts.js tree simulate <leaf-id> \
+  node $P/scripts/mcts.js tree simulate <leaf-id> \
     --session <sid> --v <V> --sigma2 <σ²>
   → Records V and marks leaf as terminal.
 
 Step ④ BACKPROPAGATION:
-  node scripts/mcts.js tree backprop <leaf-id> --session <sid>
+  node $P/scripts/mcts.js tree backprop <leaf-id> --session <sid>
   → Walks path to ROOT, updates n/V/σ² via Welford.
 
 Multi-round shortcut:
-  node scripts/mcts.js tree round-start --session <sid>
+  node $P/scripts/mcts.js tree round-start --session <sid>
   → One complete round: select + (LLM adds children) + simulate + backprop
 ```
 
@@ -122,8 +124,8 @@ CONFIRMED+n≥5+q≥0.8 → +0.15 | PROVISIONAL+n<5+q≥0.7 → +0.05 | DISPUTED
 **Round 1 special**: all n=0 → use knowledge graph recommendation score for initial sort.
 
 **Mutation Vector influence**: if UCB_a - UCB_b < 0.05 AND mutation_a > mutation_b → select node_a.
-Code: `node scripts/mcts.js compute mutation-vector --nodes '<JSON>'`
-Tiebreak: `node scripts/mcts.js compute mutation-tiebreak --nodes '<JSON>'`
+Code: `node $P/scripts/mcts.js compute mutation-vector --nodes '<JSON>'`
+Tiebreak: `node $P/scripts/mcts.js compute mutation-tiebreak --nodes '<JSON>'`
 
 ---
 
@@ -182,8 +184,8 @@ Each ancestor: n+=1, w+=V_leaf, V=w/n, Welford online σ²
 
 ## ⑤ KNOWLEDGE UPDATE
 
-Pre-write gate: `node scripts/mcts.js mma ashi '<entry_json>'` (gate-check built-in)
-Example: `node scripts/mcts.js mma ashi '{"description":"...","tags":["..."],"category":"...","emotion":"xi","source":"execution_result","q":0.8}'`
+Pre-write gate: `node $P/scripts/mcts.js mma ashi '<entry_json>'` (gate-check built-in)
+Example: `node $P/scripts/mcts.js mma ashi '{"description":"...","tags":["..."],"category":"...","emotion":"xi","source":"execution_result","q":0.8}'`
 → Returns point ID (e.g., "LUN0001") — **collect for session-end tracking**
 Score <0.4 → discard | 0.4-0.59 → observe (15-day verify) | ≥0.6 → store
 
@@ -219,7 +221,7 @@ Convergence: [check result]
 
 ⛔ FORBIDDEN: outputting only final V/n/σ² without per-round detail | collapsing rounds
 
-Template: `node scripts/mcts.js template mcts-round --data '<JSON>'`
+Template: `node $P/scripts/mcts.js template mcts-round --data '<JSON>'`
 
 ### Final Output
 
@@ -228,5 +230,5 @@ MCTS Complete — [N] rounds, stop reason: [why]
 Ranking: SolutionA n=5 V=0.84 σ²=0.03 Conf=High | SolutionB ...
 Best path: [...] | Main risk: [...]
 
-Template: `node scripts/mcts.js template mcts-final --data '<JSON>'`
+Template: `node $P/scripts/mcts.js template mcts-final --data '<JSON>'`
 ```
