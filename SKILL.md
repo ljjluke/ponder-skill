@@ -23,7 +23,15 @@ license: MIT
    - Only affects output format, never divergence engine
 4. **Recall memories**: `node scripts/mcts.js mma deqi '{"tags":["<keywords>"],"category":"<domain>","limit":5}'`
    - Global knowledge (cross-user) feeds into current analysis
-5. Output activation banner, then proceed through mandatory phases.
+5. Output activation banner.
+
+**Streaming output: each step outputs its crystallization as it completes. Do NOT wait for all steps to finish.**
+   - 五診 → output immediately (show scores + what needs asking)
+   - If user answers → continue
+   - Divergence → output 1 key finding if surprising
+   - MCTS → output ranking when ready
+   - Step 4 → output final recommendation
+   - User sees analysis building, not waiting
 
 ---
 
@@ -92,10 +100,19 @@ node scripts/mcts.js mma ashi '{"description":"Decision: [name] V=[X] — [summa
 
 ---
 
-### Step 4: Crystalline Output (what user sees)
+### Step 4: Crystalline Output (streaming)
 
+**Output each step's crystallization as it completes — user sees the analysis build step by step.**
 Each internal step may produce 0-1 crystallized insight. Output format — no numbers, no weights, no V/σ².
-User must be able to mentally simulate and validate the reasoning path.
+
+Flow:
+```
+五診 → 立即输出 (分数 + 需要追问)
+用户回答 → 继续
+心斋发现 → 立即输出 (如果反直觉)
+MCTS排名 → 完成即输出 (推理路径, 不是数字)
+最终建议 → 输出 (结论 + 风险)
+```
 
 For format rules: `node scripts/mcts.js template output-spec`
 For anti-guessing rules: `node scripts/mcts.js template anti-guessing`
