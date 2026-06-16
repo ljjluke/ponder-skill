@@ -21,11 +21,12 @@ license: MIT
 2. Determine mode: **动(Dong)** compact | **静(Jing)** full
 3. **Load user profile**: `node scripts/mcts.js profile info default` → user sees "I remember you like concise output"
    - Only affects output format, never divergence engine
-4. **Recall memories**: `node scripts/mcts.js mma deqi '{"tags":["<keywords>"],"category":"<domain>","limit":5}'`
-   - Global knowledge (cross-user) feeds into current analysis
+4. **Recall memories**: `node scripts/mcts.js mma deqi '{"tags":["<keywords>"],"category":"<domain>","limit":5}' --context '{"task_type":"<type>","domain":"<domain>","emotion":"<emotion>"}'`
+   - Context-aware recall (Tulving 1983): same context → higher retrieval
+   - Emotion-congruent recall (Bower 1981): same mood → biased retrieval
 5. Output activation banner.
 
-**Streaming output**: each step outputs its result as it completes. No framework terms in output.
+**Streaming output**: `node scripts/mcts.js template stream-flow` — each step outputs immediately.
 
 ---
 
