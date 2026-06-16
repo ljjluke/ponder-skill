@@ -76,28 +76,10 @@ After portrait: **本末(Ben-Mo)** identify root dimension + **有无(You-Wu)** 
 
 Divergence is NOT "looking from different angles." It is **completely changing observer identity, scale, and spacetime position.** Like human seeing Earth vs alien seeing Earth. Kun (deep-sea fish) seeing world vs Peng (90k li high bird) seeing world.
 
-**Flow: 心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶**
+**内部执行 (用户不可见): 心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶**
 
-**Phase 0: 心斋** — Expose default assumptions first. Skip this = fake divergence.
-- List ≥3 unchecked assumptions + their sources + 3 counter-hypotheses
-- Declare: "I don't know the answer yet. Blank slate."
-
-**Phase 1: 六视** — Six free-wandering perspectives, each changes who observes:
-- 鲲鹏之视 [Cosmic]: Redefine problem at system level
-- 蜩鸠之视 [Ground]: Notice micro-details macro misses
-- 朝菌之视 [Time-compressed]: What if only 1 day
-- 冥灵之视 [Time-expanded]: What changes in 100 years
-- 列子御风 [Flow]: Where without intervention
-- 至人无己 [Selfless]: Remove personal stake
-
-**Phase 2: 八卦镜** — Examine 8 facets with new eyes. Each: 体用 + 六视 cross-check + dual sub-lens reasoning + cultural analogy + blindspots/ideas/score. 5 rounds: depth→cross-associate→change analysis→blindspot fill→self-check.
-- **存储跨界洞察**: 发现的反直觉模式 → `node scripts/mcts.js mma capture-divergence '[{"description":"...","tags":["divergence","...","..."],"phase":"bagua","emotion":"jing","q":0.65}]'`
-
-**Phase 3: 齐物** — Equalize all views. The uncomfortable view may be the correct one.
-
-**Phase 4: 梦蝶** — Ultimate flip: subject-object swap / success-failure swap / time-order swap.
-
-Detailed templates in `engine/mcts-diverge.md`.
+These are ALL internal thinking tools. 详细规则在 `engine/mcts-diverge.md`。
+用户只看到最终方案列表 + 决策建议。不看过程。
 
 ---
 
@@ -114,23 +96,12 @@ Detailed templates in `engine/mcts-diverge.md`.
 
 ---
 
-### Step 2: Reconnaissance Report
+### Steps 2-3.6: 全量内部执行 (用户不可见)
 
-**⛔ MUST LOAD `engine/mcts-diverge.md` converge section.**
+**后台全量跑: 侦查报告 → 方案收敛 → MCTS树搜索 → 自检5问 → 盲区审计 → 言意检查**
+详细规则在对应 engine 文件中，必须加载执行。
 
-Per-facet findings + cross-validation (理事 Li-Shi separation) + explicit assumptions (Confirmed/Unconfirmed).
-
----
-
-### Step 3: Solution List → Converge → MCTS
-
-**⛔ MUST LOAD `engine/mcts-simulate.md`.**
-
-Step 3a: Multi-solution list — unlimited during divergence, tag each with source + 体用.
-Step 3b: Converge — cluster→complete→cull→crystallize. 一多(One-Many) + 体用 dedup. ≤10 into MCTS.
-Step 3c: MCTS simulation — per round: Selection/Expansion/Simulation/Backprop. Converge when V stable 3 rounds | best n≥5 σ²<0.05.
-
-**存储推演结果** (最佳方案+V值+依据):
+**存储推演结果** (知识积累):
 ```bash
 node scripts/mcts.js mma ashi '{
   "description": "决策: [方案名] V=[X] — [依据摘要]",
@@ -144,26 +115,19 @@ node scripts/mcts.js mma ashi '{
 
 ---
 
-### Step 3.5: Self-Check
+### Step 4: 最终输出给用户
 
-**⛔ MUST LOAD `engine/mcts-converge.md`.**
+**⛔ MUST LOAD `engine/mcts-converge.md` (全量内部执行).**
 
-5 questions: ① find flaws ② reverse thinking ③ risk assessment ④ 本末 check ⑤ 动静 check.
+**用户看到的是洞察, 不是排名表**:
 
----
+```
+我发现这个问题最关键的突破口不在[技术/预算], 在[真正的卡点].
+因为[一句话理由].
 
-### Step 3.6: Blindspot Audit + 言意 Gap
-
-Blindspot: sub-lens coverage → 3+ missed → WARNING → return to converge | 1-2 → annotate.
-言意: literal vs metaphorical / same word different meaning / unstated expectations.
-
----
-
-### Step 4: Decision Report
-
-**⛔ MUST LOAD `engine/mcts-converge.md`.**
-
-Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + self-check + blindspot + 言意 + execution plan + TD write-back + Memory Agent checkpoint verification.
+推荐方案A, 但有一个风险你可能没注意到: [一句话风险].
+(如果用户追问, 展开细节)
+```
 
 **触发多周期睡眠巩固** (必须, 让知识真正固化):
 ```bash
@@ -173,43 +137,41 @@ node scripts/mcts.js mma session-end '{"points":["<本会话所有ashi返回的p
 
 ---
 
-## 📏 OUTPUT RULE: SHOW THINKING, NOT PROCEDURE
+## 📏 输出规则：展示亮点，不是展示流程
 
-**Backend: ALL steps execute fully — 心斋/六视/八卦镜5轮/齐物/梦蝶/MCTS/自检/盲区 — none skipped.**
-**Output: only what's worth the user's attention. Format matters as much as content.**
+**用户要的是"这AI真想到了"的惊奇感，不是"你在报进度"的清单。**
 
-Process output is valuable — it proves the AI truly thought about the problem.
-But it must read as genuine thinking, not checklist-following.
-
-### Rule 1: Dimensional data → table
-
-Multi-value data (五診 scores, facet comparisons, MCTS ranking) → table format.
-Not "天=8分, 地=4分, 人=9分" — comma text. Use | rows.
-
-### Rule 2: Each step outputs its KEY INSIGHT, not its procedure
-
-The difference between mechanical and genuine:
+- 全量执行 (心斋/六视/八卦镜/齐物/梦蝶/MCTS/自检)：一步不少
+- 输出：每阶段只输出**最意外的1个发现**，没有意外就不输出
 
 ```
-❌ Mechanical (sounds like following instructions):
-"心斋分析: 假设1...假设2...假设3...反假设1...反假设2..."
+❌ 报进度: "心斋分析: 假设1...假设2...假设3...反假设1..."
+❌ 太干:   "方案A V=0.85 方案B V=0.72"
+✅ 有亮点: "我发现一个问题——你嘴上说预算有限，但真正卡住你的不是钱，是你刚才提到的那个跨部门协调。钱好解决，协调难办。"
 
-✅ Genuine thinking (sounds like a person thinking):
-"我观察到我默认了两个事实: X和Y。但如果反过来想——假设用户实际上更在意的是Z——那我的整个方向可能都错了。"
+❌ 报进度: "六视第一视鲲鹏之视: 大尺度洞察..."
+❌ 太干:   "推荐方案A"
+✅ 有亮点: "从全局看，这个需求真正的边界不在技术，在业务部门之间的信任。如果不解决这个信任问题，方案做得再完美也落不了地。"
 
-❌ Mechanical:
-"六视第一视鲲鹏之视: 大尺度洞察3-5条、问题重新定义、边界外"
-
-✅ Genuine thinking:
-"从全局高度看……这个需求真正的边界不在于技术限制，而在于业务部门之间互相不信任。如果这个不解决，技术方案做再好也没用。"
+❌ 报进度: "自检5问全部通过"
+✅ 有亮点: (意外发现才输出, 没有就不输出)
 ```
 
-### Rule 3: If nothing interesting → skip output, not the step
+### 用户看到的
 
-Backend: still runs the analysis.
-Output: skip that step if no surprising finding emerged.
+| 输出项 | 格式 |
+|-------|------|
+| 用户画像 | "我记得你喜欢简洁" (1行) |
+| 五診 | 分数表 + 需要追问的 (≤5行) |
+| 信息缺口 | AskUserQuestion (≤3问) |
+| 心斋/六视/八卦镜发现 | 最意外的1个发现 (没有就不输出) |
+| 方案排名 | 排名 + 推荐 + 一句话理由 |
+| 主要风险 | 如果反直觉才写, 不写废话 |
 
-If 心斋发现假设都是显而易见的、六视没有带来新视角、八卦镜所有卦象评分都在5-8区间且无跳跃——这步不输出任何内容，但后台照做。后续步骤正常衔接。
+### 内部执行不输出 (后台跑)
+
+心斋/六视/八卦镜/齐物/梦蝶/MCTS每轮/自检5问/言意分析 → 全量跑但不输出。
+除非某一步产出了**真正反直觉的发现**，才把那1个发现亮出来。
 
 ---
 
@@ -305,8 +267,8 @@ Translation tables (core concepts, 八卦 facets, 诸子百家 sub-lenses, valid
 - **六视 surface-level** — must truly BECOME each perspective
 - **八卦镜 perfunctory** — every facet needs 体用 + sub-lens reasoning + cultural analogy + 六视 cross
 - **Execute without reading engine files** — MUST LOAD files are mandatory reads
-- **Merge steps** — each step independent output
-- **MCTS: final numbers only without per-round detail**
+- **Merge steps** — backend must run each independently, even if output is combined
+- **MCTS: final numbers only without per-round detail** (internal only, but must run)
 - **Limit solutions during divergence** — unlimited until converge
 - **Output raw cultural concepts without translation/explanation**
 
@@ -335,21 +297,11 @@ Translation tables (core concepts, 八卦 facets, 诸子百家 sub-lenses, valid
 
 ---
 
-## 🧠 记忆就是你每次使用 `/luke:ponder` 留下的痕迹
+## 🧠 记忆系统
 
-记忆不是额外的"记录工作"——它嵌入在每个阶段里，LLM 避不开：
-
-| 时机 | 自动做什么 | 存什么 |
-|------|-----------|--------|
-| **启动时** | `mma deqi` 召回历史经验 | 过去的决策影响现在的思考 |
-| **五診后** | `mma ashi` 存用户偏好 | 天/地/人/法/物 各维度的习惯 |
-| **心斋后** | `mma ashi` 存用户纠正 | "用户说预算不是问题" → 下次不问了 |
-| **八卦镜后** | `mma capture-divergence` 存跨界洞察 | 反直觉发现不丢失 |
-| **MCTS后** | `mma ashi` 存推演结果 | 方案+V值+依据 |
-| **决策后** | (用户偏好仅存于当前会话上下文) | 不影响知识库 |
-| **会话结束** | `mma session-end` 多周期睡眠巩固 | NREM→REM→突触稳态 |
-
-**用户偏好不影响知识**: 用户在本次会话的偏好(输出风格/关注维度)仅存在于当前上下文, 不存入知识库。知识库只积累跨场景可复用的经验, 不受一时偏好影响。发散引擎永远不受用户偏好的约束——它该生成激进方案还是生成, 只是输出时调整优先级。
+**知识积累 (全局共享)**: 每次决策的推演结果、跨界洞察、因果经验 → 存入 MMA 经脉
+**用户画像 (独立存储)**: 沟通偏好、行为习惯 → 存入 profile, 不影响知识库
+**全自动**: 嵌入在后台流程中, 无需 LLM 额外操作
 
 ---
 
