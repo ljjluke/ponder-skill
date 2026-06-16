@@ -121,20 +121,38 @@ function observeBehavior(profile, behavior) {
 }
 
 /**
- * 更新人格五行类型
+ * 九征人格分类 (《人物志》刘劭)
+ * 神(意识)、精(智力)、筋(胆识)、骨(意志)、气(情绪)、
+ * 色(表情)、仪(举止)、容(态度)、言(言语)
+ * → 归类为五行五常
+ */
+const JIU_ZHENG = {
+    // 五行→九征→五常→行为信号映射
+    wood:  { wuchang: '仁', traits: '弘毅(宽宏坚毅)', signals: ['协作','宏观','长期'], oppose: '短视' },
+    fire:  { wuchang: '礼', traits: '文理(文采条理)', signals: ['规则','细节','流程'], oppose: '混乱' },
+    earth: { wuchang: '信', traits: '贞固(坚贞稳固)', signals: ['务实','稳定','可靠'], oppose: '冒进' },
+    metal: { wuchang: '义', traits: '勇敢(勇敢果断)', signals: ['果断','效率','直接'], oppose: '犹豫' },
+    water: { wuchang: '智', traits: '通微(通达精微)', signals: ['分析','深度','创新'], oppose: '肤浅' },
+};
+
+/**
+ * 更新人格五行类型 — 基于《人物志》九征 + 行为信号
+ * 输入: 从对话中提取的行为倾向信号
  */
 function inferWuxingType(profile, signals = {}) {
-    // 从交互信号中推断五行人格
-    // signals: {宏观: 0~1, 细节: 0~1, 果断: 0~1, 协作: 0~1, 分析: 0~1}
     if (!signals || Object.keys(signals).length < 3) return null;
 
-    const types = {
-        wood:  signals.协作 * 0.7 + signals.宏观 * 0.3 - signals.细节 * 0.2,
-        fire:  signals.规则 * 0.7 + signals.细节 * 0.3 - signals.宏观 * 0.2,
-        earth: signals.务实 * 0.6 + signals.稳定 * 0.4,
-        metal: signals.果断 * 0.6 + signals.效率 * 0.4 - signals.分析 * 0.2,
-        water: signals.分析 * 0.6 + signals.深度 * 0.4,
-    };
+    const types = {};
+    for (const [wx, cfg] of Object.entries(JIU_ZHENG)) {
+        let score = 0;
+        let count = 0;
+        for (const sig of cfg.signals) {
+            if (signals[sig] !== undefined) { score += signals[sig]; count++; }
+        }
+        const oppose = cfg.oppose;
+        if (signals[oppose] !== undefined) { score -= signals[oppose] * 0.5; }
+        types[wx] = count > 0 ? score / count : 0;
+    }
 
     let best = null, bestScore = 0;
     for (const [type, score] of Object.entries(types)) {
@@ -144,7 +162,12 @@ function inferWuxingType(profile, signals = {}) {
     if (best && bestScore > 0.3) {
         profile.personality.wuxing_type = best;
         profile.personality.wuxing_confidence = Math.round(bestScore * 100) / 100;
-        return { wuxing_type: best, confidence: profile.personality.wuxing_confidence };
+        const jz = JIU_ZHENG[best];
+        profile.personality.observed_traits = profile.personality.observed_traits || [];
+        if (!profile.personality.observed_traits.includes(jz.wuchang)) {
+            profile.personality.observed_traits.push(jz.wuchang);
+        }
+        return { wuxing_type: best, confidence: profile.personality.wuxing_confidence, wuchang: jz.wuchang, traits: jz.traits };
     }
     return null;
 }

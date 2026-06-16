@@ -766,7 +766,7 @@ function main() {
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }
 }
 
-if (require.main === module) main();
+main();
 
 module.exports = {
     computeUcb, computeAdaptiveC, computeShiMaturity, computeCltUcb,

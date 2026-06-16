@@ -34,13 +34,6 @@ function ensureDir() { if (!fs.existsSync(TREE_DIR)) fs.mkdirSync(TREE_DIR, { re
 let _seq = 0;
 function nextId() { return 'N' + String(++_seq).padStart(4, '0'); }
 function resetSeq() { _seq = 0; }
-function syncSeqFromNodes(nodes) {
-    let max = 0;
-    for (const id of Object.keys(nodes || {})) {
-        if (id.startsWith('N')) { const n = parseInt(id.slice(1)); if (n > max) max = n; }
-    }
-    _seq = max;
-}
 
 // ── 新节点工厂 ──
 function createNode(description, opts = {}) {
@@ -312,17 +305,16 @@ function loadTree(sessionId) {
     const fp = nodeFile(sessionId);
     const bp = nodeBak(sessionId);
     try {
-        let tree = null;
-        if (fs.existsSync(fp)) tree = JSON.parse(fs.readFileSync(fp, 'utf-8'));
-        else if (fs.existsSync(bp)) {
-            tree = JSON.parse(fs.readFileSync(bp, 'utf-8'));
-            fs.writeFileSync(fp, JSON.stringify(tree, null, 2), 'utf-8');
+        if (fs.existsSync(fp)) return JSON.parse(fs.readFileSync(fp, 'utf-8'));
+        if (fs.existsSync(bp)) {
+            const data = JSON.parse(fs.readFileSync(bp, 'utf-8'));
+            fs.writeFileSync(fp, JSON.stringify(data, null, 2), 'utf-8');
+            return data;
         }
-        if (tree && tree.nodes) syncSeqFromNodes(tree.nodes);
-        return tree;
     } catch (e) {
         return { error: `Failed to load tree ${sessionId}: ${e.message}` };
     }
+    return null;
 }
 
 function listTrees() {
@@ -436,7 +428,10 @@ function main() {
             const sid = args[1] || null;
             const tree = loadTree(sid);
             if (!tree) { output({ error: 'No tree found' }); break; }
-            output({ sessionId: tree.sessionId, nodes: Object.keys(tree.nodes).length, round: tree.round, loaded: true, seq: _seq });
+            // 恢复序列计数器
+            const maxId = Object.keys(tree.nodes).filter(k => k.startsWith('N')).map(k => parseInt(k.slice(1))).reduce((a, b) => Math.max(a, b), 0);
+            _seq = maxId;
+            output({ sessionId: tree.sessionId, nodes: Object.keys(tree.nodes).length, round: tree.round, loaded: true });
             break;
         }
         case 'list': {
@@ -480,5 +475,4 @@ if (require.main === module) main();
 module.exports = {
     createTree, createNode, ucbSelect, addChildren, recordSimulation, backpropagate,
     treeStatus, checkConvergence, saveTree, loadTree, listTrees, autoRound,
-    syncSeqFromNodes, nextId, resetSeq,
 };

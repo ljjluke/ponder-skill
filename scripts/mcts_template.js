@@ -189,8 +189,11 @@ function main() {
             case "dong-template": md = renderDongTemplate(d); break;
             case "output-spec": md = outputSpec(); break;
             case "anti-guessing": md = antiGuessRules(); break;
+            case "interview-script": md = interviewScript(); break;
+            case "forbidden-check": md = forbiddenCheck(); break;
+            case "translate-guide": md = translateGuide(); break;
             default:
-                log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
+                log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n  interview-script 3-step user interview template\n  forbidden-check  Forbidden rules checklist\n  translate-guide  Concept translation guide\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
                 process.exit(0);
         }
         emit(o, cmd, d, md);

@@ -10,8 +10,7 @@
  *    node scripts/mcts.js guard    → mcts_guard.js
  *    node scripts/mcts.js mma      → meridian_memory.js
  *    node scripts/mcts.js lang     → language_guard.js
- *    node scripts/mcts.js memory   → manage_memory.js
- *    node scripts/mcts.js lifecycle → knowledge_lifecycle.js (legacy)
+ *    node scripts/mcts.js profile  → mma/user_profile.js
  *
  *  压缩恢复: 只需记住一个入口 `node scripts/mcts.js`
  *  用法: node scripts/mcts.js <engine> <command> [args...]
@@ -60,17 +59,13 @@ const ENGINES = {
         desc: '语言守护 — 自动检测用户语言/验证输出语言',
         commands: ['detect','check'],
     },
-    memory: {
-        script: 'manage_memory.js',
-        desc: '记忆文件管理(legacy) — 状态/归档/清理',
-        commands: ['status','archive','cleanup'],
-    },
     template: {
         script: 'mcts_template.js',
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
         commands: ['review-map','portrait','recon-report','info-gap','mcts-round',
                    'mcts-final','self-check','decision-report','solution-list',
-                   'constraint-list','dong-template','output-spec','anti-guessing'],
+                   'constraint-list','dong-template','output-spec','anti-guessing',
+                   'interview-script','forbidden-check','translate-guide'],
     },
     profile: {
         script: 'mma/user_profile.js',

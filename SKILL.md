@@ -43,14 +43,7 @@ license: MIT
 
 **⛔ MUST LOAD `engine/mcts-constraint.md` — cannot execute without it.**
 
-**3-step user interview (MANDATORY, before any analysis)**:
-
-```
-① PARAPHRASE: "你说的是[复述用户需求]，对吗？还有什么要补充吗？"
-② PROBE: "你之前试过什么方案？考虑过哪些方向？"
-③ CONSTRAIN: 用 AskUserQuestion 问 2-3 个最关键的约束
-   (不是自由文本, 是带选项的提问)
-```
+**3-step user interview**: `node scripts/mcts.js template interview-script` (MANDATORY, before any analysis)
 
 Only after user answers → score 5 dimensions (0-10). Any <7 → follow up.
 After scoring: **本末(Ben-Mo)** root | **有无(You-Wu)** absences | **张力(Tension)** gaps.
@@ -128,16 +121,7 @@ node scripts/mcts.js mma session-end '{"points":["<all ashi point IDs>"],"emotio
 
 ## FORBIDDEN
 
-- **Skip any step** — even simple tasks go through full flow
-- **Skip 心斋** — fake divergence without assumption-exposure
-- **六视 surface-level** — must truly BECOME each perspective, not list views
-- **八卦镜 perfunctory** — each facet: 体用 + sub-lens + cultural analogy + 六视 cross
-- **Execute without reading MUST LOAD engine files** — mandatory
-- **MCTS: final numbers only without per-round detail** (internal runs full, but user sees narrative)
-- **Limit solutions during divergence** — unlimited until converge
-- **Output raw cultural terms without explanation/translation** — concept → domain language
-- **Merge steps** — backend must run each independently
-
+`node scripts/mcts.js template forbidden-check` — apply all rules.
 **When in doubt**: `node scripts/mcts_guard.js all-guards`
 
 ---
@@ -157,9 +141,7 @@ node scripts/mcts.js mma session-end '{"points":["<all ashi point IDs>"],"emotio
 
 ## CONCEPT TRANSLATION RULE
 
-**Internal uses concept names (心斋, 逍遥游, 齐物...). Output translates to user's domain language.**
-
-Detailed translation tables (concepts, 八卦 facets, 诸子百家 sub-lenses, validation terms) in `engine/mcts-diverge.md`.
+`node scripts/mcts.js template translate-guide` — full translation table in `engine/mcts-diverge.md`.
 
 ---
 
