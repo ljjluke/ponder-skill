@@ -5,7 +5,7 @@ description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   Enabled by default. Only activates on `/luke:ponder` — does NOT auto-trigger.
   Activated by /luke:ponder. Full phased output for ANY request. Every step mandatory.
-version: 1.11.1
+version: 1.12.0
 license: MIT
 ---
 
