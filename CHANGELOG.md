@@ -183,3 +183,23 @@
 - 删除死代码: agent_daemon.js, _en_final.js, _scan_chinese.js
 - 注册缺失guard命令: horizon-scan/simulate-layer/blindspot-coverage/force-search/solution-count
 - manage_memory.js → legacy标记, 数据路径碎片清理
+- 删除遗留.bak文件
+
+## v1.12.1 (2026-06-16)
+
+### Fixes
+- 去除快速路径跳过: `/luke:ponder`=全流程, 无例外
+- 记忆再巩固主动更新: 窗口内召回的知识可被新信息修改内容
+- 上下文敏感召回: deqi时比较存储时的context_snapshot
+- 情绪一致性启动: 当前情绪匹配存储情绪→召回评分+0.15
+
+### CLI简化
+- 新增mma remember/recall/finalize三个智能命令
+- 新增template all-rules/stream-flow
+- SKILL.md CLI引用从13处减到5处
+- 原17个细粒度命令全部保留
+
+### Cleanup
+- 清除冲突画像数据: default.json重置为深度分析型
+- 删除测试用户文件: test.json, demo.json
+- CHANGELOG补全
