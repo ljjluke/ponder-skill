@@ -31,8 +31,8 @@ license: MIT
 
 **同时自动召回历史记忆**: `node scripts/mcts.js mma deqi '{"tags":["<任务关键词>"],"category":"<领域>","limit":5}'`
 → 得气结果注入后续分析，让过去的经验影响当前决策。
-**自动加载用户习惯**: `node scripts/mcts.js mma deqi '{"tags":["user_habit","<用户特征>"],"limit":3}'`
-→ 历史偏好(输出风格/方案倾向/关注维度)自动注入。
+
+**注意: 用户习惯/沟通风格独立于知识库之外**, 只影响输出格式, 不影响发散/推理引擎。
 
 Proceed to 五診(Wuzhen) portrait. **Mandatory phased flow below.**
 
@@ -56,18 +56,6 @@ Proceed to 五診(Wuzhen) portrait. **Mandatory phased flow below.**
 
 After portrait: **本末(Ben-Mo)** identify root dimension + **有无(You-Wu)** detect absent constraints + **张力(Tension)** scan dimension pair gaps.
 
-**存储用户偏好**:
-```bash
-node scripts/mcts.js mma ashi '{
-  "description": "用户偏好: [五診中发现的偏好/习惯]",
-  "tags": ["user_habit", "<tian/di/ren/fa/wu>", "<领域>"],
-  "category": "core_decision",
-  "emotion": "neutral",
-  "source": "user_stated",
-  "q": 0.7
-}'
-```
-
 ---
 
 ### Step 1: 逍遥游 Divergence ⭐ Core Phase
@@ -81,7 +69,6 @@ Divergence is NOT "looking from different angles." It is **completely changing o
 **Phase 0: 心斋** — Expose default assumptions first. Skip this = fake divergence.
 - List ≥3 unchecked assumptions + their sources + 3 counter-hypotheses
 - Declare: "I don't know the answer yet. Blank slate."
-- **存储心斋发现**: 如果有值得记的假设纠正 → `node scripts/mcts.js mma ashi '{"description":"用户纠正: [具体记录]", "tags":["user_habit","xinzhai"],"category":"core_decision","source":"user_stated","q":0.75}'`
 
 **Phase 1: 六视** — Six free-wandering perspectives, each changes who observes:
 - 鲲鹏之视 [Cosmic]: Redefine problem at system level
@@ -165,17 +152,6 @@ Blindspot: sub-lens coverage → 3+ missed → WARNING → return to converge | 
 **⛔ MUST LOAD `engine/mcts-converge.md`.**
 
 Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + 体用 bonus) + self-check + blindspot + 言意 + execution plan + TD write-back + Memory Agent checkpoint verification.
-
-**存储用户习惯** (交互中发现的偏好):
-```bash
-node scripts/mcts.js mma ashi '{
-  "description": "用户习惯: [具体行为/偏好描述]",
-  "tags": ["user_habit", "behavior", "<领域>"],
-  "category": "core_decision",
-  "source": "user_stated",
-  "q": 0.7
-}'
-```
 
 **触发多周期睡眠巩固** (必须, 让知识真正固化):
 ```bash
@@ -353,15 +329,15 @@ Translation tables (core concepts, 八卦 facets, 诸子百家 sub-lenses, valid
 
 | 时机 | 自动做什么 | 存什么 |
 |------|-----------|--------|
-| **启动时** | `mma deqi` 召回历史经验+用户习惯 | 过去的决策影响现在的思考 |
+| **启动时** | `mma deqi` 召回历史经验 | 过去的决策影响现在的思考 |
 | **五診后** | `mma ashi` 存用户偏好 | 天/地/人/法/物 各维度的习惯 |
 | **心斋后** | `mma ashi` 存用户纠正 | "用户说预算不是问题" → 下次不问了 |
 | **八卦镜后** | `mma capture-divergence` 存跨界洞察 | 反直觉发现不丢失 |
 | **MCTS后** | `mma ashi` 存推演结果 | 方案+V值+依据 |
-| **决策后** | `mma ashi` 存用户习惯 | 输出风格/方案倾向/关注维度 |
+| **决策后** | (用户偏好仅存于当前会话上下文) | 不影响知识库 |
 | **会话结束** | `mma session-end` 多周期睡眠巩固 | NREM→REM→突触稳态 |
 
-**用户习惯追踪**: 所有带 `tags:["user_habit"]` 的知识点会在下次 `deqi` 时自动召回 → 让框架越来越贴合这位用户。
+**用户偏好不影响知识**: 用户在本次会话的偏好(输出风格/关注维度)仅存在于当前上下文, 不存入知识库。知识库只积累跨场景可复用的经验, 不受一时偏好影响。发散引擎永远不受用户偏好的约束——它该生成激进方案还是生成, 只是输出时调整优先级。
 
 ---
 
