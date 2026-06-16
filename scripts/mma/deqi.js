@@ -73,11 +73,69 @@ function deqi(kg, query, context = {}) {
             top.push(er);
         }
     }
-    
+
     return top;
 }
 
-/** 上焦检查 — 最近用过的知识直接浮现 */
+/**
+ * ═══════════════════════════════════════════════════════════════
+ *  模式完成 — Pattern Completion (CA3 自联想)
+ *  给定部分输入(partial tags/context), 自动补全完整知识
+ *  人脑海马 CA3 区: 部分线索→完整回忆
+ * ═══════════════════════════════════════════════════════════════
+ *  @param {object} kg — 知识图谱
+ *  @param {string[]} partialTags — 部分tags/线索
+ *  @param {number} limit — 返回条数
+ *  @returns {object[]} 补全结果, 每项含: point + completed_fields + confidence
+ */
+function patternComplete(kg, partialTags = [], context = {}, limit = 3) {
+    const candidates = [];
+    const now = new Date();
+    const contextKeys = Object.keys(context);
+
+    for (const [key, m] of Object.entries(kg.meridians)) {
+        for (const p of m.points) {
+            if (p.hidden) continue;
+            if (!p.tags || p.tags.length === 0) continue;
+
+            // 计算部分标签与知识点标签的匹配度
+            const tagMatch = partialTags.length > 0
+                ? partialTags.filter(t => p.tags.includes(t)).length / Math.max(partialTags.length, 1)
+                : 0;
+
+            // 上下文匹配
+            const ctxMatch = contextKeys.length > 0 && p.context_snapshot
+                ? contextKeys.filter(k => JSON.stringify(p.context_snapshot).includes(k)).length / contextKeys.length
+                : 0;
+
+            // 综合得分
+            const completionScore = tagMatch * 0.6 + ctxMatch * 0.3 + 0.1;
+
+            if (completionScore > 0.3) {
+                // 找出缺失的维度 (可补全的字段)
+                const dims = ['core','why','when','how','risks','alternatives','prerequisites'];
+                const filled = dims.filter(d => p[d]);
+                const completed = dims.filter(d => p[d] && !d.endsWith('unknown'));
+
+                candidates.push({
+                    point: p,
+                    meridian: key,
+                    meridian_name: m.name,
+                    completion_score: Math.round(completionScore * 100) / 100,
+                    tag_match_ratio: Math.round(tagMatch * 100) / 100,
+                    context_match: Math.round(ctxMatch * 100) / 100,
+                    filled_dimensions: filled.length + '/' + dims.length,
+                    completable_dimensions: completed.join(', '),
+                    // 如果部分输入匹配了核心tag, 置信度更高
+                    confidence: tagMatch > 0.7 ? 'high' : tagMatch > 0.4 ? 'medium' : 'low',
+                });
+            }
+        }
+    }
+
+    candidates.sort((a, b) => b.completion_score - a.completion_score);
+    return candidates.slice(0, limit);
+}
 function searchUpperBurner(wm, query) {
     const hits = [];
     for (const entry of wm.upper) {
@@ -239,7 +297,7 @@ function hexagramPreRecall(kg, topResults) {
     return results;
 }
 
-module.exports = { deqi, computeDeqiScore, propagateSensation, updateWorkingMemory, hexagramPreRecall, openReconsolidationWindow };
+module.exports = { deqi, computeDeqiScore, propagateSensation, updateWorkingMemory, hexagramPreRecall, openReconsolidationWindow, patternComplete };
 
 
 /**

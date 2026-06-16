@@ -52,51 +52,123 @@ function decayCheck(kg) {
 }
 
 /**
- * 睡眠回放 (Memory Consolidation)
- * 会话结束时触发，模拟海马体快速回放
- * 以高倍速回放本会话的知识交互，情绪强度高的巩固加强
+ * 多周期睡眠回放 (Multi-Cycle Sleep Replay)
+ * 模拟人脑 NREM→REM 多周期睡眠 (每个周期90分钟, 每夜4-6周期)
+ * NREM期: 强化事实 — 增加巩固分, 降低方差
+ * REM期:  连接概念 — 建立跨经脉 promotes, 情感再处理
+ * 终末:    突触稳态 — 全局微调, 情绪衰减
  *
  * @param {object} kg
  * @param {array} sessionPoints — 本会话涉及的所有穴位ID列表
  * @param {array} sessionEmotions — 本会话的情感时间线
+ * @param {number} cycles — 睡眠周期数 (默认4, 范围1-6)
  */
-function sessionEnd(kg, sessionPoints = [], sessionEmotions = []) {
+function sessionEnd(kg, sessionPoints = [], sessionEmotions = [], cycles = 4) {
     const now = new Date();
-    const results = [];
+    cycles = Math.max(1, Math.min(6, cycles || 4));
+    const results = { cycles: [], global: {} };
 
-    // 1. 回放本会话的每个知识交互
-    for (const pointId of sessionPoints) {
-        const found = findPointById(kg, pointId);
-        if (!found) continue;
-        const { point } = found;
+    // 收集本会话点
+    const pointIds = sessionPoints.filter(id => findPointById(kg, id));
 
-        // 2. 情绪加权: 找到该知识关联的情绪，决定巩固力度
-        const relatedEmotions = sessionEmotions.filter(e =>
-            e.context && e.context.includes(pointId.substring(0, 6))
-        );
-        let emotionBoost = 0;
-        for (const em of relatedEmotions) {
-            const config = EMOTION_CONSOLIDATION[em.qiqing] || EMOTION_CONSOLIDATION.neutral;
-            emotionBoost += config.boost;
+    // ── 多周期循环 ──
+    for (let cycle = 1; cycle <= cycles; cycle++) {
+        const cycleLog = { cycle, nrem: 0, rem: 0 };
+
+        // ── NREM期: 强化事实 ──
+        // 人脑NREM慢波振荡→海马尖波涟漪→新皮层纺锤波→记忆印记写入
+        for (const found of pointIds) {
+            const fp = findPointById(kg, found);
+            if (!fp || fp.point.hidden) continue;
+            const p = fp.point;
+            // 早期周期(1-2)强化多, 后期周期(3+)强化递减
+            const nremBoost = Math.max(1, 4 - cycle);
+            const oldCons = p.consolidation_score || 0;
+            p.consolidation_score = oldCons + nremBoost;
+            // sigma2 降低 (方差的倒数 = 置信度提升)
+            p.sigma2 = Math.max(0.01, (p.sigma2 || 0.25) * 0.95);
+
+            // 状态提升
+            if (p.status === 'HYPOTHESIS' && p.consolidation_score >= 5) p.status = 'PROVISIONAL';
+            if (p.status === 'PROVISIONAL' && p.consolidation_score >= 20 && (p.n || 0) >= 3) p.status = 'CONFIRMED';
+
+            markDirty(kg, fp.meridianKey);
+            cycleLog.nrem++;
         }
 
-        // 3. 巩固分更新: 情绪越强，巩固越多
-        const baseBoost = 2; // base replay boost
-        const totalBoost = baseBoost + Math.min(emotionBoost, 15);
-        point.consolidation_score = (point.consolidation_score || 0) + totalBoost;
-        point.last_replayed = now.toISOString();
+        // ── REM期: 连接概念 + 情绪再处理 ──
+        // 人脑REM期: 海马θ波→前额叶→跨脑区连接重组
+        if (cycle > 1) { // 第一个周期跳过REM(人脑第一个周期NREM为主)
+            for (const found of pointIds) {
+                const fp = findPointById(kg, found);
+                if (!fp || fp.point.hidden) continue;
+                const p = fp.point;
+                if (!p.tags) continue;
 
-        // 4. 状态提升: 巩固分达标 → 升级
-        if (point.status === 'HYPOTHESIS' && point.consolidation_score >= 5) point.status = 'PROVISIONAL';
-        if (point.status === 'PROVISIONAL' && point.consolidation_score >= 20 && point.n >= 3) point.status = 'CONFIRMED';
+                // 从不相干经脉找潜在关联 (跨领域连接)
+                for (const [key, m] of Object.entries(kg.meridians)) {
+                    if (key === fp.meridianKey) continue;
+                    for (const other of m.points) {
+                        if (other.hidden || !other.tags) continue;
+                        // 找tags完全不同但有潜在关联的知识
+                        const overlap = p.tags.filter(t => other.tags.includes(t)).length;
+                        if (overlap === 0 && p.tags.length > 0 && other.tags.length > 0) {
+                            // 不同但互补的话题 → 建立弱promotes
+                            p.promotes = p.promotes || [];
+                            if (!p.promotes.find(r => r.target_meridian === key)) {
+                                p.promotes.push({
+                                    target_meridian: key, target_id: other.id,
+                                    strength: 0.05, type: 'promote',
+                                    desc: 'REM sleep cross-meridian association',
+                                    created: now.toISOString(),
+                                });
+                                cycleLog.rem++;
+                            }
+                        }
+                    }
+                }
 
-        results.push({ point_id: pointId, boost: totalBoost, new_score: point.consolidation_score, status: point.status });
+                // 情绪衰减: 情绪浓度随时间周期性降低
+                if (p.emotion_boost && p.emotion_boost > 0) {
+                    p.emotion_boost = Math.max(0, p.emotion_boost - 1 * (cycle / cycles));
+                    markDirty(kg, fp.meridianKey);
+                }
+            }
+        }
+        results.cycles.push(cycleLog);
     }
 
-    // 5. 清理: 衰减检查
+    // ── 突触稳态 (Synaptic Homeostasis) ──
+    // REM睡眠后期: 全局突触强度微降, 保持可塑性
+    // 人脑机制: 慢波活动→突触下缩放→防止饱和
+    let scaled = 0;
+    for (const [key, m] of Object.entries(kg.meridians)) {
+        for (const p of m.points) {
+            if (p.hidden) continue;
+            if (p.q !== undefined) {
+                const scale = 0.98; // 全局下调2%
+                p.q = Math.max(0.01, p.q * scale);
+                markDirty(kg, key);
+                scaled++;
+            }
+        }
+    }
+    results.global = { synaptic_scaling: '0.98', points_scaled: scaled };
+
+    // ── 衰减检查 ──
     const decayed = decayCheck(kg);
 
-    return { replayed: results.length, decayed: decayed.length, details: results };
+    // 汇总
+    const totalNrem = results.cycles.reduce((s, c) => s + c.nrem, 0);
+    const totalRem = results.cycles.reduce((s, c) => s + c.rem, 0);
+    return {
+        cycles: cycles,
+        replayed: pointIds.length,
+        nrem_consolidations: totalNrem,
+        rem_associations: totalRem,
+        synaptic_scaling: scaled,
+        decayed: decayed.length,
+    };
 }
 
 /**

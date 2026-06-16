@@ -23,7 +23,8 @@ function ashiInsert(kg, entry) {
 
     // 完整性分析 — 标记缺失维度
     const completeness = assessCompleteness(entry);
-    // Step 1: 归经 — 找最匹配的经脉
+    // Step 1: 归经 + 模式分离 (Pattern Separation)
+    // DG (齿状回) 功能: 相似经历用不同编码, 防止干扰
     let bestMeridian = null, bestScore = 0;
     for (const [key, m] of Object.entries(kg.meridians)) {
         let score = 0;
@@ -31,6 +32,17 @@ function ashiInsert(kg, entry) {
         if (entry.five_element && m.element === entry.five_element) score += 0.3;
         if (entry.tags && m.desc)
             score += entry.tags.filter(t => m.desc.toLowerCase().includes(t.toLowerCase())).length * 0.1;
+        // 模式分离: 已有相似知识时降低该经脉优先级
+        if (entry.tags && m.points.length > 0) {
+            const maxOverlap = m.points.filter(p => p.tags).reduce((max, p) => {
+                const overlap = entry.tags.filter(t => p.tags.includes(t)).length;
+                return Math.max(max, overlap);
+            }, 0);
+            const minLen = Math.min(entry.tags.length, 1);
+            const overlapRatio = minLen > 0 ? maxOverlap / Math.min(entry.tags.length, 3) : 0;
+            // 海马体DG: tags重叠>40% → 分离到不同经脉(降低此经脉得分)
+            if (overlapRatio > 0.4) score -= 0.6;
+        }
         if (score > bestScore) { bestScore = score; bestMeridian = key; }
     }
     if (!bestMeridian || bestScore < 0.2) {
@@ -97,6 +109,8 @@ function ashiInsert(kg, entry) {
         task_type: entry.task_type || null,     // episodic memory context
         context_snapshot: entry.context || {},   // encoding-time context snapshot
         reconsolidation_window: null,           // reconsolidation window
+        // 模式分离标记: 因tags重叠>40%而分到不同经脉
+        pattern_separated: entry.tags ? bestScore < 0 && bestScore > -0.6 : false,
         // 完整性: 记录了哪些维度缺失
         _missing_dimensions: completeness.missing,
         _completion_suggestions: completeness.suggestions,
