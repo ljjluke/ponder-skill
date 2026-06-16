@@ -24,17 +24,22 @@ license: MIT
 4. **Recall memories**: `node scripts/mcts.js mma deqi '{"tags":["<keywords>"],"category":"<domain>","limit":5}' --context '{"task_type":"<type>","domain":"<domain>","emotion":"<emotion>"}'`
    - Context-aware recall (Tulving 1983): same context → higher retrieval
    - Emotion-congruent recall (Bower 1981): same mood → biased retrieval
-5. Output activation banner.
+5. **Output activation banner** (user must see the skill is running):
+```
+═══════════════════════════════════════════════
+ ⚡ [MCTS-TD] 思维框架已激活 — 发散→推演→收敛
+ 触发: [用户需求摘要]
+ 模式: [动/静]
+═══════════════════════════════════════════════
+```
 
 **Streaming output**: `node scripts/mcts.js template stream-flow` — each step outputs immediately.
 
 ---
 
-## 📐 PROCESS FLOW: Prediction → Test → Correct → Converge
+## 📐 三引擎执行流程
 
-**⛔ MUST LOAD `engine/mcts-predictive.md` — transforms linear steps into recursive loop.**
-
-The framework is not a linear pipeline. It is a **prediction-correction loop**, like the human brain:
+**⛔ 三引擎: 发散(八面审视) → 推演(MCTS树搜索) → 收敛(综合判断)**
 
 ### Phase A: Fast Path Check (System 1)
 
