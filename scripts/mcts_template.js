@@ -133,6 +133,39 @@ function renderDongTemplate(d) {
     return `[${d.phase_name || 'Phase'}] Key: ${keyPts}\nScores: ${scoreStr}\nAction: ${d.action || ''}`;
 }
 
+// ===== Output format rules (moved from SKILL.md to reduce prompt length) =====
+function outputSpec() { return `
+每步输出规则:
+  五診: 你对各维度的判断 + 需要追问的部分 | 3-8行
+  心斋: 你注意到什么矛盾/用户的真实卡点 | 3-5行
+  六视: 从哪个角度发现了什么反直觉的东西 | 3-6行
+  八卦镜: 哪个维度最异常 + 跨维度的冲突 | 5-10行
+  齐物: 如果有视角冲突就写, 没有就不写 | 0-3行
+  梦蝶: 如果翻转发现意外结论就写 | 0-3行
+  MCTS: 方案对比推理(不带数字) + 推荐 + 风险 | 3-8行
+  自检: 找到的风险/漏洞 | 0-3行
+
+铁律:
+  1. 不要出现用户看不懂的术语: V值/σ²/权重/UCB/置信度 → 后台用不展示
+  2. 不要出现"我做了X分析"前缀 → 直接写结论
+  3. 不要出现步骤编号 → 用户不关心
+  4. 要详细, 每步至少3行, 让用户感觉认真分析了
+  5. 要让用户能用自己经验验证推理路径
+`.trim(); }
+
+function antiGuessRules() { return `
+反猜测规则:
+  用户没说过的不能假装知道: 拿不准的要问, 不能编
+  方案推荐必须有依据, 依据来自用户自己说过的话
+  ❌ "项目处于早期阶段" → 用户没说过
+  ✅ "你说项目时间还宽裕, 但具体阶段我没太确定"
+
+内部来源标注(不展示给用户):
+  ✅ verified = 直接来自用户或代码
+  ⚠️ inferred = 从已有信息推导
+  ❓ speculative = 无证据, 不能用于决策
+`.trim(); }
+
 // ===== CLI =====
 function main() {
     const args = process.argv.slice(2);
@@ -154,8 +187,10 @@ function main() {
             case "solution-list": md = renderSolutionList(d); break;
             case "constraint-list": md = renderConstraintList(d); break;
             case "dong-template": md = renderDongTemplate(d); break;
+            case "output-spec": md = outputSpec(); break;
+            case "anti-guessing": md = antiGuessRules(); break;
             default:
-                log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
+                log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
                 process.exit(0);
         }
         emit(o, cmd, d, md);

@@ -68,7 +68,7 @@ const ENGINES = {
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
         commands: ['review-map','portrait','recon-report','info-gap','mcts-round',
                    'mcts-final','self-check','decision-report','solution-list',
-                   'constraint-list','dong-template'],
+                   'constraint-list','dong-template','output-spec','anti-guessing'],
     },
     profile: {
         script: 'mma/user_profile.js',
