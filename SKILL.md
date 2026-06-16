@@ -25,30 +25,71 @@ license: MIT
    - Global knowledge (cross-user) feeds into current analysis
 5. Output activation banner.
 
-**Streaming output: each step outputs its crystallization as it completes.**
-   - 五診(scores + what needs asking) → output immediately
-   - 心斋(assumption contradiction found) → output if surprising
-   - 六视(counter-intuitive finding) → output if any
-   - 八卦镜(most abnormal facet) → output if striking
-   - 齐物/梦蝶(perspective flip) → output if flips conclusion
-   - MCTS(detailed comparison, no numbers) → output when ready
-   - Final recommendation + risk → last output
-   - User answers → wait for input, then continue
+**Streaming output**: each step outputs its result as it completes. No framework terms in output.
 
 ---
 
-## 📐 MANDATORY PHASED FLOW
+## 📐 PROCESS FLOW: Prediction → Test → Correct → Converge
 
-### Step 0.5: 五診 (Wuzhen) — Grill the User FIRST
+**⛔ MUST LOAD `engine/mcts-predictive.md` — transforms linear steps into recursive loop.**
 
-**⛔ MUST LOAD `engine/mcts-constraint.md` — cannot execute without it.**
+The framework is not a linear pipeline. It is a **prediction-correction loop**, like the human brain:
 
-**3-step user interview**: `node scripts/mcts.js template interview-script` (MANDATORY, before any analysis)
+### Phase A: Fast Path Check (System 1)
 
-Only after user answers → score 5 dimensions (0-10). Any <7 → follow up.
-After scoring: **本末(Ben-Mo)** root | **有无(You-Wu)** absences | **张力(Tension)** gaps.
+Before any analysis, check memory for a direct match. If high-confidence past solution exists, output it directly and skip to session end.
 
-Output: concise table showing scores + what needs asking.
+```bash
+# Check fast path
+node scripts/mcts.js compute fast-path-check --query '<json>' --memories '<deqi_results>'
+```
+
+### Phase B: Generate Prediction (System 2)
+
+If no fast-path match, generate an initial prediction about the user's domain.
+
+1. **Load prediction rules**: `node scripts/mcts.js template interview-script` → 3-step user interview
+2. **Generate prediction**: `node scripts/mcts.js compute predict-generate --task '<json>' --memory '<deqi_results>'`
+3. **Score dimensions**: 天(Timing) 地(Resources) 人(People) 法(Rules) 物(Essence)
+
+### Phase C: Test → Error → Propagate (Recursive Loop)
+
+Test prediction against user input, compute error, propagate corrections.
+
+```
+① Output current scores → ask about low-confidence dimensions
+② Get user response → compute prediction error
+③ If error > threshold → correct scores → re-run affected analysis
+④ Repeat until error < threshold
+```
+
+### Phase D: Diverge → Converge (from corrected prediction)
+
+**⛔ MUST LOAD `engine/mcts-diverge.md` and `engine/mcts-simulate.md`.**
+
+Run divergence (心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶) using the corrected prediction.
+Run MCTS tree search using the corrected scores.
+
+```bash
+# Propagate correction if user changes input mid-flow
+node scripts/mcts.js compute predict-propagate --correction '<json>'
+```
+
+### Phase E: Output + Memory
+
+Final recommendation in plain language. Store results.
+
+```bash
+node scripts/mcts.js mma session-end '{"points":["<IDs>"],"emotions":[{"qiqing":"<emotion>","context":"<context>"}]}'
+```
+
+---
+
+## OUTPUT
+
+Non-technical, natural language. No framework terms. The user should see analysis, not methodology.
+
+For format rules: `node scripts/mcts.js template output-spec`
 
 **Throughout the conversation, silently analyze user behavior patterns.** 
 Use your understanding of natural conversation — not keyword matching — to detect:
@@ -70,52 +111,15 @@ At session end: `node scripts/mcts.js profile infer default --signals '<json>'` 
 
 ---
 
-### Step 1: 逍遥游 (Free Wandering) Divergence ⭐
-
-**⛔ MUST LOAD `engine/mcts-diverge.md` — complete Zhuangzi-based methodology.**
-
-Not "looking from different angles." **Completely changing observer identity, scale, position.**
-
-**Each sub-phase outputs 1 finding if surprising, skips if not**: 心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶
-
-**Store key divergence insights as knowledge**:
-```bash
-node scripts/mcts.js mma capture-divergence '[{"description":"...","tags":["divergence","..."],"phase":"bagua","q":0.65}]'
-```
-
----
-
-### Step 1.5: Info Gap
-
-**⛔ Any facet <7 → ask user via AskUserQuestion.**
-
----
-
-### Steps 2-3: Recon → MCTS
-
-**⛔ MUST LOAD `engine/mcts-simulate.md`.**
-
-Full backend execution: Reconnaissance → Converge → MCTS tree search. MCTS outputs ranking when done.
-
-**Step 3.5-3.6 自检/盲区/言意**: All internal, only output if genuine risk uncovered.
-
 **Store simulation results**:
 ```bash
 node scripts/mcts.js mma ashi '{"description":"Decision: [name] V=[X] — [summary]","tags":["decision_result","<domain>"],"category":"judgment_and_strategy","source":"execution_result","q":0.7}'
 ```
 
----
-
-### Step 4: Memory + Session End
-
-For format rules: `node scripts/mcts.js template output-spec`
-For anti-guessing rules: `node scripts/mcts.js template anti-guessing`
-
-**Finalize memory consolidation**:
+**Store divergence insights**:
 ```bash
-node scripts/mcts.js mma session-end '{"points":["<all ashi point IDs>"],"emotions":[{"qiqing":"<emotion>","context":"<context>"}]}'
+node scripts/mcts.js mma capture-divergence '[{"description":"...","tags":["divergence","..."],"phase":"bagua","q":0.65}]'
 ```
-→ Multi-cycle sleep: NREM(facts) → REM(connections) → synaptic homeostasis
 
 ---
 
@@ -130,7 +134,8 @@ node scripts/mcts.js mma session-end '{"points":["<all ashi point IDs>"],"emotio
 
 | Phase | File | Rule |
 |-------|------|------|
-| Step 0-0.5b | `engine/mcts-constraint.md` | MUST Read before Step 0.5 |
+| Step 0-0.2 | `engine/mcts-predictive.md` | MUST Read for predictive coding loop |
+| Step 0.5-0.5b | `engine/mcts-constraint.md` | MUST Read before Step 0.5 |
 | Step 1-2 | `engine/mcts-diverge.md` | MUST Read before Step 1 |
 | Step 3 | `engine/mcts-simulate.md` | MUST Read before MCTS |
 | Step 3.5-4 | `engine/mcts-converge.md` | MUST Read before Step 3.5 |

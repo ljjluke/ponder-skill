@@ -761,6 +761,67 @@ function main() {
                 output(mutationTiebreak(nodes));
                 break;
             }
+            // ─── Predictive Coding ───
+            case "predict-generate": {
+                const task = JSON.parse(o.task || "{}");
+                const memory = JSON.parse(o.memory || "{}");
+                const confidence = memory.match ? Math.min(0.3 + memory.match * 0.15, 1.0) : 0.3;
+                output({
+                    prediction_id: Date.now().toString(36),
+                    wuzhen_scores: { tian: 5, di: 5, ren: 5, fa: 5, wu: 5 },
+                    constraints: { hard: [], soft: [] },
+                    assumptions: ["No prior data — cold start prediction"],
+                    confidence: Math.round(confidence * 100) / 100,
+                    expected_error: Math.round((1 - confidence) * 100) / 100,
+                    system: confidence > 0.7 ? 'system1' : 'system2',
+                });
+                break;
+            }
+            case "predict-test": {
+                const pred = JSON.parse(o.prediction || "{}");
+                const userInput = JSON.parse(o.user_input || "{}");
+                const errors = {};
+                if (userInput.confirmed_scores) {
+                    for (const [dim, actual] of Object.entries(userInput.confirmed_scores)) {
+                        const predicted = pred.wuzhen_scores?.[dim] || 5;
+                        errors[dim] = Math.abs(predicted - actual) / 10;
+                    }
+                }
+                const totalError = Object.values(errors).reduce((s, v) => s + v, 0) / Math.max(Object.keys(errors).length, 1);
+                output({
+                    per_dimension: errors,
+                    total_prediction_error: Math.round(totalError * 100) / 100,
+                    needs_correction: totalError > 0.3,
+                    recommendation: totalError > 0.3 ? 'Propagate correction backward' : 'Proceed to converge',
+                });
+                break;
+            }
+            case "predict-propagate": {
+                const correction = JSON.parse(o.correction || "{}");
+                const affected = correction.affected_dimensions || [];
+                output({
+                    propagated: true,
+                    action: 'Update scores and re-run affected divergence phases',
+                    upstream_phases: affected.map(d => ({ dimension: d, phase: '五診 → 心斋 → 六视' })),
+                });
+                break;
+            }
+            case "fast-path-check": {
+                const query = JSON.parse(o.query || "{}");
+                const memories = JSON.parse(o.memories || "[]");
+                if (memories.length === 0) {
+                    output({ use_fast_path: false, reason: 'No matching memories' });
+                } else {
+                    const best = memories[0];
+                    output({
+                        use_fast_path: best.q > 0.7 && (best.n || 0) > 3,
+                        confidence: best.q,
+                        past_solution_id: best.id,
+                        reason: best.q > 0.7 && (best.n || 0) > 3 ? 'High-confidence past match' : 'Low confidence, engage full pipeline',
+                    });
+                }
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }

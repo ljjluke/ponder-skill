@@ -34,7 +34,8 @@ const ENGINES = {
                    'root-branch','absence-detect','tension-scan','dong-jing',
                    'mutation-vector','body-use-score','li-shi-split','yan-yi-check',
                    'one-many-check','ti-yong-check',
-                   'get-learning-rate','get-reward-signal','get-terminal-value','project-state','mutation-tiebreak'],
+                   'get-learning-rate','get-reward-signal','get-terminal-value','project-state','mutation-tiebreak',
+                   'predict-generate','predict-test','predict-propagate','fast-path-check'],
     },
     guard: {
         script: 'mcts_guard.js',
