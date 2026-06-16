@@ -167,43 +167,70 @@ function antiGuessRules() { return `
 `.trim(); }
 
 function interviewScript() { return `
-三步用户访谈 (MANDATORY before any analysis):
-  ① PARAPHRASE: "你说的是[复述用户需求], 对吗? 还有什么要补充吗?"
-  ② PROBE: "你之前试过什么方案? 考虑过哪些方向?"
-  ③ CONSTRAIN: AskUserQuestion 问2-3个关键约束(带选项)
-  用户回答完才打分, 不回答不推进
+3-step user interview (MANDATORY):
+  ① PARAPHRASE: "You said [restate], correct? Anything to add?"
+  ② PROBE: "What have you tried before? What approaches did you consider?"
+  ③ CONSTRAIN: AskUserQuestion with options, 2-3 critical constraints
+  Do NOT score before user answers.
 `.trim(); }
 
 function forbiddenCheck() { return `
-禁止:
-  - 跳过任何步骤 (即使任务简单)
-  - 跳过心斋 (不做假设暴露的发散是假发散)
-  - 六视表面功夫 (必须真的成为那个视角)
-  - 八卦镜敷衍 (每卦需体用+子镜+文化类比+六视交叉)
-  - 不读engine文件就执行 (MUST LOAD)
-  - MCTS只出最终数字 (内部跑完整, 用户看叙事)
-  - 发散阶段限制方案数量 (收敛后才筛选)
-  - 输出文化术语不翻译 (概念→领域语言)
-  - 合并步骤 (后台独立执行)
-有疑问: node scripts/mcts_guard.js all-guards
+FORBIDDEN:
+  - Skip any step (even if task looks simple)
+  - Skip assumption-exposure (fake divergence)
+  - Surface-level perspective shifts (must BECOME each view)
+  - Perfunctory facets (each needs substance)
+  - Execute without reading engine files (MUST LOAD)
+  - MCTS: final numbers only (user sees narrative, backend runs full)
+  - Limit solutions during divergence (unlimited until converge)
+  - Output cultural terms without translation
+  - Merge steps (backend runs each independently)
+  When in doubt: node scripts/mcts_guard.js all-guards
 `.trim(); }
 
 function translateGuide() { return `
-概念翻译规则:
-  内部用文化术语思考, 输出必须翻译为用户领域语言
-  心斋→假设暴露 | 逍遥游→自由漫游 | 齐物→等视视角
-  梦蝶→前提翻转 | 八卦镜→多视角审视
-  完整翻译表: engine/mcts-diverge.md
-  如果翻译会丢失核心含义 → 保留原名+解释
+Translation rule: internal uses concept names, output translates to user domain language.
+  心斋→assumption-exposure | 逍遥游→free-wandering | 齐物→equalize
+  梦蝶→premise-flip | 八卦镜→multi-perspective
+  Full table: engine/mcts-diverge.md
 `.trim(); }
 
 function streamFlow() { return `
-流式输出时序:
-  活化横幅 → 立即输出
-  发散引擎 → 关键发现立即输出
-  推演引擎 → 方案对比完成即出
-  收敛引擎 → 最终推荐
-  用户每步都看到进展, 不等全跑完
+Streaming output order:
+  Banner → immediate
+  Divergence engine → key findings immediate
+  Simulation engine → comparison when ready
+  Convergence engine → final recommendation
+  No waiting, user sees analysis building.
+`.trim(); }
+
+function helloTest() { return `
+Test case — user says "hello":
+  Step 1(decompose): "You said hello — testing me? Ready to start? Formal or casual?"
+  Step 2(diverge): 6-scale analysis of what "hello" implies
+  Step 3(examine): 8-perspective on hidden expectations
+  Step 4(simulate): ≥2 response types, 3 scenarios each
+  Step 5(converge): best response
+
+  Even "hello" goes through full flow. No exceptions.
+`.trim(); }
+
+function sixViews() { return `
+6 divergence scales (each MUST produce ≥1 insight):
+  System level: Where is the real boundary?
+  Micro level: What details does macro miss?
+  Time-compressed: If only 1 day, priority?
+  Time-expanded: What stays, what changes long-term?
+  Flow: Without intervention, where does it go?
+  Selfless: Remove personal stake, system optimum?
+`.trim(); }
+
+function baguaQuestions() { return `
+8 perspectives (each MUST have substance):
+  Source of force | Foundation | Change | Penetration
+  Risk | Hidden dependencies | Boundary | Balance
+
+  Output: 1-2 most abnormal + cross-perspective conflicts.
 `.trim(); }
 
 function allRules() { return [
@@ -239,6 +266,9 @@ function main() {
             case "translate-guide": md = translateGuide(); break;
             case "stream-flow": md = streamFlow(); break;
             case "all-rules": md = allRules(); break;
+            case "hello-test": md = helloTest(); break;
+            case "six-views": md = sixViews(); break;
+            case "bagua-questions": md = baguaQuestions(); break;
             default:
                 log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n  interview-script 3-step user interview template\n  forbidden-check  Forbidden rules checklist\n  translate-guide  Concept translation guide\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
                 process.exit(0);

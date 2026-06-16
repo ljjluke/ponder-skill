@@ -66,7 +66,7 @@ const ENGINES = {
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
         commands: ['review-map','portrait','recon-report','info-gap','mcts-round',
                    'mcts-final','self-check','decision-report','solution-list',
-                   'constraint-list','dong-template','stream-flow','all-rules',
+                   'constraint-list','dong-template','stream-flow','all-rules','hello-test','six-views','bagua-questions',
                    'interview-script','forbidden-check','translate-guide'],
     },
     profile: {
