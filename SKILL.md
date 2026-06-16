@@ -123,39 +123,69 @@ node $P/scripts/mcts.js mma deqi '{"tags":["<与用户请求相关的关键词>"
 
 ### Step 2-5: 启动强制管道 + 自进化
 
-Step 1 完成后，用 Workflow 工具启动管道。
+Step 1 完成后，读取当前元配置并启动管道。
 
 ```
+# 读取元配置（若没有则用默认）
+const metaConfig = JSON.parse(
+  require('fs').readFileSync(
+    require('path').join(require('os').homedir(),
+      '.claude/data/skills/mcts-td-planner/pipeline-meta.json'
+    ), 'utf-8'
+  )
+)
+
 Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
   user_request: '<用户原始请求>',
   step1: '<Step1画像输出>',
   plugin_path: '<从[MCTS-TD] Plugin:获取的路径>',
-  memory_context: '<deqi召回的结果摘要>'
+  memory_context: '<deqi召回的结果摘要>',
+  meta_config: metaConfig  // ← 传入元配置，管道按此配置执行
 }})
 ```
 
-### Step 6: 自进化评估
+### Step 6: 自进化评估（含MMA进化记忆）
 
-Workflow 返回后，除了呈现结果给用户，还做一件事：**评估当前架构的自由能，决定是否进化**。
+Workflow 返回后，做**两件事**：呈现结果给用户 + 评估架构自由能。
 
 ```
 ① 读取 free_energy 和 evolution_suggestions
-② 读取 pipeline-meta.json 中当前各步骤的适应度
-③ 如果 free_energy > 0.4（阈值）:
-   - 更新 pipeline-meta.json 中对应步骤的 fail_count 和 fitness
-   - 根据 evolution_suggestions 的类型执行变异:
-     weight_adjust → 修改 pipeline-meta.json 中该步骤的 weight
-     prompt_tweak → 修改 pipeline-meta.json 中步骤记录
-     structural_change → 修改 topology.order 或 parallel_groups
+
+② 查询MMA历史进化经验（deqi）:
+   $P = <[MCTS-TD] Plugin:路径>
+   node $P/scripts/mcts.js mma deqi '{"tags":["evolution","mutation"],"limit":5}'
+   → 找出历史上类似变异的效果:
+     - 哪些变异类型使自由能降低? → 优先选择
+     - 哪些变异类型使自由能升高? → 避免或替换
+
+③ 读取 pipeline-meta.json 中当前各步骤的适应度
+
+④ 如果 free_energy > 0.4（阈值）:
+   - 基于历史经验选择变异类型（跳过历史上失败的类型）
+   - 更新 pipeline-meta.json 中对应步骤的 fail_count
+   - 执行变异（修改 pipeline-meta.json）
    - 将变异记录写入 mutation_history
+   - 写入MMA知识:
+     node $P/scripts/mcts.js mma ashi '{
+       "description": "进化变异: [类型] on [步骤], 自由能[旧→新]",
+       "tags": ["evolution","mutation","<变异类型>"],
+       "category": "zangxiang",
+       "emotion": "xi"
+     }'
+     → 下次 deqi 能召回: "喔, weight_adjust 上次让自由能降了0.2, 这次可以再试"
    - 自增 generation
-④ 如果 free_energy <= 0.4:
+   - 保存 pipeline-meta.json
+
+⑤ 如果 free_energy <= 0.4:
    - 仅更新步骤的 pass_count
    - 不需要变异
-⑤ 保存 pipeline-meta.json
+
+⑥ 如果没有变异但 free_energy 比上次低:
+   - 写入MMA正向标签: "当前配置有效"
+   - 标记为 CONFIRMED 状态 → 未来更多使用
 ```
 
-**自进化的方向**不是预设的——它由自由能驱动。每次变异都是"降低预测误差"这个方向的尝试。如果某次变异后续让自由能下降了，那个变异就是"适应"的。
+**记忆引擎的角色**: MMA不是旁观者。每次变异的结果都被写入MMA，下次 deqi 能被召回。久而久之，MMA积累了"什么变异在什么条件下有效"的经验——这跟人脑的"经验指导行为"是一样的机制。
 
 这对应了三个理论支柱:
 - 自由能原理: 自由能 > 阈值 → 必须改变架构
