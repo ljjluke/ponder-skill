@@ -193,6 +193,7 @@ function main() {
                 if (data.tags && data.description && !data.behavior) {
                     // 存知识 (ashi)
                     result = ashiInsert(kg, data);
+                    saveMMA(kg);
                 } else if (data.behavior) {
                     // 记习惯 (profile observe)
                     const up = require('./mma/user_profile');
