@@ -10,123 +10,123 @@ license: MIT
 
 # MCTS-TD Thinking Framework
 
-> **`/luke:ponder` = Step 1(你来做) → Pipeline(Workflow强制) → 呈现结果**
-> Steps 2-5 由 workflow 脚本强制执行，LLM 无法跳过。
+> **`/luke:ponder` = Step 1 (you do, interactive) → Pipeline (Workflow-enforced) → Present results**
+> Steps 2-5 are enforced by the workflow script — LLM cannot skip them.
 
-## ⚙️ 架构
+## ⚙️ Architecture
 
-5步中Step 1是交互式的（你需要向用户提问），Steps 2-5由`scripts/ponder-pipeline.wf.js`以子Agent管道形式强制执行。
+Step 1 is interactive (you ask the user). Steps 2-5 are executed by `scripts/ponder-pipeline.wf.js` as a sub-agent pipeline.
 
-**管道强制机制**：
-- 每步由一个独立子Agent执行，通过 JSON Schema 约束输出格式
-- 前一步输出未完成→后一步不会启动（代码控制，不是prompt")
-- 子Agent不能跳过、不能合并、不能取巧
-
----
-
-## 流程
-
-### Step 1: 需求发散（你做）
-
-**入口**：用户原始请求
-**核心原则**：用户说的是"想要什么"，但你得找到他"真正需要什么"。开局发散不充分，后面的分析全是白搭。
-
-#### 1a. 自我审查 — 你在哪些方面已经下了判断？
-
-在看到用户请求的第一时间，先停下。你的大脑已经在自动归类了：这是技术问题/投资问题/职业选择...但那个分类本身可能就是错的。
-
-```
-① 我对这个请求的第一反应是什么？
-   → 写出来。然后问自己：如果用户说的是反话呢？
-   
-② 我对这个领域有什么默认假设？
-   → 例：用户说"分析A股" → 你假设他是投资者？
-     也许他是研究者、监管者、或者正在写报告？
-   
-③ 我有没有"这个问题的答案大概是X"的预判？
-   → 有这个预判很正常。但要标注它，然后在访谈中故意求证反面。
-
-④ 如果我所有的第一反应都是错的，那真实情况可能是什么？
-   → 至少列出3个反方向假设
-```
-
-这一步是在你脑中完成的。不需要输出给用户看。但你必须做过它。
-
-#### 1b. 深度访谈 — 不光问"什么"，还要问"为什么"
-
-向用户提问，逐步深入。不是3个固定问题，而是一个螺旋深入的对话。
-
-**第一层：对齐表面需求**
-```
-"你说的是[复述]，是这样吗？还有什么补充？"
-"你之前试过什么方法？"
-```
-
-**第二层：深挖动机和场景**
-```
-"你为什么现在关注这个？之前发生了什么触发点？"
-"你希望[分析]之后做什么？" ← 关键！用户的下一步动作决定了分析的用途
-"如果你已经有了答案，它大概长什么样？" ← 让用户描述他心中的"答案画像"
-```
-
-**第三层：挑战和约束**
-```
-问2-3个约束性问题（用 AskUserQuestion 选项式提问），专门挑战用户的默认假设。
-例如：
-- "你说要分析A股——你关注的是大盘方向、板块轮动还是个股？"
-- "你是个人投资者还是机构角色？这会影响表达的颗粒度"
-- "分析完你打算怎么做？会影响什么决策？"
-```
-
-⛔ 不要接受用户的第一层回答就停止。"我想分析A股"下面可能藏着"我想知道现在该不该买"的决策需求。继续往下挖。
-
-#### 1c. 整理画像
-
-输出五维需求画像。每一步都标注你有多确定、以及你的假设是什么。
-
-```
-天(Timing)= ?/10 — 时机、节奏、决策窗口    [确定度: 高/中/低]
-地(Resources)= ?/10 — 可用条件、限制       [确定度: 高/中/低]
-人(People)= ?/10 — 角色、立场、利益相关方  [确定度: 高/中/低]
-法(Rules)= ?/10 — 规则、边界、禁止        [确定度: 高/中/低]
-物(Essence)= ?/10 — 核心目标、成功标准     [确定度: 高/中/低]
-
-假设清单:
-- [假设A] 来自[什么线索] → 待验证/已验证
-- [假设B] 来自[什么线索] → 待验证/已验证
-
-待追问: [Step1c中未澄清的事项]
-```
-
-#### 1d. 记忆召回 + 知识采集 — 启动管道前加载历史经验
-
-在进入自动化管道之前，先查询MMA记忆系统，找到与当前问题相关的历史分析经验。
-
-从 SessionStart 日志 `[MCTS-TD] Plugin:` 获取插件路径 `$P`。
-
-执行记忆召回:
-```
-node $P/scripts/mcts.js mma deqi '{"tags":["<与用户请求相关的关键词>"],"limit":5}'
-```
-
-**如果召回返回结果 > 0**: 将历史经验融入Step 1画像，标注哪些结论有历史支撑。如有匹配度 > 0.7的案例，在管道参数中标注。
-
-**如果召回返回结果 = 0**: **绝对不能自己编造记忆**。使用 WebSearch 搜索与用户问题相关的真实资料/数据。这是新知识的合法来源。将搜到的资料摘要并入 Step 1 画像。
-
-管道内各步骤也遵循同样规则: 先查记忆 → 无结果则搜真实数据 → 不能自己编造。
-
-⛔ 用户未回答第三层约束问题→画像不完整→不能进入Pipeline。
-
-⛔ 至少要有1个"待验证"的假设。如果你没有任何不确定的判断→审查不够深入。
+**Pipeline enforcement:**
+- Each step runs as an independent sub-agent, output constrained by JSON Schema
+- Previous step must complete before next starts (code control, not prompt)
+- Sub-agents cannot skip, merge, or shortcut steps
 
 ---
 
-### Step 2-5: 启动强制管道 + 自进化
+## Flow
 
-Step 1 完成后，读取当前元配置并启动管道。
+### Step 1: Requirements Divergence (You do this)
+
+**Entry**: Raw user request
+**Core principle**: The user says what they "want" — you need to find what they "actually need." Insufficient divergence at the start makes everything downstream useless.
+
+#### 1a. Self-Examination — Where have you already judged?
+
+When you first see the request, pause. Your brain has already auto-categorized it: tech problem / investment question / career choice... but that category itself might be wrong.
 
 ```
-# 读取元配置（若没有则用默认）
+① What is my first reaction to this request?
+   → Write it down. Then ask: what if the user means the opposite?
+
+② What default assumptions do I hold about this domain?
+   → E.g.: user says "analyze A股" → you assume they're an investor?
+     Maybe they're a researcher, a regulator, or writing a report?
+
+③ Do I have a preconception of "the answer is probably X"?
+   → Having it is normal. Label it. Then deliberately seek disconfirming evidence.
+
+④ If ALL my first reactions are wrong, what might the truth be?
+   → List at least 3 counter-hypotheses
+```
+
+This step happens in your head. No need to output it. But you MUST do it.
+
+#### 1b. Deep Interview — Don't just ask "what", ask "why"
+
+Question the user in a spiral — three layers of depth.
+
+**Layer 1: Align surface needs**
+```
+"You said [paraphrase], correct? Anything to add?"
+"What have you tried before?"
+```
+
+**Layer 2: Dig motivation and context**
+```
+"Why are you focused on this now? What triggered this?"
+"What will you DO after this analysis?" ← Critical! The user's next action determines the analysis purpose
+"If you already had the answer, what would it look like?" ← Let the user describe their "answer image"
+```
+
+**Layer 3: Challenge constraints**
+```
+Ask 2-3 constraint questions (use AskUserQuestion with options) that specifically challenge the user's default assumptions.
+Examples:
+- "You said analyze A股 — are you looking at index direction, sector rotation, or individual stocks?"
+- "Are you a retail investor or institutional? This affects granularity."
+- "After the analysis, what decision will it inform?"
+```
+
+⛔ Do NOT accept the first layer of answers and stop. "I want to analyze A股" may hide "I want to know if I should buy now." Keep digging.
+
+#### 1c. Profile Synthesis
+
+Output a five-dimension (五診/Wuzhen) requirement profile. Each dimension must include a confidence rating and your assumptions.
+
+```
+天(Tian/Timing)= ?/10 — timing, rhythm, decision window    [Confidence: High/Med/Low]
+地(Di/Resources)= ?/10 — available conditions, constraints   [Confidence: High/Med/Low]
+人(Ren/People)= ?/10 — role, stake, stakeholders            [Confidence: High/Med/Low]
+法(Fa/Rules)= ?/10 — rules, boundaries, prohibitions        [Confidence: High/Med/Low]
+物(Wu/Essence)= ?/10 — core goal, success criteria          [Confidence: High/Med/Low]
+
+Assumptions list:
+- [Assumption A] from [what clue] → pending/verified
+- [Assumption B] from [what clue] → pending/verified
+
+Pending questions: [items not yet clarified in Step 1c]
+```
+
+#### 1d. Memory Recall + Knowledge Acquisition — Load historical experience before pipeline
+
+Before entering the automated pipeline, query the MMA memory system for past analysis relevant to the current problem.
+
+Get the plugin path from SessionStart log `[MCTS-TD] Plugin:`.
+
+Run memory recall:
+```
+node $P/scripts/mcts.js mma deqi '{"tags":["<keywords related to request>"],"limit":5}'
+```
+
+**If recall returns > 0 results**: Integrate historical experience into Step 1 profile. Note which conclusions have historical support. If any case matches > 0.7, flag it in pipeline args.
+
+**If recall returns 0 results**: **NEVER fabricate false memories.** Use WebSearch to find real data/information relevant to the user's question. This is the only legitimate source of new knowledge. Merge search results into Step 1 profile.
+
+All pipeline steps follow the same rule: recall memory first → if nothing, search real data → never fabricate.
+
+⛔ User must answer Layer 3 constraint questions → incomplete profile → cannot proceed to Pipeline.
+
+⛔ At least 1 "pending" assumption required. If you have zero uncertainty → you didn't examine deeply enough.
+
+---
+
+### Steps 2-5: Launch Forced Pipeline + Self-Evolution
+
+After Step 1 completes, read the meta config and launch the pipeline:
+
+```
+// Read meta config (from data dir — persists across plugin updates)
 const metaConfig = JSON.parse(
   require('fs').readFileSync(
     require('path').join(require('os').homedir(),
@@ -136,97 +136,97 @@ const metaConfig = JSON.parse(
 )
 
 Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
-  user_request: '<用户原始请求>',
-  step1: '<Step1画像输出>',
-  plugin_path: '<从[MCTS-TD] Plugin:获取的路径>',
-  memory_context: '<deqi召回的结果摘要>',
-  meta_config: metaConfig  // ← 传入元配置，管道按此配置执行
+  user_request: '<raw user request>',
+  step1: '<Step 1 profile output>',
+  plugin_path: '<path from [MCTS-TD] Plugin: log>',
+  memory_context: '<deqi recall summary>',
+  meta_config: metaConfig  // meta config — pipeline executes according to this
 }})
 ```
 
-### Step 6: 自进化评估（含MMA进化记忆）
+### Step 6: Self-Evolution Assessment (with MMA evolutionary memory)
 
-Workflow 返回后，做**两件事**：呈现结果给用户 + 评估架构自由能。
+After Workflow returns, do TWO things: present results + evaluate free energy.
 
 ```
-① 读取 free_energy 和 evolution_suggestions
+① Read free_energy and evolution_suggestions
 
-② 查询MMA历史进化经验（deqi）:
-   $P = <[MCTS-TD] Plugin:路径>
+② Query MMA evolutionary history (deqi):
+   $P = <[MCTS-TD] Plugin: path>
    node $P/scripts/mcts.js mma deqi '{"tags":["evolution","mutation"],"limit":5}'
-   → 找出历史上类似变异的效果:
-     - 哪些变异类型使自由能降低? → 优先选择
-     - 哪些变异类型使自由能升高? → 避免或替换
+   → Find historically effective mutations:
+     - Which mutation types reduced free energy? → Prioritize
+     - Which mutation types increased free energy? → Avoid or replace
 
-③ 读取 pipeline-meta.json 中当前各步骤的适应度
+③ Read pipeline-meta.json for current step fitness values
 
-④ 如果 free_energy > 0.4（阈值）:
-   - 基于历史经验选择变异类型（跳过历史上失败的类型）
-   - 更新 pipeline-meta.json 中对应步骤的 fail_count
-   - 执行变异（修改 pipeline-meta.json）
-   - 将变异记录写入 mutation_history
-   - 写入MMA知识:
+④ If free_energy > 0.4 (threshold):
+   - Choose mutation type based on historical success (skip historically failed types)
+   - Update pipeline-meta.json fail_count for affected steps
+   - Execute mutation (modify pipeline-meta.json)
+   - Write mutation record to mutation_history
+   - Write to MMA knowledge:
      node $P/scripts/mcts.js mma ashi '{
-       "description": "进化变异: [类型] on [步骤], 自由能[旧→新]",
-       "tags": ["evolution","mutation","<变异类型>"],
+       "description": "Evolution mutation: [type] on [step], free_energy [old→new]",
+       "tags": ["evolution","mutation","<mutation_type>"],
        "category": "zangxiang",
        "emotion": "xi"
      }'
-     → 下次 deqi 能召回: "喔, weight_adjust 上次让自由能降了0.2, 这次可以再试"
-   - 自增 generation
-   - 保存 pipeline-meta.json
+     → Next deqi will recall: "Last weight_adjust reduced free energy by 0.2, worth retrying"
+   - Increment generation
+   - Save pipeline-meta.json
 
-⑤ 如果 free_energy <= 0.4:
-   - 仅更新步骤的 pass_count
-   - 不需要变异
+⑤ If free_energy <= 0.4:
+   - Only update step pass_count
+   - No mutation needed
 
-⑥ 如果没有变异但 free_energy 比上次低:
-   - 写入MMA正向标签: "当前配置有效"
-   - 标记为 CONFIRMED 状态 → 未来更多使用
+⑥ If no mutation but free_energy is lower than last time:
+   - Write positive MMA tag: "current config effective"
+   - Mark as CONFIRMED → more likely to be reused
 ```
 
-**记忆引擎的角色**: MMA不是旁观者。每次变异的结果都被写入MMA，下次 deqi 能被召回。久而久之，MMA积累了"什么变异在什么条件下有效"的经验——这跟人脑的"经验指导行为"是一样的机制。
+**The memory engine's role**: MMA is not a bystander. Every mutation result is stored in MMA and retrievable by next deqi. Over time, MMA accumulates "which mutations work under which conditions" — same mechanism as the brain's "experience guides behavior."
 
-这对应了三个理论支柱:
-- 自由能原理: 自由能 > 阈值 → 必须改变架构
-- HyperNEAT拓扑进化: weight_adjust / structural_change / parallelize 都是拓扑变异
-- 易经: 自由能 = "变易"的驱动信号,"最小化自由能" = "不易"的元规则
+This maps to three theoretical pillars:
+- Free Energy Principle: free_energy > threshold → must change architecture
+- HyperNEAT topology evolution: weight_adjust / structural_change / parallelize are all topology mutations
+- Yijing (易经/I Ching): free_energy = "change" (变易) signal, "minimize free energy" = "unchanging" (不易) meta-rule
 
-管道内部结构：
-- `phase('6尺度发散')` — 子Agent执行6视角发散，受 STEP2_SCHEMA 约束（6视角 × 每视角20+40字）
-- `phase('八卦镜8维')` — 子Agent执行8维度检查，受 STEP3_SCHEMA 约束（8维 × 每维30字 + 3组冲突）
-- `phase('多场景推演')` — 子Agent执行3场景推演，受 STEP4_SCHEMA 约束（2方向 × 3场景）
-- `phase('收敛自检')` — 子Agent执行自检5问，受 STEP5_SCHEMA 约束（5问全部通过才 all_clear=true）
+**Pipeline structure:**
+- `phase('6-scale divergence')` — sub-agent executes 6-perspective divergence, constrained by STEP2_SCHEMA (6 perspectives × 20+40 chars each)
+- `phase('Bagua Mirror 8-dimension')` — sub-agent executes 8-dimension check, constrained by STEP3_SCHEMA (8 dims × 30+ chars + 3 conflict pairs)
+- `phase('multi-scenario simulation')` — sub-agent executes 3-scenario simulation, constrained by STEP4_SCHEMA (2 directions × 3 scenarios)
+- `phase('convergence self-check')` — sub-agent executes 5-question self-check, constrained by STEP5_SCHEMA (all 5 passed → all_clear=true)
 
-**你不能手动执行 Steps 2-5**。必须通过 Workflow 工具启动管道。管道会返回结构化结果。
+**You CANNOT manually execute Steps 2-5.** Must launch via Workflow tool. Pipeline returns structured results.
 
 ---
 
-### 呈现结果
+### Presenting Results
 
-Workflow 返回后，将结构化结果转换为用户可理解的语言：
+After Workflow returns, convert structured results to user-comprehensible language:
 
 ```
 ╔═══════════════════════════════════════════╗
-║  分析完成                                 ║
+║  Analysis Complete                        ║
 ╚═══════════════════════════════════════════╝
 
-[结论] — 用日常语言输出，不出现框架术语
-推理链: [从发散→检查→推演到结论的简要过程]
-如果判断错了: [反向假设]
+[Conclusion] — everyday language, no framework jargon
+Reasoning chain: [from divergence → examination → simulation → conclusion]
+If wrong: [counter-hypothesis]
 
-自检结果: [全部通过/有风险(说明)]
+Self-check: [all passed / issues found (details)]
 ```
 
 ---
 
 ## FORBIDDEN
 
-- 跳过 Step 1 直接启动 Pipeline（没有用户访谈就做分析是无效的）
-- 手动执行 Steps 2-5（必须通过 Workflow，不能自己假装做完了）
-- 输出框架术语（MCTS/Schema/Agent/UCB 等）
-- 运行 shell 命令
-- 在用户未回答约束前进入下一步
+- Skipping Step 1 and launching Pipeline directly (analysis without user interview is invalid)
+- Manually executing Steps 2-5 (must use Workflow, cannot pretend to complete them)
+- Outputting framework jargon (MCTS/Schema/Agent/UCB etc.)
+- Running shell commands visible to user
+- Proceeding to next step before user answers constraint questions
 
 ---
 
