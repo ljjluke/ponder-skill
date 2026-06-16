@@ -37,13 +37,12 @@ license: MIT
 
 **本末(Ben-Mo)**: identify root dimension | **有无(You-Wu)**: detect absent constraints | **张力(Tension)**: scan gaps
 
-**Store user behavior observations** (during interaction, record to profile, NOT knowledge base):
-- User interrupts verbose output → `node scripts/mcts.js profile observe default --behavior interrupts_verbose`
-- User asks about risks repeatedly → `node scripts/mcts.js profile observe default --behavior asks_about_risks`
-- User corrects assumptions → `node scripts/mcts.js profile observe default --behavior corrects_assumptions`
-- User wants deep analysis → `node scripts/mcts.js profile observe default --behavior prefers_deep_analysis`
-- User wants concise → `node scripts/mcts.js profile observe default --behavior prefers_short_output`
-- Observations only affect NEXT output format, NEVER current analysis content
+**Throughout interaction, call profile observe when user shows a pattern** (≥3 same behavior triggers auto-adjustment):
+```bash
+node scripts/mcts.js profile observe default --behavior <prefers_short_output|prefers_deep_analysis|corrects_assumptions|asks_about_risks|interrupts_verbose>
+```
+- Observations only affect NEXT output format, NEVER current analysis content.
+- At end: `node scripts/mcts.js profile infer default --signals '<json>'` to update personality type.
 
 ---
 
