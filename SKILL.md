@@ -98,6 +98,19 @@ license: MIT
 待追问: [Step1c中未澄清的事项]
 ```
 
+#### 1d. 记忆召回 — 在启动管道前加载历史经验
+
+在进入自动化管道之前，先查询MMA记忆系统，找到与当前问题相关的历史分析经验。
+
+从 SessionStart 日志 `[MCTS-TD] Plugin:` 获取插件路径 `$P`。
+
+执行记忆召回:
+```
+node $P/scripts/mcts.js mma deqi '{"tags":["<与用户请求相关的关键词>"],"limit":5}'
+```
+
+将召回结果中的洞见并入Step 1的画像中。如果有与当前问题高度匹配的历史案例（匹配度 > 0.7），在管道参数中标注。
+
 ⛔ 用户未回答第三层约束问题→画像不完整→不能进入Pipeline。
 
 ⛔ 至少要有1个"待验证"的假设。如果你没有任何不确定的判断→审查不够深入。
@@ -106,12 +119,14 @@ license: MIT
 
 ### Step 2-5: 启动强制管道
 
-Step 1 完成后，用 Workflow 工具启动管道：
+Step 1 完成后，用 Workflow 工具启动管道。**必须传入插件路径和记忆上下文**——管道内各步骤需要它们来参与记忆系统。
 
 ```
 Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
   user_request: '<用户原始请求>',
-  step1: '<Step1画像输出>'
+  step1: '<Step1画像输出>',
+  plugin_path: '<从[MCTS-TD] Plugin:获取的路径>',
+  memory_context: '<deqi召回的结果摘要>'
 }})
 ```
 

@@ -18,12 +18,15 @@ export const meta = {
 //  Schema定义 — JSON Schema为强制约束，子Agent不可跳过
 // ═══════════════════════════════════════════════════════════════
 
+const MEMORY_TAG = { type: 'string', description: '用于mma deqi召回的标签' }
+
 const PERSPECTIVE = {
   type: 'object', properties: {
     name: { type: 'string' },
     insight: { type: 'string', minLength: 20 },
     detail: { type: 'string', minLength: 40 },
     conflict_with: { type: 'array', items: { type: 'string' } },
+    _memory_tag: MEMORY_TAG,
   }, required: ['name', 'insight', 'detail']
 }
 
@@ -41,6 +44,7 @@ const DIMENSION = {
     score: { type: 'number', minimum: 0, maximum: 10 },
     analysis: { type: 'string', minLength: 30 },
     cross_ref: { type: 'string' },
+    _memory_tag: MEMORY_TAG,
   }, required: ['name', 'score', 'analysis', 'cross_ref']
 }
 
@@ -119,9 +123,16 @@ const VERIFY_SCHEMA = {
 
 const userRequest = args?.user_request || '(未提供)'
 const step1Result = args?.step1 || '(无Step1输入)'
+const pluginPath = args?.plugin_path || ''
+const memoryContext = args?.memory_context || '(无历史记忆上下文)'
+
+const memoryRecallNote = pluginPath
+  ? `【记忆参与说明】\n在开始分析前，运行以下命令召回历史相关经验:\n  node ${pluginPath}/scripts/mcts.js mma deqi '{"tags":["<分析相关关键词>"],"limit":3}'\n将召回结果作为本步骤分析的参考输入。\n完成分析后，在你的输出中标记最有记忆价值的洞见（_memory_tag字段）。\n当前已有记忆上下文: ${memoryContext}\n`
+  : ''
 
 log('用户请求: ' + userRequest)
-log('Step1输入: ' + (typeof step1Result === 'string' ? step1Result.substring(0, 200) : JSON.stringify(step1Result).substring(0, 200)))
+log('记忆上下文: ' + (memoryContext ? '有' : '无'))
+log('插件路径: ' + (pluginPath || '未提供'))
 
 const MAX_LOOPS = 2
 let loopCount = 0
@@ -143,6 +154,7 @@ do {
 
   const step2 = await agent(`你是MCTS-TD框架的"发散师"。你的任务是执行6尺度发散分析。
 
+${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
 输入（来自Step1需求发散）:
 ${JSON.stringify(step1Result, null, 2)}
@@ -179,6 +191,7 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
 
   const step3 = await agent(`你是MCTS-TD框架的"检查师"。你的任务是执行八卦镜8维交叉检查。
 
+${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
 输入（来自Step2发散结果）:
 ${JSON.stringify(step2, null, 2)}
@@ -218,6 +231,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 
   const step4 = await agent(`你是MCTS-TD框架的"推演师"。你的任务是执行多场景推演。
 
+${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
 输入（来自Step3八卦镜结果）:
 ${JSON.stringify(step3, null, 2)}
@@ -248,6 +262,7 @@ ${JSON.stringify(step3, null, 2)}
 
   const step5 = await agent(`你是MCTS-TD框架的"收敛师"。你的任务是执行收敛判断和自检。
 
+${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
 输入（来自Step4推演结果）:
 ${JSON.stringify(step4, null, 2)}
@@ -385,6 +400,12 @@ return {
   step4: {
     direction_count: step4.directions.length,
     recommendation: step4.recommendation,
+  },
+  memory_tags: {
+    step2: step2.perspectives.filter(p => p._memory_tag).map(p => p._memory_tag),
+    step3: step3.dimensions.filter(d => d._memory_tag).map(d => d._memory_tag),
+    step4: step4.directions.filter(d => d._memory_tag).map(d => d._memory_tag),
+    insight_count: [...(step2.perspectives.filter(p => p._memory_tag)), ...(step3.dimensions.filter(d => d._memory_tag))].length,
   },
   step5: {
     conclusion: step5.conclusion,
