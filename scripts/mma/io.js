@@ -293,7 +293,8 @@ function saveMMA(kg) {
     }
     for (const key of Object.keys(EIGHT_EXTRA_MERIDIANS)) {
         const shardKey = '_extra_' + key;
-        if (dirtySet && !dirtySet.has(shardKey)) continue;
+        // 兼容: markDirty 可能用原始key('dai')或shardKey('_extra_dai')
+        if (dirtySet && !dirtySet.has(shardKey) && !dirtySet.has(key)) continue;
         const m = kg.extra[key];
         if (m && m.points) {
             const shardData = { points: m.points, _version: latestVersion, _pid: process.pid };
