@@ -53,7 +53,8 @@ const ENGINES = {
         desc: 'MMA经络记忆引擎 — 得气/阿是穴/补泻/子午流注/四象/八纲辨证/衰减/回放/集群',
         commands: ['deqi','ashi','reinforce','ziwu','status','four-images','diagnose',
                    'decay','replay','session-end','cluster','observe','load',
-                   'audit','interact','capture-divergence'],
+                   'audit','interact','capture-divergence',
+                   'remember','recall','finalize'],
     },
     lang: {
         script: 'language_guard.js',
@@ -65,7 +66,7 @@ const ENGINES = {
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
         commands: ['review-map','portrait','recon-report','info-gap','mcts-round',
                    'mcts-final','self-check','decision-report','solution-list',
-                   'constraint-list','dong-template','stream-flow',
+                   'constraint-list','dong-template','stream-flow','all-rules',
                    'interview-script','forbidden-check','translate-guide'],
     },
     profile: {

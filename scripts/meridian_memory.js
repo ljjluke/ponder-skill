@@ -184,6 +184,71 @@ function main() {
                 output({ stored: stored.length, points: stored });
                 break;
             }
+            // ─── Smart Commands (auto-layer, original commands preserved) ───
+            case "remember": {
+                // 自动判断场景: 存知识/记习惯/存洞察/收尾
+                const data = JSON.parse(args[1] || "{}");
+                const kg = loadMMA();
+                let result = {};
+                if (data.tags && data.description && !data.behavior) {
+                    // 存知识 (ashi)
+                    result = ashiInsert(kg, data);
+                } else if (data.behavior) {
+                    // 记习惯 (profile observe)
+                    const up = require('./mma/user_profile');
+                    const profile = up.loadProfile('default');
+                    const r = up.observeBehavior(profile, data.behavior);
+                    up.saveProfile(profile);
+                    result = r;
+                } else if (data.phase && data.description) {
+                    // 存发散洞察 (capture-divergence)
+                    const entries = Array.isArray(data) ? data : [data];
+                    const stored = [];
+                    for (const ins of entries) {
+                        if (!ins.description) continue;
+                        const entry = { description: ins.description, tags: ins.tags || ['divergence', ins.phase], category: 'tools_and_means', emotion: ins.emotion || 'neutral', source: ins.source || 'divergence_insight', q: ins.q || 0.6, memory_type: 'semantic' };
+                        const r2 = ashiInsert(kg, entry);
+                        if (r2 && !r2.rejected) stored.push({ id: r2.point?.id, desc: ins.description.substring(0, 40) });
+                    }
+                    if (stored.length > 0) { clusterDetect(kg); saveMMA(kg); }
+                    result = { stored: stored.length, points: stored };
+                }
+                output(result);
+                break;
+            }
+            case "recall": {
+                // 智能召回: 上下文+情绪+经脉一次搞定
+                const query = JSON.parse(args[1] || "{}");
+                const ctx = JSON.parse(args[2] || "{}");
+                const kg = loadMMA();
+                if (ctx.task_type || ctx.domain || ctx.emotion) query.context = ctx;
+                const results = deqi(kg, query, ctx);
+                const top = results.slice(0, query.limit || 5);
+                const insights = top.map(r => ({
+                    id: r.point.id, description: r.point.description?.substring(0, 80), score: Math.round(r.deqi_score * 100) / 100, source: r.source, context_match: r.context_match || false, emotion_match: r.emotion_match || false, meridian: r.meridian_name, tags: r.point.tags,
+                }));
+                output({ count: insights.length, results: insights });
+                break;
+            }
+            case "finalize": {
+                // 一键收尾: session-end + profile infer + MMA save
+                const session = JSON.parse(args[1] || "{}");
+                const kg = loadMMA();
+                const sessionResult = sessionEnd(kg, session.points || [], session.emotions || []);
+                const up = require('./mma/user_profile');
+                const profile = up.loadProfile('default');
+                if (session.points?.length > 0) { up.logInteraction(profile, 'session', `Processed ${session.points.length} points`); }
+                // 自动推断人格
+                if (Object.values(profile.observations || {}).some(v => v >= 2)) {
+                    try { up.inferWuxingType(profile, JSON.parse(session.signals || "{}") || {}); } catch(e) {}
+                }
+                up.saveProfile(profile);
+                clusterDetect(kg);
+                saveMMA(kg);
+                const pInfo = up.getFormatAdjustments(profile);
+                output({ session: { replayed: sessionResult.replayed, cycles: sessionResult.cycles }, profile: { style: profile.preferences.output_style, type: profile.personality.wuxing_type }, adjustments: pInfo.adjustments || pInfo });
+                break;
+            }
             case "observe": {
                 // Unified observe command for Memory Agent checkpoints
                 const phase = args[args.indexOf('--phase') + 1] || null;

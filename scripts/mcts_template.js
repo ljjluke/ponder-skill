@@ -166,6 +166,51 @@ function antiGuessRules() { return `
   ❓ speculative = 无证据, 不能用于决策
 `.trim(); }
 
+function interviewScript() { return `
+三步用户访谈 (MANDATORY before any analysis):
+  ① PARAPHRASE: "你说的是[复述用户需求], 对吗? 还有什么要补充吗?"
+  ② PROBE: "你之前试过什么方案? 考虑过哪些方向?"
+  ③ CONSTRAIN: AskUserQuestion 问2-3个关键约束(带选项)
+  用户回答完才打分, 不回答不推进
+`.trim(); }
+
+function forbiddenCheck() { return `
+禁止:
+  - 跳过任何步骤 (即使任务简单)
+  - 跳过心斋 (不做假设暴露的发散是假发散)
+  - 六视表面功夫 (必须真的成为那个视角)
+  - 八卦镜敷衍 (每卦需体用+子镜+文化类比+六视交叉)
+  - 不读engine文件就执行 (MUST LOAD)
+  - MCTS只出最终数字 (内部跑完整, 用户看叙事)
+  - 发散阶段限制方案数量 (收敛后才筛选)
+  - 输出文化术语不翻译 (概念→领域语言)
+  - 合并步骤 (后台独立执行)
+有疑问: node scripts/mcts_guard.js all-guards
+`.trim(); }
+
+function translateGuide() { return `
+概念翻译规则:
+  内部用文化术语思考, 输出必须翻译为用户领域语言
+  心斋→假设暴露 | 逍遥游→自由漫游 | 齐物→等视视角
+  梦蝶→前提翻转 | 八卦镜→多视角审视
+  完整翻译表: engine/mcts-diverge.md
+  如果翻译会丢失核心含义 → 保留原名+解释
+`.trim(); }
+
+function streamFlow() { return `
+流式输出时序:
+  活化横幅 → 立即输出
+  发散引擎 → 关键发现立即输出
+  推演引擎 → 方案对比完成即出
+  收敛引擎 → 最终推荐
+  用户每步都看到进展, 不等全跑完
+`.trim(); }
+
+function allRules() { return [
+  outputSpec(), antiGuessRules(), interviewScript(),
+  forbiddenCheck(), translateGuide(), streamFlow()
+].join('\n---\n'); }
+
 // ===== CLI =====
 function main() {
     const args = process.argv.slice(2);
@@ -192,6 +237,8 @@ function main() {
             case "interview-script": md = interviewScript(); break;
             case "forbidden-check": md = forbiddenCheck(); break;
             case "translate-guide": md = translateGuide(); break;
+            case "stream-flow": md = streamFlow(); break;
+            case "all-rules": md = allRules(); break;
             default:
                 log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n  interview-script 3-step user interview template\n  forbidden-check  Forbidden rules checklist\n  translate-guide  Concept translation guide\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
                 process.exit(0);
