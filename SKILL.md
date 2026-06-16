@@ -73,26 +73,28 @@ license: MIT
 
 ---
 
-### Step 4: 推演 (MCTS — 独立子Agent模拟)
+### Step 4: 推演 (MCTS — 多轮独立子Agent模拟)
 
-**⛔ 每个方案必须由独立的子 Agent 推演。不允许 LLM 自己在脑子里比较。不允许交叉污染。**
+**⛔ 每个方案必须由≥3次独立子Agent模拟。单次模拟不可信, 取分布才可信。不允许交叉污染。**
 
 流程:
 
 ```
-① 列出 ≥2 个方案, 每个方案写入 MCTS 真实树:
+① 列出 ≥2 个方案, 写入 MCTS 树:
    node scripts/mcts.js tree init --solutions '<json>'
    
-② 对每个方案, 通过子 Agent 独立模拟:
-   Agent(mcts-simulator) with prompt:
-   "Solution: [方案名] | Description: [方案] | Assumptions: [约束]"
-   → 得到 V, σ², 步骤预测, 关键风险
+② 每个方案跑 N 次独立模拟 (N ≥ 3):
+   Agent(mcts-simulator) — "Solution A, 第1次"
+   Agent(mcts-simulator) — "Solution A, 第2次"
+   Agent(mcts-simulator) — "Solution A, 第3次"
+   (每次模拟不知道其他次的存在)
+   
+③ 汇总每次模拟的 V 和 σ²:
+   方案A: V=[0.72, 0.68, 0.75] σ²=[0.25, 0.30, 0.22]
+   方案B: V=[0.55, 0.60, 0.52] σ²=[0.35, 0.30, 0.40]
+   → 均值 V 和 σ² 写入 MCTS 树
 
-③ 将模拟结果写入 MCTS 树:
-   node scripts/mcts.js tree simulate <leaf-id> --v <V> --sigma2 <σ²>
-   node scripts/mcts.js tree backprop <leaf-id>
-
-④ 所有方案模拟完成后, 对比结果输出推荐
+④ 对比结果输出推荐: 哪个方案均值 V 高且 σ² 低
 ```
 
 输出: 方案对比 + 推荐 + 风险(如有)。
