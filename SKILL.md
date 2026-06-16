@@ -12,6 +12,8 @@ license: MIT
 # MCTS-TD Thinking Framework
 
 > **`alwaysApply: true` only ensures the skill is enabled. It ONLY responds to `/luke:ponder` — never auto-triggers.**
+> 
+> **⚠️ 重要: `/luke:ponder` 触发后必须走完整流程。不允许跳过任何步骤。不允许判断"不需要"。需求拆解 + 发散后必然能走完全流程。**
 
 ---
 
@@ -39,18 +41,11 @@ license: MIT
 
 **⛔ 三引擎: 发散(八面审视) → 推演(MCTS树搜索) → 收敛(综合判断)**
 
-### Phase A: Fast Path Check (System 1)
+**`/luke:ponder` = 全流程，无跳过。没有"这个需求太简单不需要"。**
 
-Before any analysis, check memory for a direct match. If high-confidence past solution exists, output it directly and skip to session end.
+三引擎全量执行，发散→推演→收敛，一步不能少。
 
-```bash
-# Check fast path
-node scripts/mcts.js compute fast-path-check --query '<json>' --memories '<deqi_results>'
-```
-
-### Phase B: Generate Prediction (System 2)
-
-If no fast-path match, generate an initial prediction about the user's domain.
+### Phase A: 需求拆解 + 预测生成
 
 1. **Load prediction rules**: `node scripts/mcts.js template interview-script` → 3-step user interview
 2. **Generate prediction**: `node scripts/mcts.js compute predict-generate --task '<json>' --memory '<deqi_results>'`
