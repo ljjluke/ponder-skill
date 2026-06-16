@@ -40,8 +40,8 @@ When you first see the request, pause. Your brain has already auto-categorized i
    → Write it down. Then ask: what if the user means the opposite?
 
 ② What default assumptions do I hold about this domain?
-   → E.g.: user says "analyze A股" → you assume they're an investor?
-     Maybe they're a researcher, a regulator, or writing a report?
+   → E.g.: user says "analyze [this domain]" → you assume their role?
+     Maybe they're a practitioner, a decision-maker, or just curious?
 
 ③ Do I have a preconception of "the answer is probably X"?
    → Having it is normal. Label it. Then deliberately seek disconfirming evidence.
@@ -73,12 +73,12 @@ Question the user in a spiral — three layers of depth.
 ```
 Ask 2-3 constraint questions (use AskUserQuestion with options) that specifically challenge the user's default assumptions.
 Examples:
-- "You said analyze A股 — are you looking at index direction, sector rotation, or individual stocks?"
-- "Are you a retail investor or institutional? This affects granularity."
-- "After the analysis, what decision will it inform?"
+- "You said analyze [this domain] — are you looking at the big picture, specific details, or a particular angle?"
+- "Are you approaching this as a practitioner, decision-maker, or external observer? This affects granularity."
+- "After the analysis, what decision will it inform or what action will it lead to?"
 ```
 
-⛔ Do NOT accept the first layer of answers and stop. "I want to analyze A股" may hide "I want to know if I should buy now." Keep digging.
+⛔ Do NOT accept the first layer of answers and stop. "I want to analyze [this domain]" may hide a concrete decision need underneath. Keep digging.
 
 #### 1c. Profile Synthesis
 
