@@ -44,7 +44,9 @@ const ENGINES = {
                    'self-check-guard','memory-agent-guard','compliance-report',
                    'constraint-checklist','engine-mode','phase-15-guard','all-guards',
                    'phase-rules','five-diagnosis-detail','diverge-detail',
-                   'simulate-detail','converge-detail'],
+                   'simulate-detail','converge-detail',
+                   'horizon-scan-guard','simulate-layer-guard','blindspot-coverage-guard',
+                   'force-search-guard','solution-count-guard'],
     },
     mma: {
         script: 'meridian_memory.js',

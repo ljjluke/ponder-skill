@@ -163,3 +163,23 @@
 - Multi-solution independent simulation decision engine
 - Knowledge graph value function management
 - Cross-session continuous learning
+## v1.12.0 (2026-06-16)
+
+### Features
+- 流式输出: 每步完成立即输出, 不等全跑完
+- 用户画像: 习惯/性格识别, 独立于知识库 (profile命令)
+- CLS记忆架构: 模式分离/完成/多周期睡眠/突触稳态
+- 知识审计: mma audit 完整度/矛盾/过期/五行平衡
+- 五行生克: 相乘/相侮/逆生 + 跨知识 promotes/inhibits
+
+### Changes
+- MCTS真实树结构: scripts/mcts_tree.js, 持久化
+- 三步用户访谈恢复: 复述→探询→约束 (SKILL.md)
+- 反猜测规则: 所有结论必须有来源, 无来源不能用于决策
+- 核心逻辑英文化: SKILL.md中文1581→61(仅文化术语)
+- 输出规则改为亮点驱动: 展示洞察不展示流程
+
+### Cleanup
+- 删除死代码: agent_daemon.js, _en_final.js, _scan_chinese.js
+- 注册缺失guard命令: horizon-scan/simulate-layer/blindspot-coverage/force-search/solution-count
+- manage_memory.js → legacy标记, 数据路径碎片清理
