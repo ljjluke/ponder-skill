@@ -166,24 +166,24 @@
 ## v1.12.0 (2026-06-16)
 
 ### Features
-- 流式输出: 每步完成立即输出, 不等全跑完
-- 用户画像: 习惯/性格识别, 独立于知识库 (profile命令)
-- CLS记忆架构: 模式分离/完成/多周期睡眠/突触稳态
-- 知识审计: mma audit 完整度/矛盾/过期/五行平衡
-- 五行生克: 相乘/相侮/逆生 + 跨知识 promotes/inhibits
+- Streaming output: each step outputs immediately
+- User profile: habit/personality recognition, separated from knowledge base
+- CLS memory architecture: pattern separation/completion/multi-cycle sleep/synaptic homeostasis
+- Knowledge audit: mma audit completeness/contradiction/staleness/5-element balance
+- 5-element: generating/controlling/insulting + cross-knowledge promotes/inhibits
 
 ### Changes
-- MCTS真实树结构: scripts/mcts_tree.js, 持久化
-- 三步用户访谈恢复: 复述→探询→约束 (SKILL.md)
-- 反猜测规则: 所有结论必须有来源, 无来源不能用于决策
-- 核心逻辑英文化: SKILL.md中文1581→61(仅文化术语)
-- 输出规则改为亮点驱动: 展示洞察不展示流程
+- MCTS real tree: scripts/mcts_tree.js, persistent
+- 3-step user interview restored: paraphrase→probe→constrain
+- Anti-guessing: every conclusion needs a source
+- Core logic in English: SKILL.md Chinese 1581→61(cultural terms only)
+- Output: show insights, not process
 
 ### Cleanup
-- 删除死代码: agent_daemon.js, _en_final.js, _scan_chinese.js
-- 注册缺失guard命令: horizon-scan/simulate-layer/blindspot-coverage/force-search/solution-count
-- manage_memory.js → legacy标记, 数据路径碎片清理
-- 删除遗留.bak文件
+- Delete dead code: agent_daemon.js, _en_final.js, _scan_chinese.js
+- Register missing guards
+- manage_memory.js → legacy, storage path cleanup
+- Delete legacy .bak files
 
 ## v1.12.1 (2026-06-16)
 
@@ -200,9 +200,9 @@
 - 原17个细粒度命令全部保留
 
 ### Cleanup
-- 清除冲突画像数据: default.json重置为深度分析型
-- 删除测试用户文件: test.json, demo.json
-- CHANGELOG补全
+- Cleared conflicting profile: default.json reset to "deep analysis"
+- Deleted test user files: test.json, demo.json
+- CHANGELOG completed
 
 ## v1.12.2 (2026-06-16)
 
