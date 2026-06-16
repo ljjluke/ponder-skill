@@ -19,7 +19,15 @@ license: MIT
 
 1. Parse user request — extract task features (dimensions/domains/choices)
 2. Determine mode: urgent/simple → **动(Dong)** compact 3-5 rounds | important/complex → **静(Jing)** full 8-10 rounds
-3. Output activation banner:
+3. **加载用户画像** (让用户感知系统记住了TA):
+   ```bash
+   node scripts/mcts.js profile info default
+   ```
+   → 输出示例: "我记得你上次... 你喜欢简洁输出, 你经常关注风险"
+   → 只影响输出格式, 不影响发散引擎的分析内容
+4. **自动召回历史记忆**: `node scripts/mcts.js mma deqi '{"tags":["<任务关键词>"],"category":"<领域>","limit":5}'`
+   → 全局知识(跨所有用户积累的经验)注入后续分析
+5. Output activation banner:
 
 ```
 ═══════════════════════════════════════════════
@@ -29,16 +37,20 @@ license: MIT
 ═══════════════════════════════════════════════
 ```
 
-**同时自动召回历史记忆**: `node scripts/mcts.js mma deqi '{"tags":["<任务关键词>"],"category":"<领域>","limit":5}'`
-→ 得气结果注入后续分析，让过去的经验影响当前决策。
-
-**注意: 用户习惯/沟通风格独立于知识库之外**, 只影响输出格式, 不影响发散/推理引擎。
-
 Proceed to 五診(Wuzhen) portrait. **Mandatory phased flow below.**
 
 ---
 
 ## 📐 MANDATORY PHASED FLOW
+
+**交互中自动观察用户行为** → 记录到画像 (不影响知识库):
+- 用户嫌长 → `node scripts/mcts.js profile observe default --behavior interrupts_verbose`
+- 用户追问风险 → `node scripts/mcts.js profile observe default --behavior asks_about_risks`
+- 用户纠正假设 → `node scripts/mcts.js profile observe default --behavior corrects_assumptions`
+- 用户要深度分析 → `node scripts/mcts.js profile observe default --behavior prefers_deep_analysis`
+- 用户要精简 → `node scripts/mcts.js profile observe default --behavior prefers_short_output`
+
+> 观察结果只影响**下次输出格式**, 不影响当前分析内容。
 
 ### Step 0.5: 五診 Requirement Portrait
 

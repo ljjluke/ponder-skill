@@ -70,6 +70,11 @@ const ENGINES = {
                    'mcts-final','self-check','decision-report','solution-list',
                    'constraint-list','dong-template'],
     },
+    profile: {
+        script: 'mma/user_profile.js',
+        desc: '用户画像 — 习惯/性格/沟通偏好 (不混入知识库)',
+        commands: ['load','observe','infer','format-adjust','info'],
+    },
     tree: {
         script: 'mcts_tree.js',
         desc: 'MCTS真实树结构 — init/select/add-children/simulate/backprop/status/save/load',

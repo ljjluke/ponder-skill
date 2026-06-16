@@ -1,0 +1,282 @@
+/** ═══════════════════════════════════════════════════════════════
+ *  用户画像 (User Profile) — 习惯/性格/沟通偏好
+ *  "知己知彼" —《孙子兵法》
+ *
+ *  与知识库完全分离:
+ *    - 知识(MMA) = 全局共享, 跨用户跨场景
+ *    - 画像(Profile) = 每个用户独立, 只影响输出格式
+ *    - 发散引擎永不接收画像数据 → 思维不受限
+ * ═══════════════════════════════════════════════════════════════ */
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const USERS_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'mcts-td-planner', 'users');
+
+function ensureDir() { if (!fs.existsSync(USERS_DIR)) fs.mkdirSync(USERS_DIR, { recursive: true }); }
+
+function userFilePath(userId) { return path.join(USERS_DIR, userId + '.json'); }
+
+/**
+ * 默认用户画像 (冷启动)
+ */
+function defaultProfile(userId) {
+    return {
+        user_id: userId,
+        first_seen: new Date().toISOString(),
+        last_seen: new Date().toISOString(),
+        session_count: 0,
+        // 沟通偏好 (只影响输出格式)
+        preferences: {
+            output_style: 'balanced',     // concise | balanced | detailed
+            risk_appetite: 'balanced',    // conservative | balanced | aggressive
+            focus_dimensions: [],          // ['tian','di','ren','fa','wu'] 用户特别关注的维度
+            language: null,                // 自动检测
+        },
+        // 人格特征 (基于交互行为推断)
+        personality: {
+            wuxing_type: null,            // wood | fire | earth | metal | water
+            wuxing_confidence: 0,
+            observed_traits: [],           // ['prefers_宏观','prefers_细节','prefers_风险分析']
+        },
+        // 行为观察 (从交互中积累)
+        observations: {
+            prefers_short_output: 0,       // 计数器: 喜欢简短输出
+            prefers_deep_analysis: 0,      // 计数器: 喜欢深度分析
+            asks_about_risks: 0,           // 计数器: 多次问风险
+            interrupts_verbose: 0,         // 计数器: 嫌啰嗦
+            corrects_assumptions: 0,       // 计数器: 纠正假设
+        },
+        // 交互历史摘要 (最近10条)
+        recent_interactions: [],
+    };
+}
+
+/**
+ * 加载用户画像
+ */
+function loadProfile(userId) {
+    ensureDir();
+    const fp = userFilePath(userId);
+    try {
+        if (fs.existsSync(fp)) {
+            const profile = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+            profile.last_seen = new Date().toISOString();
+            return profile;
+        }
+    } catch (e) { /* corrupted → reset */ }
+    const profile = defaultProfile(userId);
+    saveProfile(profile);
+    return profile;
+}
+
+/**
+ * 保存用户画像
+ */
+function saveProfile(profile) {
+    ensureDir();
+    const fp = userFilePath(profile.user_id);
+    profile.session_count = (profile.session_count || 0) + 1;
+    profile.last_seen = new Date().toISOString();
+    const tmp = fp + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(profile, null, 2), 'utf-8');
+    fs.renameSync(tmp, fp);
+}
+
+/**
+ * 记录观察到的行为
+ */
+function observeBehavior(profile, behavior) {
+    if (!profile.observations[behavior]) profile.observations[behavior] = 0;
+    profile.observations[behavior]++;
+
+    // 自动触发调整
+    const adj = [];
+    if (profile.observations.prefers_short_output >= 3 || profile.observations.interrupts_verbose >= 2) {
+        if (profile.preferences.output_style !== 'concise') {
+            profile.preferences.output_style = 'concise';
+            adj.push('output_style→concise');
+        }
+    }
+    if (profile.observations.prefers_deep_analysis >= 3) {
+        if (profile.preferences.output_style !== 'detailed') {
+            profile.preferences.output_style = 'detailed';
+            adj.push('output_style→detailed');
+        }
+    }
+    if (profile.observations.asks_about_risks >= 3) {
+        if (!profile.preferences.focus_dimensions.includes('fa')) {
+            profile.preferences.focus_dimensions.push('fa');
+            adj.push('added_focus:fa(risks)');
+        }
+    }
+    if (profile.observations.corrects_assumptions >= 3) {
+        if (!profile.preferences.focus_dimensions.includes('wu')) {
+            profile.preferences.focus_dimensions.push('wu');
+            adj.push('added_focus:wu(essence)');
+        }
+    }
+
+    return { behavior, count: profile.observations[behavior], adjustments: adj };
+}
+
+/**
+ * 更新人格五行类型
+ */
+function inferWuxingType(profile, signals = {}) {
+    // 从交互信号中推断五行人格
+    // signals: {宏观: 0~1, 细节: 0~1, 果断: 0~1, 协作: 0~1, 分析: 0~1}
+    if (!signals || Object.keys(signals).length < 3) return null;
+
+    const types = {
+        wood:  signals.协作 * 0.7 + signals.宏观 * 0.3 - signals.细节 * 0.2,
+        fire:  signals.规则 * 0.7 + signals.细节 * 0.3 - signals.宏观 * 0.2,
+        earth: signals.务实 * 0.6 + signals.稳定 * 0.4,
+        metal: signals.果断 * 0.6 + signals.效率 * 0.4 - signals.分析 * 0.2,
+        water: signals.分析 * 0.6 + signals.深度 * 0.4,
+    };
+
+    let best = null, bestScore = 0;
+    for (const [type, score] of Object.entries(types)) {
+        if (score > bestScore) { bestScore = score; best = type; }
+    }
+
+    if (best && bestScore > 0.3) {
+        profile.personality.wuxing_type = best;
+        profile.personality.wuxing_confidence = Math.round(bestScore * 100) / 100;
+        return { wuxing_type: best, confidence: profile.personality.wuxing_confidence };
+    }
+    return null;
+}
+
+/**
+ * 获取格式调整建议 (基于用户偏好, 不改变分析内容)
+ */
+function getFormatAdjustments(profile) {
+    const adj = [];
+    const p = profile.preferences;
+    const c = profile.observations;
+
+    if (p.output_style === 'concise') {
+        adj.push('output: concise — avoid lengthy explanations');
+        adj.push('diverge: prioritize key insights, skip mechanical steps');
+    } else if (p.output_style === 'detailed') {
+        adj.push('output: detailed — provide thorough analysis');
+    }
+
+    if (p.risk_appetite === 'conservative') {
+        adj.push('ranking: emphasize risk/reliability in comparison');
+    }
+
+    if (c.asks_about_risks >= 2) {
+        adj.push('risk: expand risk analysis section');
+    }
+
+    if (c.corrects_assumptions >= 2) {
+        adj.push('assumptions: label them clearly — user likes to correct');
+    }
+
+    return adj;
+}
+
+/**
+ * 记录一次交互到画像
+ */
+function logInteraction(profile, type, summary) {
+    profile.recent_interactions = profile.recent_interactions || [];
+    profile.recent_interactions.unshift({
+        type, summary: summary.slice(0, 120),
+        timestamp: new Date().toISOString(),
+    });
+    if (profile.recent_interactions.length > 10) profile.recent_interactions = profile.recent_interactions.slice(0, 10);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CLI
+// ═══════════════════════════════════════════════════════════════
+function main() {
+    const args = process.argv.slice(2);
+    if (args.length < 1) {
+        console.log('User Profile — per-user habits & communication preferences');
+        console.log('  load <user-id>                       Load profile');
+        console.log('  observe <user-id> --behavior <name>   Record observed behavior');
+        console.log('  infer <user-id> --signals <json>      Infer wuxing personality type');
+        console.log('  format-adjust <user-id>                Get output format adjustments');
+        console.log('  info <user-id>                         Show profile summary (user-visible)');
+        return;
+    }
+    const cmd = args[0];
+    const uid = args[1] || 'default';
+    function parseFlags(k) {
+        const idx = args.indexOf('--' + k);
+        return idx >= 0 ? args[idx + 1] : null;
+    }
+
+    try {
+        switch (cmd) {
+        case 'load': {
+            const profile = loadProfile(uid);
+            const adj = getFormatAdjustments(profile);
+            console.log(JSON.stringify({
+                user_id: uid,
+                sessions: profile.session_count,
+                wuxing_type: profile.personality.wuxing_type,
+                style: profile.preferences.output_style,
+                format_adjustments: adj,
+                first_seen: profile.first_seen,
+                recent_interactions: profile.recent_interactions.slice(0, 3),
+            }, null, 2));
+            break;
+        }
+        case 'observe': {
+            const profile = loadProfile(uid);
+            const behavior = parseFlags('behavior') || 'unknown';
+            const result = observeBehavior(profile, behavior);
+            saveProfile(profile);
+            console.log(JSON.stringify(result, null, 2));
+            break;
+        }
+        case 'infer': {
+            const profile = loadProfile(uid);
+            const signals = JSON.parse(parseFlags('signals') || '{}');
+            const result = inferWuxingType(profile, signals);
+            saveProfile(profile);
+            console.log(JSON.stringify(result || { error: 'not enough signals' }, null, 2));
+            break;
+        }
+        case 'format-adjust': {
+            const profile = loadProfile(uid);
+            const adj = getFormatAdjustments(profile);
+            console.log(JSON.stringify({ adjustments: adj }, null, 2));
+            break;
+        }
+        case 'info': {
+            const profile = loadProfile(uid);
+            const p = profile.preferences;
+            const obs = profile.observations;
+            const wu = profile.personality.wuxing_type;
+            console.log(JSON.stringify({
+                message: '我记得你上次...',
+                details: [
+                    wu ? `你倾向于${({wood:'宏观战略',fire:'流程规范',earth:'务实稳定',metal:'高效果断',water:'深度分析'})[wu]||wu}型思考` : null,
+                    p.output_style === 'concise' ? '你喜欢简洁输出' : p.output_style === 'detailed' ? '你喜欢深度分析' : null,
+                    obs.asks_about_risks > 2 ? '你经常关注风险 — 我会加强风险分析' : null,
+                    obs.corrects_assumptions > 2 ? '你经常纠正假设 — 我会明确标注未验证项' : null,
+                    obs.interrupts_verbose > 1 ? '我注意到你嫌啰嗦 — 我会精简输出' : null,
+                ].filter(Boolean),
+            }, null, 2));
+            break;
+        }
+        default:
+            console.log('Unknown:', cmd);
+        }
+    } catch (e) { console.log('Error:', e.message); }
+}
+
+if (require.main === module) main();
+
+module.exports = {
+    loadProfile, saveProfile, defaultProfile,
+    observeBehavior, inferWuxingType,
+    getFormatAdjustments, logInteraction,
+};
