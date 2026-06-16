@@ -17,11 +17,37 @@ function deqi(kg, query, context = {}) {
     const wm = loadWorkingMemory();
     const results = [];
 
-    // ── 第0层: 三焦气化工作记忆 ──
+    // ── 第0层: 标签索引快速查找 (性能优化) ──
+    // 如果查询包含tags, 使用索引O(1)查找而非遍历所有点
+    if (query.tags && query.tags.length > 0 && kg._tagIndex) {
+        const indexHits = require('./io').queryByTag(kg, query.tags, query.limit || 10);
+        // 对索引结果做完整的deqi评分
+        for (const hit of indexHits) {
+            const { meridianKey } = hit;
+            const m = kg.meridians[meridianKey] || kg.extra[meridianKey.replace('_extra_', '')];
+            if (!m) continue;
+            const score = computeDeqiScore(hit.point, query, m, hit.index);
+            if (score > 0.1) {
+                results.push({
+                    point: hit.point, meridian: meridianKey, meridian_name: m.name,
+                    position: hit.index, deqi_score: Math.min(score, 1.0),
+                });
+            }
+        }
+        if (results.length > 0) {
+            results.sort((a, b) => b.deqi_score - a.deqi_score);
+            const top = results.slice(0, query.limit || 10);
+            updateWorkingMemory(wm, top, query);
+            saveWorkingMemory(wm);
+            return top;
+        }
+    }
+
+    // ── 第1层: 三焦气化工作记忆 (索引无结果时降级) ──
     const upperHits = searchUpperBurner(wm, query);
     if (upperHits.length > 0) results.push(...upperHits);
 
-    // ── 第1层: 子午流注 → 活跃经脉 ──
+    // ── 第2层: 子午流注 → 活跃经脉 ──
     const activeMeridians = ziwuLiuzhu(kg, context);
 
     // ── 经气预热: 上次召回的经脉权重+0.15 ──

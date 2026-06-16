@@ -306,6 +306,9 @@ function saveMMA(kg) {
         }
     }
 
+    // 重建标签索引 (性能优化: 写入后索引立即可用)
+    buildTagIndex(kg);
+
     // 清除脏标记 + 更新版本号
     if (dirtySet) dirtySet.clear();
     if (kg._shard_versions) {
@@ -454,23 +457,107 @@ function saveWorkingMemory(wm) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  通用穴位查找 (不变)
+//  标签索引 — O(1)标签→穴位查找, 替代O(n)全量扫描
+// ═══════════════════════════════════════════════════════════════
+
+const _pointCache = new Map(); // 最近查找的pointId → {point, meridianKey}
+const MAX_CACHE = 100;
+
+/**
+ * 构建标签索引: tag → [pointId, pointId, ...]
+ * 每次saveMMA后重建(在数据变化时自动更新)
+ */
+function buildTagIndex(kg) {
+    const index = {};
+    const idMap = {}; // pointId → {meridianKey, index}
+    for (const [key, m] of Object.entries(kg.meridians)) {
+        for (let i = 0; i < m.points.length; i++) {
+            const p = m.points[i];
+            if (p.hidden) continue;
+            idMap[p.id] = { meridianKey: key, index: i };
+            if (p.tags) for (const tag of p.tags) {
+                if (!index[tag]) index[tag] = [];
+                index[tag].push(p.id);
+            }
+        }
+    }
+    for (const [key, m] of Object.entries(kg.extra)) {
+        for (let i = 0; i < m.points.length; i++) {
+            const p = m.points[i];
+            if (p.hidden) continue;
+            idMap[p.id] = { meridianKey: '_extra_' + key, index: i };
+            if (p.tags) for (const tag of p.tags) {
+                if (!index[tag]) index[tag] = [];
+                index[tag].push(p.id);
+            }
+        }
+    }
+    kg._tagIndex = index;
+    kg._idMap = idMap;
+    return index;
+}
+
+/**
+ * 从标签索引查询穴位 (替代全量扫描)
+ */
+function queryByTag(kg, tags, limit = 10) {
+    if (!kg._tagIndex && !buildTagIndex(kg)) return [];
+    const index = kg._tagIndex;
+    // 找匹配至少一个标签的点
+    const scored = {};
+    for (const tag of tags) {
+        const ids = index[tag];
+        if (!ids) continue;
+        for (const id of ids) {
+            scored[id] = (scored[id] || 0) + 1;
+        }
+    }
+    // 按匹配标签数排序, 返回top
+    return Object.entries(scored)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([id]) => {
+            const loc = kg._idMap[id];
+            if (!loc) return null;
+            const meridian = loc.meridianKey.startsWith('_extra_')
+                ? kg.extra[loc.meridianKey.replace('_extra_', '')]
+                : kg.meridians[loc.meridianKey];
+            if (!meridian || !meridian.points[loc.index]) return null;
+            return { point: meridian.points[loc.index], meridianKey: loc.meridianKey, index: loc.index };
+        })
+        .filter(Boolean);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  通用穴位查找 (带LRU缓存)
 // ═══════════════════════════════════════════════════════════════
 
 function findPointById(kg, pointId) {
+    // LRU cache
+    if (_pointCache.has(pointId)) return _pointCache.get(pointId);
     for (const [key, m] of Object.entries(kg.meridians)) {
         const idx = m.points.findIndex(p => p.id === pointId);
-        if (idx >= 0) return { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
+        if (idx >= 0) {
+            const result = { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
+            if (_pointCache.size >= MAX_CACHE) _pointCache.delete(_pointCache.keys().next().value);
+            _pointCache.set(pointId, result);
+            return result;
+        }
     }
     for (const [key, m] of Object.entries(kg.extra)) {
         const idx = m.points.findIndex(p => p.id === pointId);
-        if (idx >= 0) return { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
+        if (idx >= 0) {
+            const result = { point: m.points[idx], meridianKey: key, meridian: m, index: idx };
+            if (_pointCache.size >= MAX_CACHE) _pointCache.delete(_pointCache.keys().next().value);
+            _pointCache.set(pointId, result);
+            return result;
+        }
     }
     return null;
 }
 
 module.exports = { ensureDirs, loadMMA, saveMMA, freshKG, loadWorkingMemory, saveWorkingMemory, findPointById,
-    acquireShardLock, releaseShardLock, appendWAL, replayWAL, clearWAL, markDirty };
+    acquireShardLock, releaseShardLock, appendWAL, replayWAL, clearWAL, markDirty, buildTagIndex, queryByTag };
 
 function markDirty(kg, meridianKey) {
     if (kg._dirty_meridians) kg._dirty_meridians.add(meridianKey);
