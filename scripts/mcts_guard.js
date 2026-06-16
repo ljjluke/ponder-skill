@@ -22,6 +22,7 @@
  */
 
 const { log } = console;
+const { parseArgs } = require('./shared');
 
 // ═══════════════════════════════════════════════════════════════
 //  守卫1: 反"唯一方案"分解检查
@@ -1102,18 +1103,6 @@ function calculateComplianceScore(phase, decomp, infoGap, diversity, memoryAgent
 //  CLI
 // ═══════════════════════════════════════════════════════════════
 
-function parseArgs(args) {
-    const r = {};
-    for (let i = 0; i < args.length; i++) {
-        if (args[i].startsWith("--")) {
-            const k = args[i].replace(/^--/, "").replace(/-/g, "_");
-            const v = args[i + 1];
-            if (v && !v.startsWith("--")) { r[k] = v; i++; }
-            else r[k] = true;
-        }
-    }
-    return r;
-}
 
 function output(data) { log(JSON.stringify(data, null, 2)); }
 

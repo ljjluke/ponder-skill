@@ -36,7 +36,7 @@ Verify: simulate-layer-guard --state '{solutions:[...]}'
 ## Tree Data Structure (REAL — persisted to disk)
 
 **⛔ MCTS now uses a real tree stored in ~/.claude/data/skills/mcts-td-planner/memory/trees/.**
-THE IS NOT just a thought process. Every node is a real data object with CRUD operations.
+This is NOT just a thought process. Every node is a real data object with CRUD operations.
 
 API: node $P/scripts/mcts.js tree <command>
 
@@ -59,7 +59,7 @@ Each round MUST use the real tree CLI. No text-simulated trees.
 Step ① SELECTION:
   node $P/scripts/mcts.js tree select <node-id> --session <sid>
   → Returns UCB-ranked children. Pick the top one.
-  ⛔ UCB values are COMPUTED, not approximated by LLM.
+  ⛔ `UCB` values are COMPUTED, not approximated by LLM.
 
 Step ② EXPANSION:
   node $P/scripts/mcts.js tree add-children <parent-id> \
@@ -101,7 +101,7 @@ Multi-round shortcut:
 
 ## ① SELECTION — UCB + Knowledge Bias
 
-**UCB = V + c×√(ln(N_parent)/n_child) + K_bonus**, c=√2
+**`UCB` = V + c×√(ln(N_parent)/n_child) + K_bonus**, c=√2
 Code: ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>
 Real tree: tree select <node-id> --session <sid> (uses actual UCB formula)
 

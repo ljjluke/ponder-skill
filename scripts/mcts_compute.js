@@ -6,6 +6,7 @@
  */
 
 const { log } = console;
+const { parseArgs } = require('./shared');
 
 // ===== UCB & Core =====
 function computeUcb(v, nChild, nParent, c = 1.414, kBonus = 0) {
@@ -338,19 +339,6 @@ function computeAttentionGate(dimensions) {
 }
 
 // ===== CLI =====
-function parseArgs(args) {
-    const r = {};
-    for (let i = 0; i < args.length; i++) {
-        if (args[i].startsWith("--")) {
-            const k = args[i].replace(/^--/, "").replace(/-/g, "_");
-            const v = args[i + 1];
-            if (v && !v.startsWith("--")) { r[k] = v; i++; }
-            else r[k] = true;
-        }
-    }
-    return r;
-}
-
 function output(data) { log(JSON.stringify(data)); }
 
 function main() {

@@ -6,10 +6,11 @@
  */
 
 /**
- * Parse CLI args into key-value map
+ * Parse CLI args into key-value map — dashes kept as-is
  * --key value or --flag
+ * Suitable for flags without dashes in names (mcts_tree.js)
  */
-function parseArgs(args) {
+function parseArgsSimple(args) {
     const r = {};
     for (let i = 0; i < args.length; i++) {
         if (args[i].startsWith('--')) {
@@ -22,4 +23,22 @@ function parseArgs(args) {
     return r;
 }
 
-module.exports = { parseArgs };
+/**
+ * Parse CLI args into key-value map — dashes → underscores
+ * --key-name value becomes { key_name: value }
+ * Suitable for most compute/guard/template commands
+ */
+function parseArgs(args) {
+    const r = {};
+    for (let i = 0; i < args.length; i++) {
+        if (args[i].startsWith("--")) {
+            const k = args[i].replace(/^--/, "").replace(/-/g, "_");
+            const v = args[i + 1];
+            if (v && !v.startsWith("--")) { r[k] = v; i++; }
+            else r[k] = true;
+        }
+    }
+    return r;
+}
+
+module.exports = { parseArgs, parseArgsSimple };

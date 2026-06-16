@@ -8,7 +8,7 @@ description: TDL (Temporal Difference Learning) Engine's core inference rules. B
 > **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):****
-> 1. **KNOWLEDGE LIFECYCLE**: HYPOTHESIS(0.1) → PROVISIONAL(0.3) → CONFIRMED(1.0) → DISPUTED(0.2) → REFUTED(0.0). SLEEPING(0.15) after 30d unused, ARCHIVED after 90d.
+> 1. **KNOWLEDGE LIFECYCLE**: `HYPOTHESIS`(0.1) → `PROVISIONAL`(0.3) → `CONFIRMED`(1.0) → `DISPUTED`(0.2) → `REFUTED`(0.0). `SLEEPING`(0.15) after 30d unused, ARCHIVED after 90d.
 > 2. **GATE BEFORE STORE**: New knowledge MUST pass gate-check (reusability + density + novelty + reliability). Discard if score < 0.4.
 > 3. **RECALL HIERARCHY**: ①Associative recall (most relevant first) → ②Fragment completion (fill gaps from memory) → ③External verification (web/user). Don't trust recalled knowledge blindly — verify when uncertain.
 > 4. **⛔ MEMORY AGENT**: 6 checkpoints MUST execute via direct CLI calls (no daemon):

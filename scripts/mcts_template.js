@@ -5,23 +5,12 @@
  * Default output: raw Markdown. --json flag: JSON wrapper.
  */
 const { log } = console;
+const { parseArgs } = require('./shared');
 
 const TRIGRAMS = { 1: '☰', 2: '☷', 3: '☳', 4: '☴', 5: '☵', 6: '☲', 7: '☶', 8: '☱' };
 const FACET_NAMES = { 1: 'Source of Force', 2: 'Foundation Bearer', 3: 'Change/Disruption', 4: 'Penetration', 5: 'Risk/Abyss', 6: 'Visible/Dependent', 7: 'Boundary', 8: 'Convergence' };
 const VERDICT_SYMBOLS = { Pass: '✅', pass: '✅', OK: '✅', Risk: '⚠️', risk: '⚠️', WARNING: '⚠️', 'Not passed': '❌', FAIL: '❌', VIOLATION: '❌' };
 
-function parseArgs(args) {
-    const r = {};
-    for (let i = 0; i < args.length; i++) {
-        if (args[i].startsWith("--")) {
-            const k = args[i].replace(/^--/, "").replace(/-/g, "_");
-            const v = args[i + 1];
-            if (v && !v.startsWith("--")) { r[k] = v; i++; }
-            else r[k] = true;
-        }
-    }
-    return r;
-}
 
 function parseData(o) {
     if (!o.data) return {};

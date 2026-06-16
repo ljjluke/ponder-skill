@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+const { parseArgsSimple } = require('./shared');
 /**
  * ═══════════════════════════════════════════════════════════════
  *  MCTS Tree — 真实树数据结构 + CRUD + UCB选择 + 回溯 + 持久化
@@ -350,19 +351,6 @@ function listTrees() {
 // ═══════════════════════════════════════════════════════════════
 //  CLI
 // ═══════════════════════════════════════════════════════════════
-function parseArgs(args) {
-    const r = {};
-    for (let i = 0; i < args.length; i++) {
-        if (args[i].startsWith('--')) {
-            const k = args[i].replace(/^--/, '');
-            const v = args[i + 1];
-            if (v && !v.startsWith('--')) { r[k] = v; i++; }
-            else r[k] = true;
-        }
-    }
-    return r;
-}
-
 function output(data) { console.log(JSON.stringify(data, null, 2)); }
 
 function main() {
@@ -381,7 +369,7 @@ function main() {
         return;
     }
     const cmd = args[0];
-    const o = parseArgs(args.slice(1));
+    const o = parseArgsSimple(args.slice(1));
 
     try {
         switch (cmd) {
