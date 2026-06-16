@@ -3,28 +3,17 @@ name: ponder
 alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
-  Enabled by default. Only activates on `/luke:ponder` — does NOT auto-trigger.
-  Activated by /luke:ponder. Full phased output for ANY request. Every step mandatory.
-version: 1.12.2
+  Activated by `/luke:ponder`. Every step mandatory. No skipping. No "too simple to process."
+version: 1.12.3
 license: MIT
 ---
 
 # MCTS-TD Thinking Framework
 
-> **`alwaysApply: true` only ensures the skill is enabled. It ONLY responds to `/luke:ponder` — never auto-triggers.**
-> 
-> **⚠️ 重要: `/luke:ponder` 触发后必须走完整流程。不允许跳过任何步骤。不允许判断"不需要"。需求拆解 + 发散后必然能走完全流程。**
+> **`/luke:ponder` → 完整流程必须走完。不允许跳过任何步骤。不允许判断"不需要"。需求拆解后必然有可分析的内容。**
 
----
+## ⚡ ACTIVATION
 
-## ⚡ ACTIVATION — Step 0
-
-1. Parse user request — extract task features (dimensions/domains/choices)
-2. Determine mode: **动(Dong)** compact | **静(Jing)** full
-3. **Load user profile**: `node scripts/mcts.js profile info default` → user sees "I remember you like concise output"
-   - Only affects output format, never divergence engine
-4. **Smart recall**: `node scripts/mcts.js mma recall '{"tags":["<keywords>"],"limit":5}' — context+emotion auto-matched
-5. **Output activation banner** (user must see the skill is running):
 ```
 ═══════════════════════════════════════════════
  ⚡ [MCTS-TD] 思维框架已激活 — 发散→推演→收敛
@@ -33,115 +22,106 @@ license: MIT
 ═══════════════════════════════════════════════
 ```
 
-**Streaming output**: `node scripts/mcts.js template stream-flow` — each step outputs immediately.
+**加载画像**: `node scripts/mcts.js profile info default`
+**召回记忆**: `node scripts/mcts.js mma recall '{"tags":["<keywords>"],"limit":5}'`
 
 ---
 
-## 📐 三引擎执行流程
+## 📋 流程 (MANDATORY — 每步必须执行, 必须输出, 不可跳过)
 
-**⛔ 三引擎: 发散(八面审视) → 推演(MCTS树搜索) → 收敛(综合判断)**
+### Step 1: 需求拆解 (五診)
 
-**`/luke:ponder` = 全流程，无跳过。没有"这个需求太简单不需要"。**
+**⛔ 必须先拆解再分析。不拆解就直接发散 = 违规。**
 
-三引擎全量执行，发散→推演→收敛，一步不能少。
-
-### Phase A: 需求拆解 + 预测生成
-
-1. **Load prediction rules**: `node scripts/mcts.js template interview-script` → 3-step user interview
-2. **Generate prediction**: `node scripts/mcts.js compute predict-generate --task '<json>' --memory '<deqi_results>'`
-3. **Score dimensions**: 天(Timing) 地(Resources) 人(People) 法(Rules) 物(Essence)
-
-### Phase C: Test → Error → Propagate (Recursive Loop)
-
-Test prediction against user input, compute error, propagate corrections.
-
+三步强制:
 ```
-① Output current scores → ask about low-confidence dimensions
-② Get user response → compute prediction error
-③ If error > threshold → correct scores → re-run affected analysis
-④ Repeat until error < threshold
+① 复述用户需求 → 问: "还有什么要补充吗?"
+② 问: "你之前试过什么方案?"
+③ 问 2-3 个关键约束
 ```
 
-### Phase D: Diverge → Converge (from corrected prediction)
-
-**⛔ MUST LOAD `engine/mcts-diverge.md` and `engine/mcts-simulate.md`.**
-
-Run divergence (心斋 → 六视 → 八卦镜 → 齐物 → 梦蝶) using the corrected prediction.
-Run MCTS tree search using the corrected scores.
-
-```bash
-# Propagate correction if user changes input mid-flow
-node scripts/mcts.js compute predict-propagate --correction '<json>'
-```
-
-### Phase E: Output + Finalize
-
-Final recommendation in plain language. **One command to finalize everything**:
-```bash
-node scripts/mcts.js mma finalize '{"points":["<IDs>"],"emotions":[{"qiqing":"<emotion>","context":"<context>"}]}'
-```
-→ session-end + profile infer + MMA save in one call.
+输出: 五维打分表 + 需要追问的部分。
 
 ---
 
-## OUTPUT
+### Step 2: 发散 (逍遥游)
 
-Non-technical, natural language. No framework terms.
+**⛔ 必须从 6 个尺度审视问题。每个尺度至少输出 1 个发现。**
 
-For all format rules: `node scripts/mcts.js template all-rules`
+| 尺度 | 必须回答的问题 |
+|------|--------------|
+| 整体系统 | 这个问题的真正边界在哪？ |
+| 微观细节 | 哪些细节被宏观视角忽略了？ |
+| 时间压缩 | 如果只有极短时间，优先做什么？ |
+| 时间膨胀 | 长期来看什么不变、什么会变？ |
+| 顺势 | 如果不干预，事情会自然走向哪？ |
+| 去自我 | 去掉个人立场，系统最优是什么？ |
 
-**Observe user patterns silently:**
+输出: 每个尺度至少 1 个洞察。
 
-| If user tends to... | record as |
-|--------------------|-----------|
-| Prefers short/direct answers over lengthy analysis | `prefers_short_output` |
-| Asks follow-ups, wants deeper reasoning | `prefers_deep_analysis` |
-| Corrects your understanding, refines assumptions | `corrects_assumptions` |
-| Repeatedly asks about downsides/edge cases | `asks_about_risks` |
-| Shows impatience with verbosity ("get to the point") | `interrupts_verbose` |
+---
 
-```bash
-node scripts/mcts.js mma remember --behavior <detected_pattern>
+### Step 3: 多视角审视
+
+**⛔ 必须从 8 个视角审视需求。每个视角必须给出具体分析。**
+
+沿经脉逐条审视:
+- 力量从哪来？根基是什么？不定性在哪？效果怎么渗透？
+- 风险在哪？表面之下依赖什么？边界在哪？利益怎么平衡？
+
+输出: 最异常的 1-2 个视角 + 跨视角冲突(如有)。
+
+---
+
+### Step 4: 推演 (MCTS)
+
+**⛔ 必须生成至少 2 个方案, 逐个推演, 给出推荐。**
+
+推演过程:
 ```
-≥3 same → auto-adjust output format. Silent, never ask.
+方案A: [一句话描述]
+  优势: ... | 风险: ...
+方案B: [一句话描述]
+  优势: ... | 风险: ...
 
-**Store results** (knowledge + divergence insights):
-```bash
-node scripts/mcts.js mma remember '{"description":"...","tags":["..."],"category":"...","q":0.7}'
+推荐: [方案] — [理由]
 ```
+
+输出: 方案对比 + 推荐 + 风险(如有)。
+
+---
+
+### Step 5: 收敛
+
+最终输出。无框架术语。用户必须能看懂推理路径。
+
+**存储**: `node scripts/mcts.js mma finalize '{"points":["<IDs>"],"emotions":[]}'`
+**画像**: 会话结束自动更新。
 
 ---
 
 ## FORBIDDEN
 
-`node scripts/mcts.js template all-rules` — sections: output-spec, forbidden-check, anti-guessing, interview-script, translate-guide.
+- **跳过任何步骤** — 即使需求看起来"简单"或"不需要分析"
+- **不拆解需求直接发散** — 必须先对齐再分析
+- **六视只输出一两句** — 每个尺度必须有实质内容
+- **推演只出一个方案** — 至少 2 个方案比较
+- **输出框架术语** — 用户必须能看懂
+- **合并步骤** — 每步独立输出
+
 **When in doubt**: `node scripts/mcts_guard.js all-guards`
 
 ---
 
 ## 📄 Engine File Routing
 
-| Phase | File | Rule |
-|-------|------|------|
-| Step 0-0.2 | `engine/mcts-predictive.md` | MUST Read for predictive coding loop |
-| Step 0.5-0.5b | `engine/mcts-constraint.md` | MUST Read before Step 0.5 |
-| Step 1-2 | `engine/mcts-diverge.md` | MUST Read before Step 1 |
-| Step 3 | `engine/mcts-simulate.md` | MUST Read before MCTS |
-| Step 3.5-4 | `engine/mcts-converge.md` | MUST Read before Step 3.5 |
-| Post-4 | `engine/td-learner.md` | TD write-back |
-| Always | `agents/memory-agent.md` | 6 checkpoint reference |
-
----
-
-## CONCEPT TRANSLATION RULE
-
-`node scripts/mcts.js template translate-guide` — full translation table in `engine/mcts-diverge.md`.
-
----
-
-## COMPRESSION-SAFE CORE
-
-**`/luke:ponder` → FULL FRAMEWORK** | **NO GATE** | **EVERY STEP MANDATORY** | **MUST LOAD ENGINE FILES** | **心斋→六视→八卦镜→齐物→梦蝶** | **DIVERGE THEN CONVERGE** | **≤10 INTO MCTS** | **CONCEPT → DOMAIN LANGUAGE**
+| Step | File | 规则 |
+|------|------|------|
+| 1 | `engine/mcts-constraint.md` | MUST Read before Step 1 |
+| 2 | `engine/mcts-diverge.md` | MUST Read before Step 2 |
+| 3 | `engine/mcts-predictive.md` | MUST Read before Step 3 |
+| 4 | `engine/mcts-simulate.md` | MUST Read before Step 4 |
+| 5 | `engine/mcts-converge.md` | MUST Read before Step 5 |
 
 ---
 
@@ -149,6 +129,6 @@ node scripts/mcts.js mma remember '{"description":"...","tags":["..."],"category
 
 - **Knowledge (global)**: decision results, cross-domain insights, causal patterns → MMA meridians
 - **User profile (per-user)**: communication preferences, behavioral patterns → profile storage, NOT knowledge
-- **Automatic**: embedded in backend flow, no extra LLM steps
+- **Automatic**: session-end finalize auto-updates
 
 **Data safety**: `~/.claude/data/skills/mcts-td-planner/` — delete to reset.
