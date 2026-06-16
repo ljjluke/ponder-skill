@@ -39,13 +39,23 @@ license: MIT
 
 ## 📐 MANDATORY PHASED FLOW
 
-### Step 0.5: 五診 (Wuzhen) Requirement Portrait
+### Step 0.5: 五診 (Wuzhen) — Grill the User FIRST
 
 **⛔ MUST LOAD `engine/mcts-constraint.md` — cannot execute without it.**
 
-5 dimensions scored 0-10. Any <7 → ask user. Output: concise table showing scores + what needs asking.
+**3-step user interview (MANDATORY, before any analysis)**:
 
-**本末(Ben-Mo)**: identify root dimension | **有无(You-Wu)**: detect absent constraints | **张力(Tension)**: scan gaps
+```
+① PARAPHRASE: "你说的是[复述用户需求]，对吗？还有什么要补充吗？"
+② PROBE: "你之前试过什么方案？考虑过哪些方向？"
+③ CONSTRAIN: 用 AskUserQuestion 问 2-3 个最关键的约束
+   (不是自由文本, 是带选项的提问)
+```
+
+Only after user answers → score 5 dimensions (0-10). Any <7 → follow up.
+After scoring: **本末(Ben-Mo)** root | **有无(You-Wu)** absences | **张力(Tension)** gaps.
+
+Output: concise table showing scores + what needs asking.
 
 **Throughout the conversation, silently analyze user behavior patterns.** 
 Use your understanding of natural conversation — not keyword matching — to detect:
