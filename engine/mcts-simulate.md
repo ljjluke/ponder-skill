@@ -5,12 +5,12 @@ description: MCTS-TD Step 2 — MCTS Tree Search. Multi-round iteration: Selecti
 
 # Step 2: MCTS Tree Search Simulation
 
-> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. 4 phases per round visible to user
 > 3. Knowledge acquisition: ① Diverge handoff ② Memory ③ Web ④ Ask user ⑤ Assume (+0.1)
->    ⛔ NEVER jump to ④⑤ without exhausting ①②③. Verify: `info-gap-guard`
+>    ⛔ NEVER jump to ④⑤ without exhausting ①②③. Verify: info-gap-guard
 > 4. Stop when V stable 3 rounds OR max iterations | 5. Multi-layer reasoning mandatory
 > 6. MUTATION VECTOR: 5-bit mask per node, volatile dimensions → higher exploration
 > 7. BODY-USE COMPATIBILITY: final ranking gets 体用(Ti-Yong) Sheng-Ke bonus
@@ -29,18 +29,18 @@ Each solution simulated at 3 layers:
 
 **V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp**
 
-Verify: `simulate-layer-guard --state '{solutions:[...]}'`
+Verify: simulate-layer-guard --state '{solutions:[...]}'
 
 ---
 
 ## Tree Data Structure (REAL — persisted to disk)
 
-**⛔ MCTS now uses a real tree stored in `~/.claude/data/skills/mcts-td-planner/memory/trees/`.**
+**⛔ MCTS now uses a real tree stored in ~/.claude/data/skills/mcts-td-planner/memory/trees/.**
 THE IS NOT just a thought process. Every node is a real data object with CRUD operations.
 
-API: `node $P/scripts/mcts.js tree <command>`
+API: node $P/scripts/mcts.js tree <command>
 
-```
+
 Node = { id, description, parentId, childIds[],
   n, w, V, σ²,                          // MCTS stats
   nodeType: ACTION|RISK|FALLBACK|TERMINAL,
@@ -48,13 +48,13 @@ Node = { id, description, parentId, childIds[],
   mutation: [0,0,0,0,0],               // 5-bit: [Tian,Di,Ren,Fa,Wu] 0=stable 1=volatile
   solutionId, lastSelected, created
 }
-```
+
 
 ### MCTS Round Cycle — via Real Tree
 
 Each round MUST use the real tree CLI. No text-simulated trees.
 
-```
+
 Step ① SELECTION:
   node $P/scripts/mcts.js tree select <node-id> --session <sid>
   → Returns UCB-ranked children. Pick the top one.
@@ -78,30 +78,30 @@ Step ④ BACKPROPAGATION:
 Multi-round shortcut:
   node $P/scripts/mcts.js tree round-start --session <sid>
   → One complete round: select + (LLM adds children) + simulate + backprop
-```
+
 
 ### Quick Reference
 
 | Action | CLI |
 |--------|-----|
-| Init tree from solutions | `tree init --solutions '<json>'` |
-| Select child (UCB-ranked) | `tree select <node-id> --session <sid>` |
-| Add child nodes | `tree add-children <node-id> --children '<json>' --session <sid>` |
-| Record simulation | `tree simulate <leaf-id> --v <V> --session <sid>` |
-| Backpropagate | `tree backprop <leaf-id> --session <sid>` |
-| Tree status | `tree status --session <sid>` |
-| Start next round | `tree round-start --session <sid>` |
-| Persist | `tree save --session <sid>` (auto-saved) |
-| Load previous | `tree load <session-id>` |
-| All sessions | `tree list` |
+| Init tree from solutions | tree init --solutions '<json>' |
+| Select child (UCB-ranked) | tree select <node-id> --session <sid> |
+| Add child nodes | tree add-children <node-id> --children '<json>' --session <sid> |
+| Record simulation | tree simulate <leaf-id> --v <V> --session <sid> |
+| Backpropagate | tree backprop <leaf-id> --session <sid> |
+| Tree status | tree status --session <sid> |
+| Start next round | tree round-start --session <sid> |
+| Persist | tree save --session <sid> (auto-saved) |
+| Load previous | tree load <session-id> |
+| All sessions | tree list |
 
 ---
 
 ## ① SELECTION — UCB + Knowledge Bias
 
 **UCB = V + c×√(ln(N_parent)/n_child) + K_bonus**, c=√2
-Code: `ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>`
-Real tree: `tree select <node-id> --session <sid>` (uses actual UCB formula)
+Code: ucb --v <V> --n <n> --parent-n <N> --k-bonus <K>
+Real tree: tree select <node-id> --session <sid> (uses actual UCB formula)
 
 ### 奇正相生(Qi-Zheng Interplay) — Sun Tzu's Orthodox & Unorthodox (虚实篇 Xu Shi Pian)
 
@@ -113,19 +113,19 @@ UCB itself is the mathematical expression of Qi-Zheng interplay:
 - **K_bonus adjusts Qi-Zheng ratio**: CONFIRMED+high confidence → increase Zheng(+0.15) | PROVISIONAL/unknown → increase Qi(+0.05) | DISPUTED → reduce Qi(-0.10)
 
 OODA-MCTS correspondence (Boyd was directly influenced by Sun Tzu's Art of War):
-```
+
 OODA:  Observe(Guan 观) → Orient(Cha 察) → Decide(Mou 谋) → Act(Xing 行)
 MCTS:  Selection(观)    → Expansion(察)    → Simulation(谋)  → Backprop(行)
-```
 
-**K_bonus**: `k-bonus --status <s> --n <n> --q <q>`
+
+**K_bonus**: k-bonus --status <s> --n <n> --q <q>
 CONFIRMED+n≥5+q≥0.8 → +0.15 | PROVISIONAL+n<5+q≥0.7 → +0.05 | DISPUTED/q<0.5 → -0.10
 
 **Round 1 special**: all n=0 → use knowledge graph recommendation score for initial sort.
 
 **Mutation Vector influence**: if UCB_a - UCB_b < 0.05 AND mutation_a > mutation_b → select node_a.
-Code: `node $P/scripts/mcts.js compute mutation-vector --nodes '<JSON>'`
-Tiebreak: `node $P/scripts/mcts.js compute mutation-tiebreak --nodes '<JSON>'`
+Code: node $P/scripts/mcts.js compute mutation-vector --nodes '<JSON>'
+Tiebreak: node $P/scripts/mcts.js compute mutation-tiebreak --nodes '<JSON>'
 
 ---
 
@@ -171,7 +171,7 @@ Sub-decision during roll-out → code guard check:
 | 2 | micro_diverge | 1 perspective, 1-step, variance +0.1 |
 | ≥3 | micro_diverge_risky | micro but high-risk, variance +0.15 |
 
-Commands: `enter-simulation`, `begin-sub-diverge`, `end-sub-diverge`, `synthesize-sim`, `reset-depth`
+Commands: enter-simulation, begin-sub-diverge, end-sub-diverge, synthesize-sim, reset-depth
 Hard limit: MCTS_MAX_DIVERGE_DEPTH=3
 
 ---
@@ -184,14 +184,14 @@ Each ancestor: n+=1, w+=V_leaf, V=w/n, Welford online σ²
 
 ## ⑤ KNOWLEDGE UPDATE
 
-Pre-write gate: `node $P/scripts/mcts.js mma ashi '<entry_json>'` (gate-check built-in)
-Example: `node $P/scripts/mcts.js mma ashi '{"description":"...","tags":["..."],"category":"...","emotion":"xi","source":"execution_result","q":0.8}'`
+Pre-write gate: node $P/scripts/mcts.js mma ashi '<entry_json>' (gate-check built-in)
+Example: node $P/scripts/mcts.js mma ashi '{"description":"...","tags":["..."],"category":"...","emotion":"xi","source":"execution_result","q":0.8}'
 → Returns point ID (e.g., "LUN0001") — **collect for session-end tracking**
 Score <0.4 → discard | 0.4-0.59 → observe (15-day verify) | ≥0.6 → store
 
 Write when: V≥0.8 | V≤0.3 | Round%5==0 | After convergence
-Safety: `check-write-safety`
-Session-end: `session-end` (decay + cluster + reinforce)
+Safety: check-write-safety
+Session-end: session-end (decay + cluster + reinforce)
 
 ---
 
@@ -208,7 +208,7 @@ Session-end: `session-end` (decay + cluster + reinforce)
 
 ### Per-Round Output Format
 
-```
+
 MCTS Round [N]:
   ① Selection: [path] (UCB values, why this path)
   ② Expansion: [new node] (type, potential)
@@ -217,18 +217,18 @@ MCTS Round [N]:
 
 Tree State: [summary of all solutions n/V/σ²]
 Convergence: [check result]
-```
+
 
 ⛔ FORBIDDEN: outputting only final V/n/σ² without per-round detail | collapsing rounds
 
-Template: `node $P/scripts/mcts.js template mcts-round --data '<JSON>'`
+Template: node $P/scripts/mcts.js template mcts-round --data '<JSON>'
 
 ### Final Output
 
-```
+
 MCTS Complete — [N] rounds, stop reason: [why]
 Ranking: SolutionA n=5 V=0.84 σ²=0.03 Conf=High | SolutionB ...
 Best path: [...] | Main risk: [...]
 
-Template: `node $P/scripts/mcts.js template mcts-final --data '<JSON>'`
-```
+Template: node $P/scripts/mcts.js template mcts-final --data '<JSON>'
+

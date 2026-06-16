@@ -5,13 +5,13 @@ description: MCTS-TD Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangz
 
 # Step 1: Diverge Engine — 逍遥游 (Free Wandering) × 齐物 (Equalizing) × 庖丁解牛
 
-> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. Phase order: 心斋→逍遥游→八卦镜→齐物→庖丁解牛→Info Gap→方案收敛
 > 3. NO SKIP / NO COLLAPSE | 4. Every perspective shift MUST be visible | 5. Domain-agnostic
-> 6. ANTI-SINGLE: `decomposition-guard` before claiming "only one solution"
-> 7. DIVERSITY: if <3 solutions → `diversity-challenge`
+> 6. ANTI-SINGLE: decomposition-guard before claiming "only one solution"
+> 7. DIVERSITY: if <3 solutions → diversity-challenge
 
 ---
 
@@ -22,7 +22,7 @@ description: MCTS-TD Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangz
 Chinese philosophical concepts (心斋, 逍遥游, 齐物, 梦蝶, etc.) are internal "thinking opcodes" — they are NOT output format. The language adaptation layer handles the final translation.
 
 Translation logic (internal concept → what user sees):
-```
+
 心斋 (Xinzhai)  → "Expose default assumptions about this problem"
 鲲鹏之视 (Kunpeng View) → "Redefine the problem from system-wide perspective"
 蜩鸠之视 (Tiaojiu View) → "Notice micro-details macro analysis misses"
@@ -34,7 +34,7 @@ Translation logic (internal concept → what user sees):
 齐物 (Qiwu) → "Every perspective has validity — the uncomfortable one may be key"
 梦蝶翻转 (Dream Flip) → "Invert all assumptions"
 庖丁解牛 (Cook Ding) → "Find the path of least resistance"
-```
+
 
 ⛔ FORBIDDEN:
 - Output raw Chinese concepts to non-Chinese users
@@ -42,10 +42,10 @@ Translation logic (internal concept → what user sees):
 - Incomplete translation — translate EVERY time, not just the first
 
 ✅ Correct:
-```
+
 Internal: "From 鲲鹏之视, this module is..."
 Output:  "From the system-wide perspective, the positioning of this module is..."
-```
+
 
 ### Mapping table (internal → domain language)
 
@@ -139,7 +139,7 @@ Zhuangzi's "Fasting of the Mind":
 
 Translated into cognitive operations:
 
-```
+
 【心斋 · Expose Assumptions】
 
 Output each item — MUST be visible to user:
@@ -159,7 +159,7 @@ Output each item — MUST be visible to user:
 ④ 坐忘 (Sitting-forget): Temporarily suspend all known solutions and "best practices"
    → Declare: "I don't know the answer yet. I'm a blank slate."
    → This isn't ignorance — it's 不知 (epistemic humility)
-```
+
 
 **After output, user sees your assumption list. User can correct: "No, budget isn't the issue — time is."**
 
@@ -171,7 +171,7 @@ Output each item — MUST be visible to user:
 
 **Apply here:** After exposing assumptions but BEFORE diverging into 6 perspectives, calculate which dimensions will yield the highest INFORMATION GAIN.
 
-```
+
 【Attention Gate · Selective Focus】
 
 ① List all dimensions from constraints (五诊: 天/地/人/法/物) + any domain-specific facets.
@@ -192,7 +192,7 @@ Output each item — MUST be visible to user:
 
 ⛔ This is NOT "skip the easy ones." This is "allocate cognitive resources
    where they yield the most new information."
-```
+
 
 ---
 
@@ -207,7 +207,7 @@ Like:
 
 **Six perspective shifts — each MUST be output independently:**
 
-```
+
 【逍遥游 · Six Perspectives】
 
 Not "analyze from 6 angles."
@@ -261,7 +261,7 @@ But "BECOME 6 different beings — each redefines what the 'problem' even is."
   ⛔ MUST output:
   - Occluded: [What interests/voices are hidden by MY perspective]
   - System-optimal: [If I had zero self-interest, what's the optimal solution]
-```
+
 
 **⛔ All six perspectives must complete before entering 八卦镜. 六视 = change your eyes. 八卦镜 = examine with new eyes.**
 
@@ -275,7 +275,7 @@ But "BECOME 6 different beings — each redefines what the 'problem' even is."
 
 **Each facet MUST output complete structure. No one-liners.**
 
-```
+
 ┌─────────────────────────────────────────────┐
 │ F? ☰/☷/☳/☴/☵/☲/☶/☱ [Name] — [Domain dimension] │
 │                                             │
@@ -298,7 +298,7 @@ But "BECOME 6 different beings — each redefines what the 'problem' even is."
 │ Ideas: [2-4 directions from this analysis]    │
 │ Score: [0-10] — [pre/post 六视 change]        │
 └─────────────────────────────────────────────┘
-```
+
 
 **Facet assignment:**
 
@@ -342,7 +342,7 @@ For facets scoring <7: ① knowledge graph → ② WebSearch (≤3 score MUST se
 
 Zhuangzi's 齐物论: All perspectives have equal validity. None is "correct."
 
-```
+
 【齐物 · Equalize】
 
 For each perspective (六视 + 八卦 + sub-lens + cultural analogy):
@@ -354,7 +354,7 @@ For each perspective (六视 + 八卦 + sub-lens + cultural analogy):
 Then answer:
 → Which perspectives make me most uncomfortable? (discomfort = blindspot contact)
 → What if the most uncomfortable perspective is the correct one?
-```
+
 
 ---
 
@@ -362,7 +362,7 @@ Then answer:
 
 > "Once Zhuang Zhou dreamt he was a butterfly, fluttering about, enjoying itself. He did not know he was Zhou. Suddenly he awoke, and there he was, solid Zhuang Zhou. He did not know whether he was Zhou dreaming he was a butterfly, or a butterfly dreaming he was Zhou."
 
-```
+
 【梦蝶 Flip】
 
 ① Subject-Object Swap:
@@ -376,7 +376,7 @@ Then answer:
 ③ Time-Order Swap:
    "Looking back from the end, which steps can be skipped?"
    "If the outcome is already determined, do the 'choices' along the way matter?"
-```
+
 
 ---
 
@@ -386,7 +386,7 @@ After divergence, gaps become visible. Now ask — not before.
 
 **⛔ Minimum 1 AskUserQuestion. Typical 2-3 rounds.**
 
-Output: `【Info Gap Round N】 Asked→Answered | Updated scores | Remaining gaps`
+Output: 【Info Gap Round N】 Asked→Answered | Updated scores | Remaining gaps
 
 ---
 
@@ -409,10 +409,10 @@ Output: solution list + coverage matrix (F1-F8 × solutions).
 
 ## Helper Tools
 
-- Domain hint: `identify-domain` | Facet loading: `get-dimensions`
-- Blindspot classification: `classify-blindspot --score <0-10>`
-- Ti-Yong check: `ti-yong-check` | One-Many check: `one-many-check`
-- Cull: `node $P/scripts/mcts_compute.js cull --criteria`
+- Domain hint: identify-domain | Facet loading: get-dimensions
+- Blindspot classification: classify-blindspot --score <0-10>
+- Ti-Yong check: ti-yong-check | One-Many check: one-many-check
+- Cull: node $P/scripts/mcts_compute.js cull --criteria
 
 ---
 
@@ -420,7 +420,7 @@ Output: solution list + coverage matrix (F1-F8 × solutions).
 
 The skill learns from every decision cycle. Three feedback loops:
 
-```
+
 ① Divergence → Memory:
    Divergence insights (心斋/六视/八卦镜 findings) → semantic knowledge
    CLI: node $P/scripts/mcts.js mma capture-divergence '<json>'
@@ -433,7 +433,7 @@ The skill learns from every decision cycle. Three feedback loops:
 ③ Knowledge Audit:
    Periodic check: completeness / contradiction / staleness / five-element balance
    CLI: node $P/scripts/mcts.js mma audit [context_tags]
-```
+
 
 ### Five Element Interactions
 

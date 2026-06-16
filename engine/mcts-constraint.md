@@ -5,7 +5,7 @@ description: MCTS-TD Step 0 — Constraint Collection + Xuanxue/Zhanbu Enhanceme
 
 # Step 0: Requirement Constraint Collection
 
-> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, replace with `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from `[MCTS-TD] Plugin:` in SessionStart log.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, replace with node <plugin>/scripts/mcts.js <args> — <plugin> = path from [MCTS-TD] Plugin: in SessionStart log.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user's language | 2. MUST ASK when unclear | 3. DEMAND REFINEMENT before solutions
@@ -29,7 +29,7 @@ description: MCTS-TD Step 0 — Constraint Collection + Xuanxue/Zhanbu Enhanceme
 
 ⚠️ Adapt questions to user's domain — never assume "software project".
 
-Code: `node $P/scripts/mcts_compute.js five-diagnosis --scores '<JSON>'`
+Code: node $P/scripts/mcts_compute.js five-diagnosis --scores '<JSON>'
 
 ### Anti-Guessing Scoring Rules (MANDATORY)
 
@@ -64,7 +64,7 @@ Cross-dimension validation (5 pairs from tension scan):
 
 ### Portrait Output Format
 
-```
+
 【Requirement Portrait · Wuzhen Integrated Assessment】
  Task: [xxx]
  ① 天(Tian) [7/10] sufficient — Stage: ... | Time: ... | Env: ...
@@ -76,9 +76,9 @@ Cross-dimension validation (5 pairs from tension scan):
  Questions: [Q1] [Q2] [Q3]
  Cross-dimension: [findings]
  Root (Ben): [dimension] | Absence: [alerts] | Tension: [hotspots]
-```
 
-Template: `node $P/scripts/mcts.js template portrait --data '<JSON>'`
+
+Template: node $P/scripts/mcts.js template portrait --data '<JSON>'
 
 ---
 
@@ -89,21 +89,21 @@ Template: `node $P/scripts/mcts.js template portrait --data '<JSON>'`
 After Wuzhen scores, identify root dimension (ben) — its constraints are super-hard.
 Adjacent dimension violation → HARD. Peripheral → SOFT.
 
-Code: `node $P/scripts/mcts_compute.js root-branch --scores '<JSON>'`
+Code: node $P/scripts/mcts_compute.js root-branch --scores '<JSON>'
 
 ### 有无 (Absence Detection)
 
 For each dimension, check what constraints are ABSENT that should normally be present.
 Abnormal absence → mark blindspot → Info Gap phase asks about it.
 
-Code: `node $P/scripts/mcts_compute.js absence-detect --domain '<str>' --constraints '<JSON>'`
+Code: node $P/scripts/mcts_compute.js absence-detect --domain '<str>' --constraints '<JSON>'
 
 ### Relational Tension (六壬(Liu-Ren) Method)
 
 Compute tension for key dimension pairs: 天↔地, 人↔物, 法↔地, 天↔人, 物↔法
 Tension = |score_A - score_B|. ≥4: HOTSPOT → diverge priority. ≤1: STABLE.
 
-Code: `node $P/scripts/mcts_compute.js tension-scan --scores '<JSON>'`
+Code: node $P/scripts/mcts_compute.js tension-scan --scores '<JSON>'
 
 ### 动静 (Movement-Stillness) — Engine Mode
 
@@ -114,13 +114,13 @@ Before engine engages, determine mode:
 
 Mode switch: if Dong mode reveals hidden complexity → upgrade to Jing.
 
-Code: `node $P/scripts/mcts_compute.js dong-jing --message '<msg>' --decision-count <N>`
+Code: node $P/scripts/mcts_compute.js dong-jing --message '<msg>' --decision-count <N>
 
 ---
 
 ## 0.2 Technical Constraint Checklist
 
-Code: `node $P/scripts/mcts_guard.js constraint-checklist` (9 items: methodology, resources_external, structure, compliance, performance, safety, time_budget, legacy_constraints, stakeholder_preference)
+Code: node $P/scripts/mcts_guard.js constraint-checklist (9 items: methodology, resources_external, structure, compliance, performance, safety, time_budget, legacy_constraints, stakeholder_preference)
 
 Items with auto_detect=true → check from available materials. auto_detect=false → MUST ask user.
 
@@ -154,12 +154,12 @@ Hard constraint violated → eliminate solution. Soft → lower match score M.
 
 ## Constraint Output Format
 
-```
+
 【Requirement Constraint List】
  Task: [xxx]
  Hard: [✓/✗] constraint (source)
  Soft: [ ] constraint (source, unconfirmed)
  Sources: User=N, Code=N, Inferred=N
-```
 
-Template: `node $P/scripts/mcts.js template constraint-list --data '<JSON>'`
+
+Template: node $P/scripts/mcts.js template constraint-list --data '<JSON>'

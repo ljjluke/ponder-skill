@@ -5,7 +5,7 @@ description: TDL (Temporal Difference Learning) Engine's core inference rules. B
 
 # TD Learning Engine
 
-> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):****
 > 1. **KNOWLEDGE LIFECYCLE**: HYPOTHESIS(0.1) → PROVISIONAL(0.3) → CONFIRMED(1.0) → DISPUTED(0.2) → REFUTED(0.0). SLEEPING(0.15) after 30d unused, ARCHIVED after 90d.
@@ -13,7 +13,7 @@ description: TDL (Temporal Difference Learning) Engine's core inference rules. B
 > 3. **RECALL HIERARCHY**: ①Associative recall (most relevant first) → ②Fragment completion (fill gaps from memory) → ③External verification (web/user). Don't trust recalled knowledge blindly — verify when uncertain.
 > 4. **⛔ MEMORY AGENT**: 6 checkpoints MUST execute via direct CLI calls (no daemon):
 >    pre_engine→during_diverge→post_simulate→complete→pre_converge→post_execution→session_end
->    Run `node $P/scripts/mcts_guard.js memory-agent-guard` to verify.
+>    Run node $P/scripts/mcts_guard.js memory-agent-guard to verify.
 >    **⛔ ENFORCEMENT**: After Decision Report, MUST output checkpoint verification block.
 >    Collect ashi point IDs throughout session, pass to session-end at end.
 
@@ -38,11 +38,11 @@ $$V(s_t) \leftarrow V(s_t) + \alpha \times TD\_error$$
 
 ### Inference Mapping
 
-```
+
 TD_target = Local feedback + γ × Expected value of subsequent steps
 TD_error = TD_target - Old expected value of current step
 New expected value = Old expected value + α × TD_error
-```
+
 
 | Formula Symbol | Inference Correspondence | Acquisition Method |
 |---------------|-------------------------|---------------------|
@@ -60,7 +60,7 @@ New expected value = Old expected value + α × TD_error
 
 Feedback collection occurs after each step of task execution:
 
-```
+
 r_t =
   +1.0  − Full success (all objectives met)
   +0.5  − Partial success (main objective met, minor gaps)
@@ -69,12 +69,12 @@ r_t =
   -0.7  − Major failure (core objective not met)
   -1.0  − Catastrophic failure (objective failed with severe consequences)
 
-Code: `node $P/scripts/mcts.js compute get-reward-signal --type <type>`
-```
+Code: node $P/scripts/mcts.js compute get-reward-signal --type <type>
+
 
 ### Terminal State Value
 
-```
+
 V(s_terminal) =
   +1.0  − Goal fully achieved (all objectives satisfied)
   +0.5  − Partial achievement (main goal met, edge cases unhandled)
@@ -82,8 +82,8 @@ V(s_terminal) =
   -0.5  − Collateral damage (achieved A but harmed B)
   -1.0  − Goal failed (need alternative approach)
 
-Code: `node $P/scripts/mcts.js compute get-terminal-value --type <type>`
-```
+Code: node $P/scripts/mcts.js compute get-terminal-value --type <type>
+
 
 ---
 
@@ -105,9 +105,9 @@ Academic support: TD learning is essentially incremental value function approxim
 
 ### Gamma Discounted Backpropagation
 
-Inference rules ported from tetris_mcts's `backup_trace_obs` function:
+Inference rules ported from tetris_mcts's backup_trace_obs function:
 
-```
+
 Input: Decision trace [s_0, s_1, ..., s_T], leaf node value V_leaf, 
        leaf node variance σ²_leaf
 
@@ -130,7 +130,7 @@ Traverse backwards from t=T to t=0:
     
     4. Gamma discount then pass to previous node
        current_value = γ × V_corrected + score(s_t)
-```
+
 
 ### Learning Rate α Selection
 
@@ -141,7 +141,7 @@ Traverse backwards from t=T to t=0:
 | 21-100 times | 0.1 | Stable learning |
 | >100 times | 0.05 | Fine-tuning, prevent oscillation |
 
-Code: `node $P/scripts/mcts.js compute get-learning-rate --n <N>`
+Code: node $P/scripts/mcts.js compute get-learning-rate --n <N>
 
 ---
 
@@ -149,7 +149,7 @@ Code: `node $P/scripts/mcts.js compute get-learning-rate --n <N>`
 
 Ported from tetris_mcts's Welford online variance algorithm:
 
-```
+
 Variance Update (single step):
     Input: Historical mean μ_old, historical M2_old, count n, new value x
     
@@ -169,15 +169,15 @@ Variance Update (batch, for eligibility trace backpropagation):
     for i = k-1 to 1:
         discounted = γ × current_value + x_i
         current_value = discounted
-```
+
 
 ### Variance Usage Rules
 
-```
+
 Variance→Confidence mapping:
-  `node $P/scripts/mcts_compute.js` get_confidence_level
+  node $P/scripts/mcts_compute.js get_confidence_level
   σ²<0.1→High | 0.1~0.3→Medium | ≥0.3→Low
-```
+
 
 ---
 
@@ -185,7 +185,7 @@ Variance→Confidence mapping:
 
 Ported from tetris_mcts's projection mechanism:
 
-```
+
 Concept: Two "identical" state features should share knowledge graph query
 
 In Claude Code, state "equality" is determined by state feature vector:
@@ -205,8 +205,8 @@ Query Rules:
   Partial match → Return closest entry + mark "partial match"
   No match → Return empty (cold start)
 
-Code: `node $P/scripts/mcts.js compute project-state --state_vector '<JSON>'`
-```
+Code: node $P/scripts/mcts.js compute project-state --state_vector '<JSON>'
+
 
 ---
 
@@ -218,7 +218,7 @@ Ported from TD(λ) algorithm:
 
 Eligibility trace solves "credit assignment" problem — when final feedback is received, **which steps should be responsible for this result?**
 
-```
+
 Simulation scenario:
   Step 1: Chose Solution A        ← Is this the key decision?
   Step 2: Executed action X          ← Or here?
@@ -228,25 +228,25 @@ Simulation scenario:
     Step 1 gets 20% of credit
     Step 2 gets 80% of credit
     Step 3 gets 100% of credit
-```
+
 
 ### Rules
 
-```
+
 Eligibility trace decay: Step t's eligibility = λ^(T-t)
-Recommended λ: `node $P/scripts/mcts_compute.js get-lambda --steps <N>`
+Recommended λ: node $P/scripts/mcts_compute.js get-lambda --steps <N>
 → 1-3 steps: 0.0 | 4-8 steps: 0.5 | 9+ steps: 0.8
-```
+
 
 ---
 
 ## Experience Replay and Online Learning
 
-Ported from tetris_mcts's `store_nodes` and `train_nodes`:
+Ported from tetris_mcts's store_nodes and train_nodes:
 
 ### Experience Collection
 
-```
+
 After each search completes, collect following experiences:
   - state: Current state feature vector
   - value: Value estimate from search
@@ -256,11 +256,11 @@ After each search completes, collect following experiences:
 Storage Conditions:
   - Visit count >= min_visits_to_store (default=10)
   - Non-terminal state (terminal state V=0, no learning value)
-```
+
 
 ### Experience Replay
 
-```
+
 When enough experience collected (N >= threshold):
   1. Aggregate all experiences
   2. Sort by weight, keep Top-K
@@ -270,7 +270,7 @@ When enough experience collected (N >= threshold):
 Threshold Design:
   min_experiences = 20  (Minimum 20 experiences before replay)
   max_experiences = 500 (Maximum 500 retained, discard old data if exceeded)
-```
+
 
 ---
 
@@ -282,7 +282,7 @@ This is this engine's core upgrade — from "one row per feature aggregate stati
 
 Old mode (aggregate statistics) cannot handle scenarios:
 
-```
+
 Old mode: {CORRECTIVE, INTERFACE, LOW} → q=0.85, n=30, σ²=0.05
 
 Problem 1: If this 0.85 was data under methodology/toolset v1, after methodology/toolset
@@ -295,13 +295,13 @@ Problem 2: If this 0.85 knowledge itself is wrong (initial data bias)
 Problem 3: If later verified new knowledge 0.30 is also wrong, old
            knowledge 0.85 was actually correct
            → Old value already overwritten, cannot rollback
-```
+
 
 ### New Mode: Knowledge Entry + State Machine
 
 Each piece of knowledge is an independent entry with its own lifecycle:
 
-```
+
 Knowledge Entry = {
     id: "K001",                    // Unique identifier
     feature_key: "CORRECTIVE|INTERFACE|LOW", // State feature
@@ -319,13 +319,13 @@ Knowledge Entry = {
     source: "Experience accumulation (30 tasks)",
     conflict_log: []               // Conflict records
 }
-```
+
 
 ### Knowledge State Machine
 
 Each knowledge entry undergoes following state transitions in its lifecycle:
 
-```
+
                         ┌─────────────────────┐
                         │   HYPOTHESIS        │  ← Initial state: new knowledge,
                         │   (Hypothesis)       │    not yet verified
@@ -393,13 +393,13 @@ Each knowledge entry undergoes following state transitions in its lifecycle:
           │   for exploration   │
           │   guidance)         │
           └─────────────────────┘
-```
+
 
 ### State Transition Rules
 
 State transitions calculated by code engine:
-`node $P/scripts/mcts_compute.js check_status_transition`
-Weight query: `node $P/scripts/mcts_compute.js get-status-weight --status <status>`
+node $P/scripts/mcts_compute.js check_status_transition
+Weight query: node $P/scripts/mcts_compute.js get-status-weight --status <status>
 
 Core rules:
   HYPOTHESIS→(verified 1 time)→PROVISIONAL/REFUTED |
@@ -434,7 +434,7 @@ This engine simulates this human brain process with three stages:
 
 #### Recall Process Overview
 
-```
+
 Query Request: {Current task description, Current context}
 
           ┌─────────────────────────────────┐
@@ -466,7 +466,7 @@ Query Request: {Current task description, Current context}
           │  → Look up resources/ask user   │
           │    to complete                  │
           └─────────────────────────────────┘
-```
+
 
 ---
 
@@ -474,7 +474,7 @@ Query Request: {Current task description, Current context}
 
 Not "query with feature vector", but simulating human brain's "see problem, recall relevant experience".
 
-```
+
 Association Methods:
 
 ① Direct Association (strongest memories surface first)
@@ -507,11 +507,11 @@ Association Output:
     "Recalled K001: Previous project had similar structural failure...
      → Remember it was structural context, but different methodology,
        uncertain if applicable"
-```
+
 
 ##### Association Surfacing Rules
 
-```
+
 Not "query all knowledge then sort", but "most relevant naturally surfaces".
 
 Surfacing Priority:
@@ -528,7 +528,7 @@ Surfacing Priority:
      → "Knowledge that was disputed/rolled back is more memorable"
 
 Surfacing Count: Generally 2~4 entries, >5 truncated to top-3, 0→external verification
-```
+
 
 ---
 
@@ -536,7 +536,7 @@ Surfacing Count: Generally 2~4 entries, >5 truncated to top-3, 0→external veri
 
 Recalled knowledge is often incomplete. Need to follow existing fragments to associate outward, complete the picture.
 
-```
+
 Types of Incompleteness:
 
 ① Value Fuzzy: "Remember last time this worked well, but not sure exactly
@@ -558,11 +558,11 @@ Types of Incompleteness:
    → Complete: Check that entry's side effect records or linked
                contradiction reports
    → If no records → Mark "result incomplete"
-```
+
 
 ##### Fragment Completion Methods
 
-```
+
 Method 1: Follow fragments to associate (no need to look up external resources)
 
   "Remember it was patient intake validation process issue..."
@@ -591,11 +591,11 @@ Method 2: Related knowledge completion (check other entries in knowledge graph)
   - Core info: Known
   - Detail info: Completed from K008
   - Incompleteness level: Complete
-```
+
 
 ##### Three States After Completion
 
-```
+
 Post-completion Assessment:
 
   Complete: All key info available → Can use directly for simulation
@@ -608,7 +608,7 @@ Post-completion Assessment:
   
   Severely Incomplete: Core info missing → Enter Step 3 external verification
     "Only remember something happened, but no clue how solved"
-```
+
 
 ---
 
@@ -616,7 +616,7 @@ Post-completion Assessment:
 
 If still incomplete after fragment completion, or knowledge itself may be outdated, need to look up external resources.
 
-```
+
 Trigger Conditions:
   ① Still "severely incomplete" after fragment completion
   ② Knowledge is CONFIRMED but last verification >30 days (may be outdated)
@@ -641,11 +641,11 @@ Verification Methods (from lowest to highest cost):
     "I haven't touched this new technology, need to check docs"
     → Cost: High (need web search)
     → Applicable: New knowledge/unfamiliar domains
-```
+
 
 ##### Knowledge Update After Verification
 
-```
+
 External verification is not just "complete current gap", but also write
 verification result back to knowledge graph:
 
@@ -657,13 +657,13 @@ verification result back to knowledge graph:
   ④ If confirmed knowledge still valid → Update last_verified time
 
 This way, next recall will have more complete, more accurate knowledge.
-```
+
 
 ---
 
 #### Core Difference from Old Approach
 
-```
+
 Old Approach (Multi-path Parallel Recall):
   Input → 5 paths query simultaneously → Score sort → Top-5 → Use directly
   Problem: Complex, rigid, recalled knowledge treated as truth
@@ -672,13 +672,13 @@ New Approach (Associative Recall + Fragment Completion):
   Input → Most relevant naturally surfaces → Follow fragments to complete →
   If incomplete, look up → Confirm before use
   Advantage: Simple, flexible, knows "memory may not be correct"
-```
+
 
 ### Simulation Contradiction Report
 
 When Simulate Engine discovers certain knowledge inaccurate, generate contradiction report:
 
-```
+
 ────────────────────────────────────────
   Value Function Contradiction Report
 ────────────────────────────────────────
@@ -695,7 +695,7 @@ When Simulate Engine discovers certain knowledge inaccurate, generate contradict
     - If methodology/toolset v2 knowledge entry exists: Reference it
     - If not: Create new HYPOTHESIS entry K004
 ────────────────────────────────────────
-```
+
 
 ### Contradiction Level and State Transition
 
@@ -709,7 +709,7 @@ When Simulate Engine discovers certain knowledge inaccurate, generate contradict
 
 When discovering overturned knowledge was actually correct:
 
-```
+
 Rollback Trigger Condition:
   Some DISPUTED or REFUTED knowledge, subsequent verification discovers
   it was actually correct
@@ -743,13 +743,13 @@ Rollback Example:
       methodology/toolset v2
     → Rollback: K001 restored to CONFIRMED, K002 marked as REFUTED
     → Knowledge change log records this complete back-and-forth
-```
+
 
 ### Knowledge Change Log
 
 Each knowledge entry's status change is recorded, forming complete historical trace:
 
-```
+
 Knowledge Change Log:
   # K001 Lifecycle
   2026-05-01: K001 created (CORRECTIVE|INTERFACE|LOW, q=0.90, HYPOTHESIS)
@@ -769,7 +769,7 @@ Knowledge Change Log:
   DISPUTED: None
   REFUTED: K002(q=0.30, methodology/toolset v2, refuted)
   HYPOTHESIS: None
-```
+
 
 ### Value Function Storage Format
 
@@ -778,6 +778,6 @@ Memory file stores complete knowledge graph. **Knowledge divided into "active" a
 #### Storage and Management
 
 Archive/recall/cleanup operations:
-`node $P/scripts/mcts.js mma status`
-Storage path: `~/.claude/data/skills/mcts-td-planner/memory/`
+node $P/scripts/mcts.js mma status
+Storage path: ~/.claude/data/skills/mcts-td-planner/memory/
 (physically isolated from skill code)

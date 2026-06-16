@@ -7,13 +7,13 @@ description: General decision task state feature definitions, simulation output 
 
 ## Overview
 
-This policy file defines general decision simulation rules, applicable to any domain. **This is a reference file; for complete rules during engine execution, refer to engine files in `engine/` directory**:
+This policy file defines general decision simulation rules, applicable to any domain. **This is a reference file; for complete rules during engine execution, refer to engine files in engine/ directory**:
 
 | Topic | Reference File (More Detailed) |
 |-------|-------------------------------|
-| Diverge/Solution Generation | [`engine/mcts-diverge.md`](../engine/mcts-diverge.md) |
-| Round-by-round Simulation | [`engine/mcts-simulate.md`](../engine/mcts-simulate.md) |
-| Aggregate/Self-check/Blindspot Audit | [`engine/mcts-converge.md`](../engine/mcts-converge.md) |
+| Diverge/Solution Generation | [engine/mcts-diverge.md](../engine/mcts-diverge.md) |
+| Round-by-round Simulation | [engine/mcts-simulate.md](../engine/mcts-simulate.md) |
+| Aggregate/Self-check/Blindspot Audit | [engine/mcts-converge.md](../engine/mcts-converge.md) |
 
 This file contains:
 1. Solution generation rules (don't list solutions from thin air, extract from resources)
@@ -41,7 +41,7 @@ Solutions are not thought up from thin air, must be based on one of the followin
 
 ### Solution Description Format
 
-```
+
 Solution A: [Name]
   Basis: [Source Type] [Specific Reference]
   Approach: [One-sentence core approach]
@@ -51,11 +51,11 @@ Solution B: [Name]
   Basis: [Source Type] [Specific Reference]
   Approach: [One-sentence core approach]
   Cost: [Low/Medium/High]
-```
+
 
 ### Solution Diversity Rules
 
-```
+
 Minimum 4 solutions, maximum 8 (Perspective Wheel mechanism, 1 solution per perspective).
 Solutions must have substantial difference (must be different perspectives,
 not just different parameters).
@@ -72,7 +72,7 @@ Bad Example:
   Solution B: "Also use X but add Y component"
   → Essentially the same solution, just different details
   → Merge into one solution
-```
+
 
 ---
 
@@ -82,7 +82,7 @@ After each solution simulation completes, must output report in following standa
 
 ### Complete Simulation Report Template
 
-```
+
 ═══════════════════════════════════════════════════════
 Simulated Solution: [Solution Name]
 Knowledge Injection:
@@ -122,18 +122,18 @@ Step 3: [Endpoint Assessment]
     2. [Risk + Impact Level]
     3. [Risk + Impact Level]
   Recommendation: [Strongly Recommended / Recommended / Optional / Not Recommended]
-```
+
 
 ### Quick Simulation Report Template (for rough filter stage)
 
-```
+
 Solution: [Name]
 Feasibility: [0-1]
 Cost-Benefit: [0-1]
 Risk: [0-1]
 Rough Filter Score: = Feasibility×0.5 + Cost-Benefit×0.3 + (1-Risk)×0.2
 Keep/Eliminate: [Keep / Eliminate]
-```
+
 
 ---
 
@@ -141,7 +141,7 @@ Keep/Eliminate: [Keep / Eliminate]
 
 ### Expected Value V (0.0~1.0)
 
-```
+
 V = 1.0: Solution perfect, no side effects, success in one attempt
 V = 0.9: Solution excellent, may have minor adjustments, overall smooth
 V = 0.8: Solution good, expect 1-2 minor bumps
@@ -153,11 +153,11 @@ V = 0.3: Solution high risk, not recommended
 V = 0.2: Solution likely to fail
 V = 0.1: Solution basically infeasible
 V = 0.0: Solution completely infeasible
-```
+
 
 ### Variance σ² (0.0~1.0)
 
-```
+
 σ² = 0.0~0.05: Highly certain (similar tasks done many times)
 σ² = 0.05~0.15: Fairly certain
 σ² = 0.15~0.30: Some uncertainty
@@ -168,7 +168,7 @@ Variance Sources:
   - Low variance: Matches historical success pattern + Current context clear
   - Medium variance: Partial history match + Context has fuzzy points
   - High variance: No history match + Complex context + Unfamiliar methodology
-```
+
 
 ### Confidence Level
 
@@ -186,7 +186,7 @@ Variance Sources:
 
 After all solutions simulated, output aggregate comparison table:
 
-```
+
 ┌───────────┬───────┬────────┬────────────┬──────────────────────────┐
 │ Solution  │ Value │ Variance│ Confidence │ Key Risks                │
 ├───────────┼───────┼────────┼────────────┼──────────────────────────┤
@@ -198,16 +198,16 @@ After all solutions simulated, output aggregate comparison table:
 │           │       │        │            │ methodology adoption     │
 └───────────┴───────┴────────┴────────────┴──────────────────────────┘
 
-CLT-UCB: `node $P/scripts/mcts_compute.js` compute_clt_ucb
+CLT-UCB: node $P/scripts/mcts_compute.js compute_clt_ucb
 φ⁻¹(N): N=2→1.5, 3→1.0, 4→0.8, 5→0.7, n_i is solution simulation count
-```
+
 
 ### Handling Close Rankings
 
-```
-Close ranking: `node $P/scripts/mcts_compute.js handle_close_ranking`
+
+Close ranking: node $P/scripts/mcts_compute.js handle_close_ranking
 UCB diff <0.05 → Detailed comparison (V/σ²), diff <0.02 → Suggest user decision
-```
+
 
 ---
 
@@ -244,13 +244,13 @@ Ported from tetris_mcts's policy module, select different policies by stage:
 
 ### Memory File Path
 
-```
+
 memory/mcts-td-value-archive.md
-```
+
 
 ### Storage Format
 
-```markdown
+markdown
 ---
 name: mcts-td-value-archive
 description: MCTS-TD Engine cross-session value function archive
@@ -279,11 +279,11 @@ metadata:
 ## Cross-session Knowledge
   - [2026-06-01] Stakeholder preference: Prefers conservative/defensive approach
   - [2026-06-02] Constraint: Storage layer not allowed to use third-party solutions directly
-```
+
 
 ### Update Rules
 
-```
+
 After execution completes, execute TD update:
   1. Collect actual results:
      - Did execution achieve expected outcome
@@ -317,4 +317,3 @@ After execution completes, execute TD update:
      If failed: Record execution path to "Failure Patterns"
   
   5. Write to memory file
-```

@@ -22,17 +22,17 @@ You will be told which scenario to simulate:
 
 ## Input
 
-```
+
 Solution: [name]
 Description: [what it does]
 Assumptions: [what must be true]
 Constraints: [from user]
 Scenario: [optimistic | realistic | pessimistic | adversarial]
-```
+
 
 ## Output
 
-```
+
 Step 1: [prediction] (based on [fact from input])
 Step 2: [prediction]
 ...
@@ -41,4 +41,4 @@ Final:
   V: [0-1]
   σ²: [0-0.5]
   Breaking point: [which assumption, if false, kills this solution]
-```
+

@@ -5,12 +5,12 @@ description: MCTS-TD Step 3~3.6 — Converge Engine. CLT-UCB ranking + self-chec
 
 # Step 3~3.6: Converge Engine
 
-> **Path note**: Commands use `node $P/scripts/mcts.js` (relative). When executing, use `node <plugin>/scripts/mcts.js <args>` — `<plugin>` = path from SessionStart `[MCTS-TD] Plugin:`.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. Phases: Aggregate → Self-Check → Blindspot → Decision Report
 > 3. Rank ALL solutions (not just top 3) with n/V/σ²/confidence + multi-layer breakdown
-> 4. SELF-CHECK mandatory: `self-check-guard` | 5. COMPLIANCE: `compliance-report` before decision
+> 4. SELF-CHECK mandatory: self-check-guard | 5. COMPLIANCE: compliance-report before decision
 
 ---
 
@@ -30,18 +30,18 @@ Academic support: Herbert Simon "Bounded Rationality" (1956) — When optimal is
 
 ### Multi-Layer Ranking
 
-```
+
 Rank │ Solution │ V_final │ V_feas │ V_robust │ V_persp │ σ² │ n │ Conf
 ─────┼──────────┼─────────┼────────┼──────────┼─────────┼────┼───┼──────
   1  │ [...]    │ [...]   │ [...]  │ [...]    │ [...]   │ .. │ . │ HIGH
-```
+
 
 V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + Body-Use bonus
-Code: `rank --solutions '<JSON>'`
+Code: rank --solutions '<JSON>'
 
 ### Convergence
 
-`check-final-convergence`: Root n≥solutions×4, 1st n≥5, σ²<0.10, V gap >0.05
+check-final-convergence: Root n≥solutions×4, 1st n≥5, σ²<0.10, V gap >0.05
 Not converged → +3 rounds (max 2×), still not → mark "not fully converged"
 
 ### Display + Confirm
@@ -77,18 +77,18 @@ Before self-check, **display MCTS conclusion to user** with ranking + best path 
    - Over-analyzing a simple problem (靜→動 bias)? → simplify, decide
    - Under-analyzing a complex problem (動→靜 bias)? → slow down, more sim
 
-```
+
 Self-Check Verdict:
   ✅ Pass — all 5 questions satisfied
   ⚠️ Risk — specific concern, recommend user confirm (use AskUserQuestion)
   ❌ Not passed — re-simulate with adjusted assumptions
-```
 
-Template: `node $P/scripts/mcts.js template self-check --data '<JSON>'`
 
-Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
+Template: node $P/scripts/mcts.js template self-check --data '<JSON>'
 
-**Circuit breaker**: `get-fuse-mode --accuracy <float> --consecutive-bad <int>`
+Code: handle-self-check --conclusion <Pass/Risk/NotPassed>
+
+**Circuit breaker**: get-fuse-mode --accuracy <float> --consecutive-bad <int>
 <70% → simplified | <50% → ask user | 3× <50% → suggest manual
 
 ---
@@ -122,7 +122,7 @@ Code: `handle-self-check --conclusion <Pass/Risk/NotPassed>`
 - Same yan different yi → keep both (fundamental disagreement, need user clarification)
 - Gap affects ranking → re-simulate → mark for user confirmation
 
-Code: `yan-yi-check --statements '<JSON>' --interpretations '<JSON>'`
+Code: yan-yi-check --statements '<JSON>' --interpretations '<JSON>'
 
 ### Blindspot Audit Framework
 
@@ -135,7 +135,7 @@ Code: `yan-yi-check --statements '<JSON>' --interpretations '<JSON>'`
 
 ## Re-simulate Mode
 
-`re-simulation-decide`: 2nd place has sim → compare | no sim → quick 2-step | all affected → return to Diverge
+re-simulation-decide: 2nd place has sim → compare | no sim → quick 2-step | all affected → return to Diverge
 Update: failure → knowledge graph, new constraints → list, success → full trace
 
 ---
@@ -150,16 +150,16 @@ Update: failure → knowledge graph, new constraints → list, success → full 
 
 ### 理事 (Li-Shi) Dual-Layer Write-back
 
-- **Li(Principle)**: universal pattern → tag `layer:principle`, cross-domain reusable, CONFIRMED after 3+ validations
-- **Shi(Phenomenon)**: concrete case → tag `layer:phenomenon`, same-domain reference
+- **Li(Principle)**: universal pattern → tag layer:principle, cross-domain reusable, CONFIRMED after 3+ validations
+- **Shi(Phenomenon)**: concrete case → tag layer:phenomenon, same-domain reference
 
-Code: `li-shi-split --insight '<JSON>'`
+Code: li-shi-split --insight '<JSON>'
 
 ---
 
 ## Decision Report Format
 
-```
+
 【MCTS-TD Decision Report】
  Task: [...] | Date: [...] | Iterations: [N] | Solutions: [5-8]
 
@@ -171,7 +171,7 @@ Code: `li-shi-split --insight '<JSON>'`
  言意 Gap Check: ✅/⚠️ [specific gaps]
 
  Execution Plan: [solution] → [steps] → [key risks] | [fallback]
- Phase 3.5: `should-ask-user --ranked '<JSON>'`
+ Phase 3.5: should-ask-user --ranked '<JSON>'
 
  Knowledge Update: [new knowledge] [TD error: V_predicted → V_actual]
 
@@ -185,7 +185,7 @@ Code: `li-shi-split --insight '<JSON>'`
 
  Session Points: [list of ashi point IDs created this session]
 
- Language Guard: `check --user-lang <lang> --output "..."` [PASS/FAIL]
-```
+ Language Guard: check --user-lang <lang> --output "..." [PASS/FAIL]
 
-Template: `node $P/scripts/mcts.js template decision-report --data '<JSON>'`
+
+Template: node $P/scripts/mcts.js template decision-report --data '<JSON>'
