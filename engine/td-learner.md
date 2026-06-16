@@ -107,7 +107,7 @@ Academic support: TD learning is essentially incremental value function approxim
 
 Inference rules ported from tetris_mcts's backup_trace_obs function:
 
-
+```text
 Input: Decision trace [s_0, s_1, ..., s_T], leaf node value V_leaf, 
        leaf node variance σ²_leaf
 
@@ -130,6 +130,7 @@ Traverse backwards from t=T to t=0:
     
     4. Gamma discount then pass to previous node
        current_value = γ × V_corrected + score(s_t)
+```
 
 
 ### Learning Rate α Selection
@@ -149,7 +150,7 @@ Code: node $P/scripts/mcts.js compute get-learning-rate --n <N>
 
 Ported from tetris_mcts's Welford online variance algorithm:
 
-
+```text
 Variance Update (single step):
     Input: Historical mean μ_old, historical M2_old, count n, new value x
     
@@ -169,7 +170,7 @@ Variance Update (batch, for eligibility trace backpropagation):
     for i = k-1 to 1:
         discounted = γ × current_value + x_i
         current_value = discounted
-
+```
 
 ### Variance Usage Rules
 

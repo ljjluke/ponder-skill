@@ -83,6 +83,7 @@ After each solution simulation completes, must output report in following standa
 ### Complete Simulation Report Template
 
 
+```text
 ═══════════════════════════════════════════════════════
 Simulated Solution: [Solution Name]
 Knowledge Injection:
@@ -90,6 +91,7 @@ Knowledge Injection:
   - Decision Pattern: [Referenced success/failure patterns]
   - Context: [Relevant current session knowledge]
 ═══════════════════════════════════════════════════════
+```
 
 Step 1: [Starting Action]
   → Operation Description: [Specifically what to do]

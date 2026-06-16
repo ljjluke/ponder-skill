@@ -66,6 +66,7 @@ Cross-dimension validation (5 pairs from tension scan):
 
 
 【Requirement Portrait · Wuzhen Integrated Assessment】
+```text
  Task: [xxx]
  ① 天(Tian) [7/10] sufficient — Stage: ... | Time: ... | Env: ...
  ② 地(Di)   [4/10] partial ← ask — [what's missing]
@@ -76,6 +77,7 @@ Cross-dimension validation (5 pairs from tension scan):
  Questions: [Q1] [Q2] [Q3]
  Cross-dimension: [findings]
  Root (Ben): [dimension] | Absence: [alerts] | Tension: [hotspots]
+```
 
 
 Template: node $P/scripts/mcts.js template portrait --data '<JSON>'
@@ -156,10 +158,12 @@ Hard constraint violated → eliminate solution. Soft → lower match score M.
 
 
 【Requirement Constraint List】
+```text
  Task: [xxx]
  Hard: [✓/✗] constraint (source)
  Soft: [ ] constraint (source, unconfirmed)
  Sources: User=N, Code=N, Inferred=N
+```
 
 
 Template: node $P/scripts/mcts.js template constraint-list --data '<JSON>'

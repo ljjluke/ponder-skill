@@ -40,7 +40,7 @@ THE IS NOT just a thought process. Every node is a real data object with CRUD op
 
 API: node $P/scripts/mcts.js tree <command>
 
-
+```text
 Node = { id, description, parentId, childIds[],
   n, w, V, σ²,                          // MCTS stats
   nodeType: ACTION|RISK|FALLBACK|TERMINAL,
@@ -48,13 +48,14 @@ Node = { id, description, parentId, childIds[],
   mutation: [0,0,0,0,0],               // 5-bit: [Tian,Di,Ren,Fa,Wu] 0=stable 1=volatile
   solutionId, lastSelected, created
 }
+```
 
 
 ### MCTS Round Cycle — via Real Tree
 
 Each round MUST use the real tree CLI. No text-simulated trees.
 
-
+```text
 Step ① SELECTION:
   node $P/scripts/mcts.js tree select <node-id> --session <sid>
   → Returns UCB-ranked children. Pick the top one.
@@ -78,6 +79,7 @@ Step ④ BACKPROPAGATION:
 Multi-round shortcut:
   node $P/scripts/mcts.js tree round-start --session <sid>
   → One complete round: select + (LLM adds children) + simulate + backprop
+```
 
 
 ### Quick Reference
