@@ -73,18 +73,26 @@ license: MIT
 
 ---
 
-### Step 4: 推演 (MCTS)
+### Step 4: 推演 (MCTS — 独立子Agent模拟)
 
-**⛔ 必须生成至少 2 个方案, 逐个推演, 给出推荐。**
+**⛔ 每个方案必须由独立的子 Agent 推演。不允许 LLM 自己在脑子里比较。不允许交叉污染。**
 
-推演过程:
+流程:
+
 ```
-方案A: [一句话描述]
-  优势: ... | 风险: ...
-方案B: [一句话描述]
-  优势: ... | 风险: ...
+① 列出 ≥2 个方案, 每个方案写入 MCTS 真实树:
+   node scripts/mcts.js tree init --solutions '<json>'
+   
+② 对每个方案, 通过子 Agent 独立模拟:
+   Agent(mcts-simulator) with prompt:
+   "Solution: [方案名] | Description: [方案] | Assumptions: [约束]"
+   → 得到 V, σ², 步骤预测, 关键风险
 
-推荐: [方案] — [理由]
+③ 将模拟结果写入 MCTS 树:
+   node scripts/mcts.js tree simulate <leaf-id> --v <V> --sigma2 <σ²>
+   node scripts/mcts.js tree backprop <leaf-id>
+
+④ 所有方案模拟完成后, 对比结果输出推荐
 ```
 
 输出: 方案对比 + 推荐 + 风险(如有)。

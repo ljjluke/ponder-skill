@@ -53,15 +53,14 @@ If verdict is BLOCKED → expand facets, list alternatives, acquire info. Do NOT
 - Output: solution list + facet coverage matrix
 
 ### 2. Simulate Engine (engine/mcts-simulate.md)
-MCTS tree search — multi-round iteration:
-① Selection: UCB + knowledge graph bias
-② Expansion: new execution branches
-③ Simulation: roll out to termination (with recursive depth guard)
-④ Backpropagation: Welford online update
-⑤ Knowledge Update: write back high-value/failure experiences
+MCTS tree search — **each solution simulated independently by a sub-agent** to prevent cross-contamination:
+① Selection: UCB via `mcts_tree.js` CLI
+② Expansion: spawn sub-agent for each solution via `Agent(mcts-simulator)`
+③ Simulation: sub-agent simulates step by step, returns V + σ² + risks
+④ Backpropagation: Welford online update via `mcts_tree.js` CLI
+⑤ Knowledge Update: write back to MMA via `mma remember`
 
 Stop on convergence (V stable | sufficient n | low σ²).
-Show tree state summary after each round.
 
 ### 3. Converge Engine (engine/mcts-converge.md)
 ① Rank by converged V
