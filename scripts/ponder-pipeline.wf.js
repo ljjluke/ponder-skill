@@ -536,7 +536,11 @@ C的陈词: ${debateArgs[2].argument}`, {
   step5 = await agent(`你是Ponder框架的"收敛师"。你的任务是执行收敛判断和自检。
 
 ${memoryRecallNote}
-${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
+${fixContext ? '【本轮是修复重做】
+上一轮验证发现的问题:
+' + fixContext + '
+请务必解决这些问题。
+' : ''}
 输入（来自Step4推演结果）:
 ${JSON.stringify(step4, null, 2)}
 
@@ -544,52 +548,25 @@ ${JSON.stringify(step4, null, 2)}
 Step2发散: ${JSON.stringify(step2, null, 2)}
 Step3八卦镜: ${JSON.stringify(step3, null, 2)}
 DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
-社会认知辩论:
-  A(乐观): ${debateArgs[0].argument.substring(0, 200)}
-  B(悲观): ${debateArgs[1].argument.substring(0, 200)}
-  C(异见): ${debateArgs[2].argument.substring(0, 200)}
-  A回应: ${debateRebuttals[0].rebuttal.substring(0, 150)}
-  B回应: ${debateRebuttals[1].rebuttal.substring(0, 150)}
-社会认知辩论:
-  A(乐观): ${JSON.stringify(debateArgs[0].argument).substring(0,200)}
-  B(悲观): ${JSON.stringify(debateArgs[1].argument).substring(0,200)}
-  C(异见): ${JSON.stringify(debateArgs[2].argument).substring(0,200)}
-  A回应: ${JSON.stringify(debateRebuttals[0].rebuttal).substring(0,150)}
-  B回应: ${JSON.stringify(debateRebuttals[1].rebuttal).substring(0,150)}
+辩论摘要:
+  正方(推进): ${debateArgs[0].argument.substring(0, 200)}
+  反方(风险): ${debateArgs[1].argument.substring(0, 200)}
+  第三方(新思路): ${debateArgs[2].argument.substring(0, 200)}
 
-【躯体标记信号—情绪作为决策信号】
-Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但无法做决策,
-因为缺少情绪信号来"标记"选项的好坏。
+【自检 = 辩论】— 每个问题先写正方论点, 再写反方论点, 然后判定谁赢。
+反方赢 → passed=false。
 
-在做出最终推荐前:
-1. 回顾Step1-4的所有分析, 感受每个方向的"情绪味道"
-2. 问自己: "如果选择方向A, 我的直觉感受是什么? 不安? 平静? 兴奋?"
-3. 问自己: "历史上类似的情况, 情绪记忆告诉了我什么?"
-4. 如果某个方向在推演中data_sources很少(依赖LLM自身推理而非真实数据),
-   给它一个"怀疑标记"——这不是理性的评分, 而是"信息不足的不安感"
-5. 如果有DMN自由联想的gut_feeling与理性分析矛盾, 不要忽略它,
-社会认知辩论:
-  A(乐观): ${JSON.stringify(debateArgs[0].argument).substring(0,200)}
-  B(悲观): ${JSON.stringify(debateArgs[1].argument).substring(0,200)}
-  C(异见): ${JSON.stringify(debateArgs[2].argument).substring(0,200)}
-  A回应: ${JSON.stringify(debateRebuttals[0].rebuttal).substring(0,150)}
-  B回应: ${JSON.stringify(debateRebuttals[1].rebuttal).substring(0,150)}
-   在结论中标注"直觉提示: [gut_feeling], 但理性分析指向..."
+① 正方:" Step2覆盖全面" 反方:"但X视角被过度依赖" 谁赢?
+② 正方:"异常发现已体现" 反方:"但Y发现被忽略" 谁赢?
+③ 正方:"排除方向Z合理" 反方:"如果Z才是对的呢" 谁赢?
+④ 正方:"推理链完整" 反方:"StepN和StepN+1之间有断裂" 谁赢?
+⑤ 正方:"结论可靠" 反方:"如果完全错了第一步在哪" 谁赢?
 
-5.1 综合判断（用日常语言，不出现框架术语）:
-- what（结论）+ why（Step2→3→4推理链）+ what if wrong（反向假设）
-- 加入躯体标记: "这个结论给我的感觉是[情绪词], 因为[原因]"
+【躯体标记】描述每个方向给你的情绪感受(不安/平静/兴奋/怀疑)
 
-5.2 自检5问（每问必须回答，passed必须true/false）:
-① Step2的6视角是否有过重依赖某个视角？
-② Step3最异常发现是否在结论中体现？
-③ Step4排除的方向理由充分吗？
-④ 推理链是否有断裂？
-⑤ 完全错的话第一步在哪？
+【综合判断】结论+推理链+如果错了+跟踪信号
 
-5.3 有漏洞→标注"待确认"并说明
-
-约束: 自检5问全部回答、all_clear明确、follow_up_signals至少2个、结论含what+why+what_if_wrong`, {
+用户偏好→user_questions`, {
 涉及用户风险偏好的推荐→在 user_questions 中输出让用户选择, 不自己假设。
 如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
     label: '综合判断',
