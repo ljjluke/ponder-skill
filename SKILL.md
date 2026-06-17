@@ -128,9 +128,12 @@ This is NOT a linear "ask 3 questions → done" process. It's a cycle:
 
 **Execution — ONE question per message. Wait for answer. Then next.**
 
+**ALL questions must be multiple-choice with options.** Use AskUserQuestion with predefined options. Do NOT ask open-ended questions — users give vague answers to open questions. Force specificity through options.
+
 ```
-① Start: Ask ONE opening question:
-   "You said [paraphrase] — correct? What haven't I asked?"
+① Start: Ask ONE opening question with options:
+   "You said [paraphrase] — which of these best describes what you want?
+   A) [option 1]  B) [option 2]  C) [option 3]"
    → WAIT for user answer. Read it. Find gaps.
 
 ② Based on the answer, ask ONE follow-up about the dimmest dimension:
