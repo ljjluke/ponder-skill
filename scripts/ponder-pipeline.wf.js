@@ -6,14 +6,14 @@ export const meta = {
   name: 'ponder-pipeline',
   description: 'Structured analysis pipeline: divergence → examination → simulation → debate → convergence → verification',
   phases: [
-    { title: '6尺度发散', detail: '从6个观测位置审视问题' },
-    { title: '八卦镜8维', detail: '8维度交叉检查' },
-    { title: 'DMN间歇', detail: '自由联想期' },
+    { title: '多角度分析', detail: '从6个不同角度审视问题' },
+    { title: '维度检查', detail: '8个维度的系统分析' },
+    { title: '自由联想', detail: '发散性关联思考' },
     { title: '多场景推演', detail: '多个方向的独立模拟' },
-    { title: '社会认知辩论', detail: '多立场观点碰撞' },
-    { title: '综合判断', detail: '收敛分析+自检' },
-    { title: '回溯验证', detail: '验证推理链条' },
-    { title: '独立核验', detail: '从反面角度审查结论' },
+    { title: '多方论证', detail: '不同角度的观点对比' },
+    { title: '综合判断', detail: '多方向综合判断和自审' },
+    { title: '结果回溯', detail: '回溯推理过程' },
+    { title: '结论审查', detail: '从反面审查结论' },
   ],
 }
 
