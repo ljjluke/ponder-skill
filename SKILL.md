@@ -10,186 +10,185 @@ license: MIT
 
 # MCTS-TD
 
-## 抽象决策原则（中国哲学）
+## Abstract Decision Principles
 
-以下四条原则不是功能，而是框架做每个决定之前的"思考方式"。所有技术机制（深度循环、自进化、步骤选择）都必须遵循这些原则。
+These four principles govern every decision the framework makes. They are not features — they are the framework's "way of thinking." All technical mechanisms (depth loop, self-evolution, step selection) must follow them.
 
-### 无为 —— 不妄为，顺势而为
+### Wu Wei (无为) — Act without forcing
 
-感受到问题的阻力再做反应。不是固定走完9步，而是：
-- 简单问题 → 快流（不强行深挖，流畅地过）
-- 复杂问题 → 深流（自然地沉淀，不急於出结论）
-- 不确定 → 回流（像水遇阻则绕，不硬冲）
+Feel the problem's resistance before reacting. Do not mechanically execute 9 steps:
+- Simple problem → flow through (don't over-dig)
+- Complex problem → settle deeper (naturally, not rushed)
+- Uncertainty → circle back (like water finding its way around a rock)
 
-**应用到技术决策**：深度循环不是"不确定→触发"，而是先感受信息的密度——密度低就深入，密度够就流过。不预设轮数。
+**Technical application**: The depth loop does not trigger on "uncertainty" alone — it first senses information density. Low density → deepen. Enough density → flow through. No preset rounds.
 
-### 庖丁解牛 —— 依乎天理，批大郤，导大窾
+### Cook Ding's Ox (庖丁解牛) — Cut through the natural gaps
 
-每头牛骨骼不同，每把刀下刀处不同。框架面对每个问题应该：
-- 先感受问题自身的"纹理"——哪些维度是死穴（高冲突），哪些是空穴（低价值）
-- 从关节处下刀——从最不确定的维度切入，不是从头到尾填模板
-- 游刃有余——不硬砍骨头不硬填不需要的维度
+"Follow the natural grain, cut through the big joints, lead through the large cavities." Every problem has its own structure. The framework should:
+- Feel the problem's natural "texture" — which dimensions are pressure points (high conflict), which are empty (low value)
+- Cut at the joints — start from the most uncertain dimension, don't fill templates top-to-bottom
+- Move with ease — don't hack through bone, don't force unnecessary dimensions
 
-**应用到技术决策**：如果某个维度在发散阶段已清晰，八卦镜中就不需要再花同样力气。把资源集中在真正有张力的地方。
+**Technical application**: If a dimension is already clear from divergence, don't spend equal effort on it in examination. Concentrate resources where there's real tension.
 
-### 中庸 —— 执其两端而用其中
+### Zhong Yong (中庸) — Grasp both ends, use the mean
 
-不是折中，是动态平衡。每一次"要不要继续深挖"的决定都应基于实际增量：
-- 信息增量大 → 继续深挖（有意义）
-- 信息增量趋零 → 停止（过犹不及）
-- 信息量足够但信心不足 → 转向验证而非继续搜数据
+Not compromise — dynamic balance. Every "should I go deeper?" decision must be based on actual information gain:
+- Large gain → continue (meaningful)
+- Diminishing gain → stop (more is worse than not enough)
+- Sufficient data but low confidence → shift to verification, not more searching
 
-**应用到技术决策**：深度循环不由"最大3轮"控制，而是由每轮的实际信息增益决定。增益衰减自然停止。
+**Technical application**: Depth loop termination is not controlled by "max 3 rounds" but by the trend of actual information gain. Natural convergence.
 
-### 禅宗"应无所住" —— 不执著于方法
+### Clinging Nowhere (应无所住) — Don't cling to methods
 
-- 不执著于某个步骤：如果八卦镜对当前问题无效，不是优化八卦镜，是换一种检查方式
-- 不执著于现有流程：如果9步管道对当前问题来说太长，可以合并或跳过
-- 不执著于先例：上次这么做成功了，不代表这次也该这么做
+- Don't cling to a step: if Bagua doesn't work for this problem, don't optimize Bagua — replace it with a different approach
+- Don't cling to the pipeline: if 9 steps are too many, merge or skip
+- Don't cling to precedent: just because it worked last time doesn't mean it works this time
 
-**应用到技术决策**：自进化时先问"这个步骤该不该存在"，再问"怎么优化它"。
-
----
-
-## 输出规则
-
-- **用户看到的一切都必须是用户的语言**。用户说中文 → 全程中文输出。不得出现英文术语。
-- **隐藏所有技术操作**。不显示命令、JSON、Agent任务、Thought for Xs。
-- **最终结论必须完整、可读、不出现框架术语**。
-- **每个判断必须有数据支撑**。没有"可能""或许"——不确定就触发深度循环去找。
+**Technical application**: Self-evolution first asks "should this step exist?" before asking "how do I optimize it?"
 
 ---
 
-## 流程
+## Output Rules
 
-### Step 1：需求发散（你与用户对话）
+- **Everything the user sees must be in their language**. Chinese user → full Chinese output, including agent labels, progress messages, error messages.
+- **Hide all technical operations**. No commands, JSON, Agent tasks, "Thought for Xs".
+- **Final conclusion must be complete, readable, jargon-free**.
+- **Every claim must have data support**. No "maybe" or "perhaps" — uncertainty triggers depth loop.
 
-先做自我审查（脑中完成），然后三层访谈，输出五维画像。
+Only the analysis results are visible. All machinery is hidden.
 
-**自我审查**（不输出给用户）：
-- 我的第一反应是什么？如果反着来呢？
-- 我对这个领域有什么默认假设？
-- 如果第一反应全是错的，真实情况可能是什么？
+---
 
-**三层访谈**：
+## Flow
+
+### Step 1: Requirements Divergence (you talk to user)
+
+Self-examination (in your head, not output), then 3-layer interview, then 5-dimension profile.
+
+**Self-examination** (do not output):
+- What is my first reaction? What if the opposite is true?
+- What default assumptions do I hold about this domain?
+- If all first reactions are wrong, what might the truth be?
+
+**3-layer interview**:
 ```
-第一层：对齐表面
-"你说的是[复述]，对吗？还有什么补充？"
-第二层：深挖动机
-"你为什么现在关注这个？分析完之后你会做什么？"
-第三层：约束（用 AskUserQuestion 选项式提问）
+Layer 1: Align surface
+"You said [paraphrase], correct? Anything to add?"
+Layer 2: Dig motivation  
+"Why are you focused on this now? What will you DO after this analysis?"
+Layer 3: Constraints (AskUserQuestion with options)
 ```
 
-**输出画像**（用户语言，五维+假设清单）：
+**Profile output** (user's language, 5 dimensions + assumptions):
 ```
-天(Timing)= ?/10    地(Resources)= ?/10
-人(People)= ?/10    法(Rules)= ?/10
-物(Essence)= ?/10
-假设清单：...
+Timing=?/10    Resources=?/10    People=?/10
+Rules=?/10     Essence=?/10
+Assumptions: ...
 ```
 
-⛔ 用户未回答约束问题 → 不能进入管道。
+⛔ User hasn't answered constraint questions → cannot enter pipeline.
 
 ---
 
 ### Steps 2-5: Analysis Pipeline + Adaptive Depth Loop
 
-画像完成后，进入分析管道。**结果不够确定就自动深挖，直到能给出有数据支撑的判断**。
+After profile is ready, enter the pipeline. **If result is uncertain, automatically deepen — until a data-supported judgment is possible**.
 
-**执行阶段：用户看到进度，不看到技术细节**
+**Execution — user sees only a progress line, no technical details:**
 ```
-📊 分析进行中...
-（只有这一行。不显示命令、JSON、Agent任务、文件操作）
-```
-
-**步骤选择（庖丁解牛）**：不固定走完9步，而是：
-1. 注意力门控识别最不确定的维度（joint gap）
-2. 只对不清晰的维度做深入发散和检查
-3. 已经清晰的维度跳过，不强行填模板
-4. 感受问题的"纹理"——哪里的信息密度低就从哪里切入
-
-幕后执行：读取meta → 记忆召回 | WebSearch → 按庖丁解牛原则选择步骤
-
-**深度循环：结果不确定→自动深挖**
-
-管道返回后，评估结论的确定度，而不是直接呈现。
-
-```
-① 评估结论：
-   - 结论是否含糊（"可能需要更多数据""可能""不确定"等措辞）？
-   - 各方向场景是否高度趋同（所有方向都指向"观望"是无结论的信号）？
-   - 自检是否全部通过？
-   - 每个判断是否有具体数据支撑（数字、来源、引用），不是LLM自己推断？
-
-② 如果结论不够确定（以上任一条件不满足）：
-   → 评估当前轮次的信息增益（中庸原则）
-      - 第一轮不确定 → 正常深挖（大势所趋）
-      - 第二轮不确定 → 评估增量：
-        信息质量明显提升？→ 继续（信息增益为正）
-        信息质量没变化？→ 停止（过犹不及）
-   → 显示："📊 深入分析中..."
-   → 基于特定缺口做聚焦采集
-   → 重新执行管道
-
-③ 是否继续深挖不由固定轮数决定，而是由每轮实际信息增益决定（中庸）：
-   - 信息增益大（新的关键数据、冲突被解决）→ 继续
-   - 信息增益小（与上轮结论基本一致）→ 自然停止
-   - 信息增益趋零（数据已经饱和）→ 停止，呈现当前结果
-
-④ 停止深挖后：
-   → 如果结论明确且有数据支撑 → 呈现结果
-   → 如果仍有不确定性但数据已饱和 → 诚实告知用户缺口
-   → 列出"什么条件下可以重新分析"的条件清单
+📊 Analysis in progress...
 ```
 
-**呈现阶段：用户看到完整的分析结论，用用户的语言**
+**Step selection (Cook Ding's Ox principle)**: Do not mechanically execute all 9 steps:
+1. Attention gate identifies the most uncertain dimensions (the "joints")
+2. Only deepen unclear dimensions; skip those already clear
+3. Feel the problem's texture — where information density is lowest, cut there
 
-深度循环结束后，呈现最终结果：
+Run in background: read meta → memory recall | WebSearch → pipeline (step selection based on Cook Ding principle)
+
+**Depth loop — uncertain result triggers automatic deepening**:
+
+After pipeline returns, evaluate conclusion confidence before presenting.
 
 ```
-▎发散总结
-从6个不同尺度观察的结论摘要（用户语言，非术语）
+① Evaluate:
+   - Is the conclusion vague ("might need more data", "maybe", "uncertain")?
+   - Are all direction scenarios converging to the same outcome? (uniformity = no conclusion)
+   - Did self-check pass?
+   - Does each claim have specific data support (numbers, sources, citations)?
 
-▎8维交叉分析
-各维度评分和关键发现（中文，列表形式，非矩阵术语）
-最突出的矛盾点：X vs Y
+② If uncertain (any condition unmet):
+   → Evaluate information gain this round (Zhong Yong principle):
+      - Round 1 uncertain → deepen naturally
+      - Round 2+ uncertain → assess gain:
+        Quality improved? → continue (positive gain)
+        No change? → stop (more harms)
+   → Display: "📊 Deepening analysis..."
+   → Focused collection on specific gaps
+   → Re-execute pipeline
 
-▎多场景推演
-方向A：[名称]
-  乐观情境：什么条件下成立 → 路径 → 信号
-  现实情境：最可能的路径 → 关键变量  
-  悲观情境：什么情况下失败 → 止损信号
-方向B、C同上
+③ Continue/stop determined by information gain trend, NOT fixed rounds:
+   - Large gain (new key data, conflicts resolved) → continue
+   - Small gain (similar conclusions) → naturally stop
+   - Zero gain (data saturated) → stop, present current results
 
-▎最终建议
-基于以上分析的判断 + 如果判断错了 + 后续跟踪信号
+④ After stopping:
+   → Clear with data support → present
+   → Still uncertain but data saturated → honestly tell user the gaps
+   → List conditions for re-analysis
 ```
 
-输出规则：
-- ✅ 展示分析结果（发散结论、维度评分、场景路径、建议）
-- ✅ 全部用用户的语言
-- ✅ 每个判断有具体数据支撑（数字、引用、来源）
-- ⛔ 不展示技术细节（命令、JSON、Agent、术语）
-- ⛔ 不出现英文框架术语
-- ⛔ 不允许模棱两可的结论（"可能""或许""需要更多数据但不深入找"）
-- ⛔ 不允许所有方向趋同（如果趋同→说明信息不够→触发深度循环）
+**Presentation — user sees complete analysis in their language**:
+
+After depth loop ends, present final results:
+
+```
+▎Divergence Summary
+Key insights from multi-scale observation
+
+▎Cross-dimensional Analysis
+Dimension scores and key findings
+Most prominent contradiction: X vs Y
+
+▎Scenario Simulation
+Direction A: [name]
+  Optimistic: conditions → path → signal
+  Realistic: most likely path → key variables
+  Pessimistic: failure conditions → stop-loss
+Direction B, C: same structure
+
+▎Final Recommendation
+Data-supported judgment + if wrong + follow-up signals
+```
+
+Rules:
+- ✅ Show analysis conclusions (divergence insights, dimension scores, scenarios, recommendation)
+- ✅ All in user's language
+- ✅ Every claim has data support (numbers, citations, sources)
+- ⛔ No technical details (commands, JSON, Agent, terms)
+- ⛔ No English framework jargon
+- ⛔ No vague conclusions ("might", "maybe", "perhaps" without deepening)
+- ⛔ No converging directions (uniformity = insufficient data → triggers depth loop)
 
 ---
 
-## 允许 vs 禁止
+## Allowed vs Forbidden
 
-✅ 允许展示：
-- 需求画像（五维评分、假设清单）
-- 发散结论（6个尺度的洞察摘要）
-- 8维分析（各维度评分和关键发现）
-- 场景推演（各方向的情境路径）
-- 最终建议（结论+反假设+后续信号）
-- 以上全部用用户的语言，无框架术语
+✅ Allowed to show:
+- Requirements profile (5-dimension scores, assumptions list)
+- Divergence insights (6-perspective summary)
+- Cross-dimensional analysis (scores and key findings)
+- Scenario simulations (each direction's paths)
+- Final recommendation (judgment + counter-hypothesis + follow-up signals)
+- All in user's language, no framework jargon
 
-⛔ 禁止展示：
-- 任何shell命令和JSON输出
-- Agent子任务列表和状态
-- 文件读写操作
-- "Thought for Xs"、任务ID、执行时间
-- 英文框架术语（MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA等）
-- 编造记忆（无结果只能WebSearch）
+⛔ Forbidden to show:
+- Shell commands and JSON output
+- Agent sub-task list and status
+- File read/write operations
+- "Thought for Xs", task IDs, execution time
+- English framework terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
+- Fabricated memories (no results → WebSearch only)

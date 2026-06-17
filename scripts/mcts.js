@@ -62,6 +62,11 @@ const ENGINES = {
         desc: '语言守护 — 自动检测用户语言/验证输出语言',
         commands: ['detect','check'],
     },
+    l10n: {
+        script: 'l10n.js',
+        desc: 'Language adaptation — detect user language, map operations to friendly descriptions',
+        commands: [],
+    },
     template: {
         script: 'mcts_template.js',
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
