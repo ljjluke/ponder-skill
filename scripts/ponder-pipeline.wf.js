@@ -812,9 +812,12 @@ Step3关键发现: ${step3.key_finding}
 1. 先查询过去被推翻的知识(listRefuted):
    node ${pluginPath}/scripts/mcts.js knowledge refuted
 2. 对每条新知识, 语义对比是否与 REFUTED 思路一致:
-   - 一致? → 不存储, 标记 "与[ID]思路一致, 跳过"
-   - 不确定? → 存储但标记 'suspected_refuted'
-   - 全新思路? → 正常存储
+   - 与已推翻的一致? → 不能只是跳过。需要换思路重新查
+    a. 换一组完全不同的关键词, 重新搜索: node $P/scripts/mcts.js knowledge acquire
+\    b. 换思路后还不冲突 → 存储
+\    c. 还冲突 → 诚实报告此路不通, 存为 dead_end 标记
+   - 不确定? → 存疑存储 suspected_refuted
+   - 全新思路? → 正常存储为 HYPOTHESIS
 
 【存储指令】
 ${knowledgeEntries.map((k, i) => `
@@ -827,7 +830,7 @@ ${knowledgeEntries.map((k, i) => `
 执行完上述检查后, 逐一存储通过的条目。
 每条存储: node ${pluginPath}/scripts/mcts.js mma ashi '{"description":"...","tags":[...],"category":"tools_and_means","emotion":"an","q":...}'
 
-全部完成后汇报: 存了几条, 跳过几条, 跳过原因。`, {
+全部完成后汇报: 存了几条, 换思路重试了几条, dead_end几条。`, {
       label: '知识固化',
       phase: '知识固话',
       schema: { type: 'object', properties: {
