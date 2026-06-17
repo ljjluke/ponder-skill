@@ -16,12 +16,12 @@ These four principles govern every decision the framework makes. They are not fe
 
 ### Wu Wei (无为) — Act without forcing
 
-Feel the problem's resistance before reacting. Do not mechanically execute 9 steps:
-- Simple problem → flow through (don't over-dig)
-- Complex problem → settle deeper (naturally, not rushed)
-- Uncertainty → circle back (like water finding its way around a rock)
+Feel the problem's resistance before reacting. **All 9 steps always execute.** The difference between simple and complex is depth within each step, not presence of steps:
+- Simple problem → flow through all steps at baseline depth (don't over-dig, but don't skip)
+- Complex problem → settle deeper in each step (more rounds, more data, more rigor)
+- Uncertainty → circle back through steps with more data (not skipping forward)
 
-**Technical application**: The depth loop does not trigger on "uncertainty" alone — it first senses information density. Low density → deepen. Enough density → flow through. No preset rounds.
+**Critical: "flow through" ≠ "skip."** All steps execute. All dimensions are checked. All phases complete. The depth loop adds rounds only when needed — the baseline pipeline always runs fully.
 
 ### Cook Ding's Ox (庖丁解牛) — Cut through the natural gaps
 
@@ -75,6 +75,10 @@ Before writing ANY message to the user, run this mental checklist. If any item f
 ---
 
 ## Flow
+
+**Rule: ALL steps execute for ALL problems, regardless of size.** Simple question or complex strategy — every step runs fully. The pipeline (9 phases, sub-agent enforced) guarantees this. No step can be skipped.
+
+"Simple problem" only means the depth loop may trigger fewer rounds. It never means skipping interview, divergence, examination, simulation, debate, or verification. If a step seems unnecessary — that's a signal to examine why, not a signal to skip.
 
 ### Step 1: Requirements Divergence — Spiral Divergence
 
