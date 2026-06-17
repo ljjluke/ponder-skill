@@ -848,11 +848,36 @@ if (freeEnergy > 0.6) {
   })
 }
 
+// ── 自动进化裁定 (Auto-evolution verdict) ──
+// 不再依赖 LLM 判断, 由代码决定是否需要变异
+const mutationResult = []
+if (freeEnergy > 0.4) {
+  mutationResult.push({
+    execute: true,
+    command: `node ${pluginPath}/scripts/pipeline.js set-weight ${lowestFitnessStep[0]} ${Math.max(0.3, lowestFitnessStep[1] - 0.2).toFixed(1)}`,
+    step: lowestFitnessStep[0],
+    type: 'weight_adjust',
+    reason: `free_energy=${freeEnergy}, ${lowestFitnessStep[0]} fitness=${lowestFitnessStep[1]}`,
+  })
+}
+if (freeEnergy > 0.6) {
+  mutationResult.push({
+    execute: true,
+    command: `node ${pluginPath}/scripts/pipeline.js disable ${lowestFitnessStep[0]}`,
+    step: lowestFitnessStep[0],
+    type: 'disable_step',
+    reason: `free_energy=${freeEnergy}, critical threshold exceeded`,
+  })
+}
+if (freeEnergy <= 0.4) {
+  mutationResult.push({ execute: false, reason: `free_energy=${freeEnergy}, within normal range. No mutation needed.` })
+}
+
 return {
   step_log: step_log,
   user_request: userRequest,
   free_energy: freeEnergy,
-  evolution_suggestions: evolutionSuggestions,
+  mutation_result: mutationResult,
   step_fitness: stepFitness,
   step2: {
     perspective_count: step2.perspectives.length,

@@ -234,7 +234,26 @@ Returns:
 Max 3 depth rounds. Between cycles: display progress in user's language.
 The decision logic is in code — the LLM only reads the result and executes.
 
-**Never let the LLM decide.** Every fork must be backed by data or user input. If you can't justify why you chose one path over another, you're guessing — and that's not allowed.
+**Never let the LLM decide.** Every fork must be backed by data or user input.
+
+**Auto-evolution — read mutation_result from pipeline return, then execute:**
+
+```
+mutation_result = [
+  { execute: true, command: "node ... set-weight step weight", reason: "..." }
+  or
+  { execute: false, reason: "free_energy within normal range" }
+]
+
+If mutation_result[0].execute === true:
+  → Run the command(s) silently (do NOT show to user)
+  → The pipeline has evolved for next use
+If mutation_result[0].execute === false:
+  → No action needed
+```
+
+The LLM does NOT decide whether to mutate. The pipeline code determines mutation necessity.
+The LLM only executes the commands. No judgment calls.
 
 **Presentation — user sees complete analysis in their language**:
 
