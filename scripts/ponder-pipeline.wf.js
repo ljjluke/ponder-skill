@@ -770,19 +770,6 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
   }
   if (verifyResult.all_clear) {
     log('✅ 独立验证通过 — 分析可靠')
-    // ── 深度循环: 结论清晰度检测 (code-enforced, LLM不可跳过) ──
-    // 验证通过不代表结论明确。检查是否有含糊措辞、方向是否趋同。
-    const vagueWords = ['guessed', 'might', 'perhaps', 'maybe', 'uncertain', '需要更多', '可能', '或许', '不确定']
-    const concText = (step5?.conclusion || '') + ' ' + (step4?.recommendation || '')
-    const isVague = vagueWords.some(w => concText.includes(w))
-    const allSame = step4?.directions?.length > 1 &&
-      new Set(step4.directions.map(d => (d.optimistic?.path || '').substring(0, 40))).size < 2
-    const needsDepth = isVague || allSame
-
-    if (needsDepth && loopCount < 3) {
-      log('⚠️ 结论不够清晰 — 触发深度辩论循环 (第' + (loopCount+1) + '轮)')
-      fixContext = '【深度循环】结论含糊/方向趋同, 需从记忆系统获取更多证据后重新辩论。'
-    } else {
 
 
     // ── 具身认知: 行动建议 (Embodied Cognition / Action Loop) ──
@@ -813,7 +800,7 @@ Step3关键发现: ${step3.key_finding}
     // 将行动计划存入args供主LLM呈现
     args._action_plan = actionPlan
     }
-    if (!needsDepth || loopCount >= 3) break
+    const verIssues = (verifyResult?.issues?.length || 0); const noDepth = (step5?.all_clear !== false if (!needsDepth || loopCount >= 3) breakif (!needsDepth || loopCount >= 3) break verIssues <= 1); if (noDepth || loopCount >= 3) break
   }
 
   // ── 知识固化 Consolidation Phase (代码强制, LLM无法跳过) ──
@@ -891,7 +878,7 @@ ${knowledgeEntries.map((k, i) => `
   const criticalCount = verifyResult.issues.filter(i => i.severity === 'critical').length
   if (criticalCount > 0 && loopCount >= MAX_LOOPS) {
     log('⚠️ 仍有' + criticalCount + '个关键问题，已达最大修复轮次，输出带警告')
-    if (!needsDepth || loopCount >= 3) break
+    const verIssues = (verifyResult?.issues?.length || 0); const noDepth = (step5?.all_clear !== false if (noDepth || loopCount >= 3) breakif (!needsDepth || loopCount >= 3) break verIssues <= 1); if (noDepth || loopCount >= 3) break
   }
 
   const weakSteps = Object.entries(STEP_WEIGHTS).filter(([s, w]) => w < 0.7).map(([s]) => 'Step' + s).join(', ')
