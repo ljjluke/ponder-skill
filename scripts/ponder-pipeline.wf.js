@@ -479,8 +479,9 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        evidence: { type: 'array', items: EVIDENCE_ITEM, minItems: 1, description: '引用的证据(每条带可信度状态)' },
-      }, required: ['argument', 'evidence'] },
+        evidence: { type: 'array', items: EVIDENCE_ITEM, description: '引用的证据(每条带可信度状态)。可空——找不到就说找不到, 不准编' },
+        evidence_gap: { type: 'string', description: '如果没找到有力证据, 如实说明缺了什么证据、为什么缺' },
+      }, required: ['argument'] },
     }),
     agent(`你一名称职的辩论分析师。你的立场是: "反方: 风险"——找问题, 防风险, 看负面。
 
@@ -499,7 +500,8 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        evidence: { type: 'array', items: EVIDENCE_ITEM, minItems: 1 },
+        evidence: { type: 'array', items: EVIDENCE_ITEM },
+        evidence_gap: { type: 'string' },
       }, required: ['argument', 'evidence'] },
     }),
     agent(`你一名称职的辩论分析师。你的立场是: "第三方: 新思路"——找前两者都没看到的盲区。
@@ -519,7 +521,8 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        evidence: { type: 'array', items: EVIDENCE_ITEM, minItems: 1 },
+        evidence: { type: 'array', items: EVIDENCE_ITEM },
+        evidence_gap: { type: 'string' },
       }, required: ['argument', 'evidence'] },
     }),
   ])
