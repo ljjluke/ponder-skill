@@ -41,38 +41,30 @@ No configuration. No training data. No data leaves your machine.
 ## Architecture
 
 ```
- ┌─────────────────────────────────────────────────────────────┐
- │              Self-Evolution (learns from every use)          │
- │  Quality score = pass rate × 0.4 + accuracy × 0.3           │
- │                 + prediction error × 0.3                     │
- │  Score too low → pipeline adjusts (next time you use it)    │
- ├─────────────────────────────────────────────────────────────┤
- │                                                              │
- │      Interview ──→ Gather Data ──→ Analyze ──→ Check        │
- │      (You talk         |past      (9 automated   (If        │
- │       to user,         |experience steps:        unclear    │
- │       find real        |+ web      diverge,      → debate   │
- │       needs)           |research)  examine,      more,       │
- │                                  simulate,      max 3       │
- │                                  debate,        rounds)     │
- │                                  converge)                  │
- │                                       │                     │
- │                                 ┌─────▼──────┐              │
- │                                 │ Present    │              │
- │                                 │ Result     │              │
- │                                 └─────┬──────┘              │
- │                                       │                     │
- │                                 ┌─────▼──────┐              │
- │                                 │ User       │              │
- │                                 │ Feedback   │              │
- │                                 │ (corrects, │              │
- │                                 │  confirms) │              │
- │                                 └────────────┘              │
- │                                                              │
- │  Every step feeds into learning: what worked, what didn't   │
- │  User corrections are remembered: avoid same mistakes       │
- │  Next time you ask: the pipeline is slightly better          │
- └─────────────────────────────────────────────────────────────┘
+ ┌──────────────────────────────────────────────────┐
+ │         Self-Evolution (improves every use)        │
+ ├──────────────────────────────────────────────────┤
+ │                                                    │
+ │   Interview → Gather data → Analyze → Verify      │
+ │   (you talk   (past       (9-step    (if unclear  │
+ │    to user)    exp. +     pipeline)   → re-debate │
+ │                web search)             max 3)      │
+ │                                  │                  │
+ │                            ┌─────▼─────┐           │
+ │                            │  Present  │           │
+ │                            │  Result   │           │
+ │                            └─────┬─────┘           │
+ │                                  │                  │
+ │                            ┌─────▼─────┐           │
+ │                            │  User     │           │
+ │                            │  Feedback │           │
+ │                            │ (correct, │           │
+ │                            │  confirm) │           │
+ │                            └───────────┘           │
+ │                                                    │
+ │  Every use makes it slightly better                │
+ │  Mistakes remembered → avoided next time           │
+ └──────────────────────────────────────────────────┘
 ```
 
 Self-evolution isn't a final step — it wraps everything. Every phase feeds into it, and the pipeline improves between uses, not during one.
