@@ -248,15 +248,15 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
 
 约束:
 如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
-- 每个视角至少20字洞见+40字分析
-- 6个视角必须真正不同，不能相互重复
+- 每' perspectives至少20字洞见+40字分析
+- 6' perspectives必须真正不同，不能相互重复
 - 最后综合出矛盾点和共识点`, {
     label: '多视角发散分析',
     phase: '6尺度发散',
     schema: STEP2_SCHEMA,
   })
 
-  log('Step2完成: ' + step2.perspectives.length + '个视角')
+  log('Step2 complete: ' + step2.perspectives.length + '' perspectives')
   } else { step2 = { perspectives: [] } }
 
   // ── Step 3: 八卦镜8维检查 ──
@@ -300,7 +300,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
     schema: STEP3_SCHEMA,
   })
 
-  log('Step3完成: ' + step3.dimensions.length + '个维度, ' + step3.conflicts.length + '组冲突')
+  log('Step3 complete: ' + step3.dimensions.length + '' dimensions, ' + step3.conflicts.length + '' conflict pairs')
 
   // ── DMN间歇: Default Mode Network 孵化期 ──
   // 人脑的DMN在非任务态时才活跃, 负责远距离联想和洞见涌现
@@ -358,7 +358,7 @@ ${JSON.stringify(step3, null, 2)}
     schema: DIRECTION_PLAN_SCHEMA,
   })
 
-  log('Step4a: ' + directionPlan.directions.length + '个方向待推演')
+  log('Step4a: ' + directionPlan.directions.length + '' directions to simulate')
   }
 
   // 4b: 每个方向独立推演（并行）
@@ -402,7 +402,7 @@ Step3分析摘要: ${JSON.stringify(step3, null, 2)}
 
   // Filter out any null results (failed agents)
   const validResults = directionResults.filter(Boolean)
-  log('Step4b: ' + validResults.length + '个方向推演完成')
+  log('Step4b: ' + validResults.length + '' directions simulated')
 
   // 4c: 汇总所有方向推演结果
   const step4Agg = await agent(`你是"推演汇总师"。综合所有独立推演的结果，输出跨方向对比。
@@ -445,7 +445,7 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
     key_risks: step4Agg.key_risks,
     recommendation: step4Agg.recommendation,
   }
-  log('Step4完成: ' + step4.directions.length + '个方向, 汇总完毕')
+  log('Step4 complete: ' + step4.directions.length + '', aggregation complete')
 
   // ── 多场景辩论 (Scenario-based Debate) ──
   // 辩论方不是正反方, 而是来自Step4的不同分析场景
@@ -572,7 +572,7 @@ ${sceneNames[2] || '场景C'}证据: ${JSON.stringify(debateArgs[2].evidence || 
   }
 
   // ── Step 5: 收敛与自检 ──
-  phase('收敛自检')
+  phase('收敛 self-check')
 
   step5 = await agent(`你是Ponder框架的"收敛师"。你的任务是执行收敛判断和自检。
 
@@ -614,11 +614,11 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
 涉及用户风险偏好的推荐→在 user_questions 中输出让用户选择, 不自己假设。
 如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
     label: '综合判断',
-    phase: '收敛自检',
+    phase: '收敛 self-check',
     schema: STEP5_SCHEMA,
   })
 
-  log('Step5完成: 自检' + (step5.all_clear ? '全部通过' : '有风险'))
+  log('Step5 complete:  self-check' + (step5.all_clear ? ' all passed' : ' has issues'))
   }
 
   // ── 层级预测: Top-Down Prediction Pass (Hierarchical Predictive Coding) ──
@@ -682,7 +682,7 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
 4. 伪精确: 评分、概率有依据吗？还是为了满足格式随意给的数字？
 5. 确认偏误: 分析是否只找了支持某个方向的证据，忽略了反面？
 6. 3个最常见的死因:
-   - Step2的6个视角实际上只有3-4个真正不同，其他是重复的
+   - Step2的6' perspectives实际上只有3-4个真正不同，其他是重复的
    - Step3的8维分析流于表面，没有真正交叉引用Step2
    - 推演中的场景概率无依据，乐观/现实/悲观'只是三段标签
    - 推演中的场景无真实数据支撑，evidence字段无真实来源引用
