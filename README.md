@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.9.0-blue" alt="version">
+  <img src="https://img.shields.io/github/v/release/ljjluke/mcts-skill" alt="version">
   <img src="https://img.shields.io/badge/status-stable-green" alt="status">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="license">
 </p>
@@ -176,8 +176,10 @@ User intent → Constraint Collection
 
 ## 🚀 Install
 
+### First-time install
+
 ```bash
-# GitHub (International)
+# GitHub (International) — latest stable release
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
 /plugin install luke
 
@@ -186,17 +188,39 @@ User intent → Constraint Collection
 /plugin install luke
 ```
 
+### Install a specific version
+
+Releases are tagged: [github.com/ljjluke/mcts-skill/releases](https://github.com/ljjluke/mcts-skill/releases)
+
+```bash
+# Install v1.13.0 specifically
+/plugin remove luke
+/plugin marketplace add https://github.com/ljjluke/mcts-skill
+/plugin install luke@luke        # installs latest
+# Then manually replace with a specific release:
+git clone --branch v1.13.0 https://github.com/ljjluke/mcts-skill.git
+/plugin add luke --local --path ./mcts-skill
+```
+
+Or from a local copy:
+```bash
+git clone https://github.com/ljjluke/mcts-skill.git
+cd mcts-skill
+git checkout tags/v1.13.0        # check out the version you want
+/plugin add luke --local --path .
+```
+
 ## 🔄 Upgrade
 
 ```bash
-/plugin marketplace update luke     # uses the registered source
-/plugin install luke                # auto-updates if already installed
+# To latest release
+/plugin marketplace update luke
+/plugin install luke
 /reload-plugins
 ```
 
 > If GitHub is unreachable, re-register with Gitee: `/plugin marketplace add https://gitee.com/luke2438107466/mcts-skill`, then upgrade.
-
-> Old versions auto-cleaned.
+> Old versions auto-cleaned by hooks (only latest kept).
 
 Type any task. When you see the ⚡, it's working.
 
@@ -253,3 +277,14 @@ User Message
   <b>Don't just do it. Think it through first.</b><br>
   <i>Powered by MCTS × TD Learning × Eight-Facet Philosophy</i>
 </p>
+
+---
+
+## 📦 Release Notes
+
+| Version | Highlights | Date |
+|---------|-----------|------|
+| [v2.0.0](https://github.com/ljjluke/mcts-skill/releases/tag/v2.0.0) | Self-evolving pipeline · data-driven mutation · emotion-gated memory · competitive attention | 2026-06-17 |
+| [v1.13.0](https://github.com/ljjluke/mcts-skill/releases/tag/v1.13.0) | Brain features complete · DMN incubation · somatic marker · social debate · hierarchical prediction | 2026-06-16 |
+| [v1.12.3](https://github.com/ljjluke/mcts-skill/releases/tag/v1.12.3) | Self-correcting loop · independent verification agent · parallel simulation sub-agents | 2026-06-16 |
+| [v1.6.0](https://github.com/ljjluke/mcts-skill/releases/tag/luke--v1.9.0) | MMA meridian memory · 12 meridians · compliance guards · unified CLI | 2026-06-12 |
