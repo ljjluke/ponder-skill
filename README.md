@@ -41,48 +41,41 @@ No configuration. No training data. No data leaves your machine.
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    Self-Evolution                         │
-│  free_energy = verify_fail×0.4 + check_fail×0.3          │
-│              + prediction_error×0.3                       │
-│  > 0.4 → data-driven pipeline mutation (next session)     │
-├──────────────────────────────────────────────────────────┤
-│                                                           │
-│  ┌──────┐    ┌──────────┐    ┌──────────────┐            │
-│  │ Step1│───▶│ Knowledge │───▶│ Steps 2-5    │            │
-│  │Inter-│    │ Engine    │    │ Pipeline     │            │
-│  │view  │    │ acquire() │    │ 9 phases     │            │
-│  └──────┘    │ ┌──────┐  │    │ sub-agents   │            │
-│              │ │MMA   │  │    └──────┬───────┘            │
-│              │ │memory│  │           │                     │
-│              │ ├──────┤  │    ┌──────▼───────┐            │
-│              │ │Web   │  │    │ Depth Loop   │            │
-│              │ │Search│  │    │ (re-debate   │            │
-│              │ └──────┘  │    │  max 3)      │            │
-│              └──────────┘    └──────┬───────┘            │
-│                                     │                     │
-│                              ┌──────▼───────┐            │
-│                              │ Present to   │            │
-│                              │ User         │            │
-│                              │ + evaluate   │            │
-│                              │ free_energy  │            │
-│                              └──────┬───────┘            │
-│                                     │                     │
-│                              ┌──────▼───────┐            │
-│                              │ User Feedback │            │
-│                              │ tagVerdict() │            │
-│                              │ recordOutcome│            │
-│                              └──────────────┘            │
-│                                                           │
-│  All phases contribute: step performance → free_energy   │
-│  User feedback → knowledge classification (REFUTED/etc)  │
-│  Next /luke:ponder uses evolved pipeline-meta.json       │
-└──────────────────────────────────────────────────────────┘
+ ┌─────────────────────────────────────────────────────────────┐
+ │              Self-Evolution (learns from every use)          │
+ │  Quality score = pass rate × 0.4 + accuracy × 0.3           │
+ │                 + prediction error × 0.3                     │
+ │  Score too low → pipeline adjusts (next time you use it)    │
+ ├─────────────────────────────────────────────────────────────┤
+ │                                                              │
+ │      Interview ──→ Gather Data ──→ Analyze ──→ Check        │
+ │      (You talk         |past      (9 automated   (If        │
+ │       to user,         |experience steps:        unclear    │
+ │       find real        |+ web      diverge,      → debate   │
+ │       needs)           |research)  examine,      more,       │
+ │                                  simulate,      max 3       │
+ │                                  debate,        rounds)     │
+ │                                  converge)                  │
+ │                                       │                     │
+ │                                 ┌─────▼──────┐              │
+ │                                 │ Present    │              │
+ │                                 │ Result     │              │
+ │                                 └─────┬──────┘              │
+ │                                       │                     │
+ │                                 ┌─────▼──────┐              │
+ │                                 │ User       │              │
+ │                                 │ Feedback   │              │
+ │                                 │ (corrects, │              │
+ │                                 │  confirms) │              │
+ │                                 └────────────┘              │
+ │                                                              │
+ │  Every step feeds into learning: what worked, what didn't   │
+ │  User corrections are remembered: avoid same mistakes       │
+ │  Next time you ask: the pipeline is slightly better          │
+ └─────────────────────────────────────────────────────────────┘
 ```
 
-Self-evolution is not a step after the pipeline. **It's the container.**
-Every phase feeds data into it: free energy, step performance, user corrections, knowledge outcomes.
-The pipeline changes based on what self-evolution learns — but those changes take effect on the NEXT invocation, not during the current one.
+Self-evolution isn't a final step — it wraps everything. Every phase feeds into it, and the pipeline improves between uses, not during one.
 
 ---
 
