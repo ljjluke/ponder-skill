@@ -3,9 +3,9 @@
 *一个 Claude Code 技能。本地训练认知管道。每次 `/luke:ponder` 进化一次。*
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/ljjluke/mcts-skill" alt="版本">
-  <img src="https://img.shields.io/github/last-commit/ljjluke/mcts-skill" alt="最后提交">
+  <img src="https://img.shields.io/badge/版本-1.14.0-blue" alt="版本">
   <img src="https://img.shields.io/badge/许可-MIT-yellow" alt="许可">
+  <img src="https://img.shields.io/github/last-commit/ljjluke/mcts-skill" alt="最后提交">
 </p>
 
 ---

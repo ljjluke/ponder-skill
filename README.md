@@ -3,9 +3,9 @@
 *A Claude Code skill. A locally-trained cognitive pipeline. One `/luke:ponder` at a time.*
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/ljjluke/mcts-skill" alt="version">
-  <img src="https://img.shields.io/github/last-commit/ljjluke/mcts-skill" alt="last commit">
+  <img src="https://img.shields.io/badge/version-1.14.0-blue" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="license">
+  <img src="https://img.shields.io/github/last-commit/ljjluke/mcts-skill" alt="last commit">
 </p>
 
 ---
