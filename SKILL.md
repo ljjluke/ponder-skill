@@ -103,26 +103,38 @@ Assumptions list:
 Pending questions: [items not yet clarified in Step 1c]
 ```
 
-#### 1d. Memory Recall + Knowledge Acquisition — Load historical experience before pipeline
+#### 1d. Memory Recall — Load historical experience
 
-Before entering the automated pipeline, query the MMA memory system for past analysis relevant to the current problem.
+Before the pipeline, query the MMA memory system for relevant past analyses.
 
-Get the plugin path from SessionStart log `[MCTS-TD] Plugin:`.
+**Important — output format**: The user should see a friendly status, NOT raw shell output.
 
-Run memory recall:
 ```
-node $P/scripts/mcts.js mma deqi '{"tags":["<keywords related to request>"],"limit":5}'
+Step 1d execution:
+
+① Display to user:
+   "🧠 正在检索历史经验..."
+   (friendly, one line, no technical details)
+
+② Run recall:
+   node $P/scripts/mcts.js mma deqi '{"tags":["<keywords>"],"limit":5}'
+
+③ Interpret results for user:
+   If > 0 results → "✅ 找到 N 条相关经验" + 1-line summary
+   If 0 results → "📚 无历史经验，从新知识开始积累"
+   Do NOT dump raw JSON to user.
+   Do NOT show the bash command.
 ```
 
-**If recall returns > 0 results**: Integrate historical experience into Step 1 profile. Note which conclusions have historical support. If any case matches > 0.7, flag it in pipeline args.
+**If recall returns > 0**: Integrate into Step 1 profile. Note historical support. If match > 0.7, flag in pipeline args.
 
-**If recall returns 0 results**: **NEVER fabricate false memories.** Use WebSearch to find real data/information relevant to the user's question. This is the only legitimate source of new knowledge. Merge search results into Step 1 profile.
+**If recall returns 0**: **NEVER fabricate.** Use WebSearch for real data. This is the only legitimate new knowledge source.
 
-All pipeline steps follow the same rule: recall memory first → if nothing, search real data → never fabricate.
+All pipeline steps follow: recall first → if nothing, search real data → never fabricate.
 
-⛔ User must answer Layer 3 constraint questions → incomplete profile → cannot proceed to Pipeline.
+⛔ User must answer Layer 3 constraint questions → incomplete profile → cannot proceed.
 
-⛔ At least 1 "pending" assumption required. If you have zero uncertainty → you didn't examine deeply enough.
+⛔ At least 1 "pending" assumption. Zero uncertainty → insufficient examination.
 
 ---
 
@@ -149,19 +161,24 @@ Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
 }})
 ```
 
-### Step 6: Self-Evolution Assessment (with MMA evolutionary memory)
+### Step 6: Self-Evolution Assessment (with MMA evolutionary history)
 
-After Workflow returns, do TWO things: present results + evaluate free energy.
+After Workflow returns, present results (friendly) + evaluate free energy.
 
 ```
-① Read free_energy and evolution_suggestions
+① Present results to user:
+   "📊 分析完成" + conclusion summary
+   (no technical details, no JSON, no bash output)
 
-② Query MMA evolutionary history (deqi):
-   $P = <[MCTS-TD] Plugin: path>
-   node $P/scripts/mcts.js mma deqi '{"tags":["evolution","mutation"],"limit":5}'
-   → Find historically effective mutations:
-     - Which mutation types reduced free energy? → Prioritize
-     - Which mutation types increased free energy? → Avoid or replace
+② If needed, evaluate evolution (silent, user-facing friendly only):
+   1. Display: "⚙️ 评估架构性能..."
+   2. Read free_energy + evolution_suggestions
+   3. Query MMA evolution history:
+      $P = <[MCTS-TD] Plugin: path>
+      node $P/scripts/mcts.js mma deqi '{"tags":["evolution","mutation"],"limit":5}'
+   4. Present to user only if mutation occurs:
+      "🧬 管道已微调: [step] [mutation type]"
+   (do NOT show raw command output, do NOT show JSON, do NOT show bash calls)
 
 ③ Read pipeline-meta.json for current step fitness values
 
