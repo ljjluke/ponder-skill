@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full 5-step flow. Every step mandatory. No skipping.
-version: 2.0.0
+version: 1.14.0
 license: MIT
 ---
 
