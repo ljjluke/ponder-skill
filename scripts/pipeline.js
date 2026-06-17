@@ -14,7 +14,7 @@ const path = require('path')
 const fs = require('fs')
 const os = require('os')
 
-const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'mcts-td-planner')
+const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder')
 const META_FILE = path.join(DATA_DIR, 'pipeline-meta.json')
 const DEFAULT_META = path.join(__dirname, '..', 'pipeline-meta.json')
 

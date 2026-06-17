@@ -215,7 +215,7 @@ function updateStepWeights() {
   log('自适应权重: Step2=' + STEP_WEIGHTS[2].toFixed(2) + ' Step3=' + STEP_WEIGHTS[3].toFixed(2) + ' Step4=' + STEP_WEIGHTS[4].toFixed(2) + ' Step5=' + STEP_WEIGHTS[5].toFixed(2))
 }
 
-// ── 自进化元配置（从args传入，源文件在 ~/.claude/data/skills/mcts-td-planner/pipeline-meta.json）──
+// ── 自进化元配置（从args传入，源文件在 ~/.claude/data/skills/ponder/pipeline-meta.json）──
 // pipeline-meta.json 位于数据目录，插件更新不会覆盖，用户的进化历史持久保存
 const metaConfig = args?.meta_config || {}
 const stepOrder = metaConfig.topology?.order || []
