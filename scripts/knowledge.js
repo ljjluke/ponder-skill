@@ -42,43 +42,13 @@ function findMmaScript() {
   return null;
 }
 
-// Char-level expansion for Chinese tags: "关键词" → ["关", "键", "词"]
-function charExpand(tag) {
-  const results = [tag]
-  if (/[一-鿿]/.test(tag) && tag.length > 1) {
-    // 对双字中文词, 拆单字加入
-    const chars = tag.split('')
-    for (const c of chars) {
-      if (c.length === 1 && results.indexOf(c) < 0) results.push(c)
-    }
-  }
-  return results
-}
-
-// 扩展搜索标签: 原标签 + 近义词 + 字符级扩展
-function expandTags(tags) {
-  const expanded = new Set(tags);
-  for (const tag of tags) {
-    // Character-level expansion for Chinese: '股票' → '股'
-    if (/[一-鿿]/.test(tag) && tag.length > 1) {
-      for (const ch of tag) {
-        if (ch.length === 1 && !expanded.has(ch)) expanded.add(ch);
-      }
-    }
-  }
-  return Array.from(expanded);
-}
-
 function acquire(query, options = {}, stepName = '') {
   const { tags = [], limit = 5, allowSearch = true, storeNew = true } = query || {};
   const result = { source: 'none', entries: [] };
 
-  // Phase 0: Expand tags with synonyms for higher recall
-  const expandedTags = expandTags(tags);
-  if (expandedTags.length > tags.length) {
-    // Try with expanded tags first (broader recall)
-    if (MMA_SCRIPT && expandedTags.length > 0) {
-      const mmaResult = spawnSync('node', [MMA_SCRIPT, 'mma', 'deqi', JSON.stringify({ tags: expandedTags, limit })], {
+  // Phase 1: Check MMA memory with the original tags (deqi handles partial matching internally)
+  if (MMA_SCRIPT && tags.length > 0) {
+    const mmaResult = spawnSync('node', [MMA_SCRIPT, 'mma', 'deqi', JSON.stringify({ tags, limit })], {
       timeout: 10000, encoding: 'utf-8',
     });
     if (mmaResult.status === 0) {
@@ -107,8 +77,7 @@ function acquire(query, options = {}, stepName = '') {
         }
       } catch (e) {}
     }
-    } // if MMA_SCRIPT
-  } // if expanded
+  }
 
   // Phase 2: If MMA has results, return them
   if (result.entries.length > 0) return result;
@@ -343,7 +312,7 @@ function trace(pointId) {
   };
 }
 
-module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, expandTags };
+module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace };
 
 if (require.main === module) {
   const cmd = process.argv[2];

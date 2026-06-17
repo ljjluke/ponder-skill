@@ -179,9 +179,17 @@ Every decision during the pipeline and depth loop must fall into one of three ca
 
 If you're tempted to make a judgment call without data or user input → STOP. Either find data or ask the user.
 
-**Unified data acquisition**: Every data need goes through the same path:
+**Unified data acquisition**: Every data need goes through the same path. **Before searching, expand your tags with contextually relevant synonyms** — the LLM understands language, use that intelligence instead of hardcoded mappings.
 
 ```
+Example: searching with tags ["market", "risk"]
+  → Expand yourself: ["market", "risk", "investment", "volatility", "trend"]
+  → Then: acquire(expanded_tags, {stepName: 'divergence'})
+
+Example: 搜索标签 ["市场", "风险"]
+  → 自己扩展: ["市场", "风险", "投资", "波动", "趋势", "行情"]
+  → 然后: acquire(扩展标签, {stepName: '发散分析'})
+
 acquire(tags) → ① Check MMA (deqi recall)
              → ② Found? → Return (exclude REFUTED/DISPUTED)
              → ③ Not found? → WebSearch → store as HYPOTHESIS → return
