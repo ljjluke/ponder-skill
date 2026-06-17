@@ -41,45 +41,59 @@ No configuration. No training data. No data leaves your machine.
 ## Architecture
 
 ```
-                    ┌──────────────────────────┐
-                    │  Step 1: Interview (you) │
-                    │  3 layers → 5-dim profile│
-                    └──────────┬───────────────┘
-                               │
-                    ┌──────────▼───────────────┐
-                    │  Memory Recall + WebSearch│
-                    │  (load past experience)   │
-                    └──────────┬───────────────┘
-                               │
-                    ┌──────────▼───────────────┐
-                    │  Pipeline (background)    │
-                    │                           │
-                    │  6-perspective divergence │
-                    │  Bagua Mirror 8-dim check │
-                    │  DMN free association     │
-                    │  Multi-scenario simulation│
-                    │  (parallel sub-agents)     │
-                    │  Social debate ×3 stances │
-                    │  Convergence + self-check │
-                    │  Hierarchical prediction  │
-                    │  Independent verification │
-                    │  Action proposal          │
-                    └──────────┬───────────────┘
-                               │
-                    ┌──────────▼───────────────┐
-                    │  Depth Loop              │
-                    │  (uncertain? → deepen)    │
-                    │  max 3 rounds,           │
-                    │  info-gain-based stop    │
-                    └──────────┬───────────────┘
-                               │
-                    ┌──────────▼───────────────┐
-                    │  Self-Evolution          │
-                    │  free_energy > 0.4?      │
-                    │  → data-driven mutation  │
-                    │  → pipeline changes      │
-                    └──────────────────────────┘
+ ╔═══ Self-Evolution ═══════════════════════════════════╗
+ ║  free_energy > 0.4 → data-driven mutation → evolve  ║
+ ║  (runs across all phases, not a final step)          ║
+ ╚═══════════════════════════════════════════════════════╝
+        │                           ↑
+        ▼                           ║
+ ┌──────────────────────┐           ║
+ │ Interview (you)      │           ║
+ │ 3 layers → profile   │           ║
+ └──────┬───────────────┘           ║
+        │                           ║
+ ┌──────▼───────────────┐           ║
+ │ Memory ←→ WebSearch  │◄──────────║── knowledge acquired → tagged
+ │ (bi-directional)     │  stores   ║   with step usage
+ └──────┬───────────────┘           ║
+        │                           ║
+ ┌──────▼───────────────┐           ║
+ │ Pipeline (background)│           ║
+ │ • Divergence         │  step     ║
+ │ • Dimension check    │  perf.   ║
+ │ • Free association   │  tracked ║
+ │ • Scenario simulation│  →       ║
+ │ • Multi-stance debate│  free    ║
+ │ • Convergence        │  energy  ║
+ │ • Prediction check   │  calc.   ║
+ │ • Independent verify │           ║
+ │ • Action proposal    │           ║
+ └──────┬───────────────┘           ║
+        │                           ║
+ ┌──────▼───────────────┐           ║
+ │ Depth Loop           │           ║
+ │ (re-debate if        │           ║
+ │  uncertain, max 3)   │           ║
+ └──────┬───────────────┘           ║
+        │                           ║
+        ▼                           ║
+ ┌──────────────────────────┐       ║
+ │ Present result to user   │──────►║── user feedback →
+ └──────────────────────────┘  wait ║   tagVerdict()
+        │                    next   ║
+        ▼                    use    ║
+ ┌──────────────────────────┐       ║
+ │ Record outcome           │──────►║── recordOutcome()
+ │ (user verdict →          │  refute/confirm → knowledge classified
+ │  update knowledge)       │       ║
+ └──────────────────────────┘       ║
+                                    ║
+ ←══════════════════════════════════╝
 ```
+
+Self-evolution is not a step after the pipeline. **It's the container.**
+Every phase feeds data into it: free energy, step performance, user corrections, knowledge outcomes.
+The pipeline changes based on what self-evolution learns — but those changes take effect on the NEXT invocation, not during the current one.
 
 ---
 
