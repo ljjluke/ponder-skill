@@ -77,6 +77,16 @@ const ENGINES = {
         desc: 'Decision routing engine — depth loop / uncertainty classification / output filter',
         commands: [],
     },
+    uncertainty: {
+        script: 'uncertainty.js',
+        desc: '不确定性连续编码 — 歧义/风险/无知量化评估与路由',
+        commands: ['assess', 'decide'],
+    },
+    weights: {
+        script: 'weights.js',
+        desc: '可学习权重注册表 — 从pipeline验证结果自动学习调整系数',
+        commands: ['get', 'set', 'learn', 'reset'],
+    },
     template: {
         script: 'mcts_template.js',
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',

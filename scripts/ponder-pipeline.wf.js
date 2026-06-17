@@ -129,6 +129,22 @@ const STEP5_SCHEMA = {
   }, required: ['conclusion', 'reasoning_chain', 'self_check', 'all_clear']
 }
 
+// ── DMN自由联想 Schema ──
+const DMN_SCHEMA = {
+  type: 'object', properties: {
+    free_associations: { type: 'array', items: { type: 'string' }, minItems: 2, description: '自然涌现的想法, 不需要合理' },
+    unexpected_connection: { type: 'string', description: '跨领域联想' },
+    gut_feeling: { type: 'string', description: '直觉感受, 不需要理由' },
+  }, required: ['free_associations', 'gut_feeling'],
+}
+
+// ── 权重加载 Schema ──
+const WEIGHTS_SCHEMA = {
+  type: 'object',
+  additionalProperties: { type: 'number' },
+  description: '从WeightRegistry加载的可学习权重',
+}
+
 // ── 独立验证 Schema ──
 // 验证Agent是独立上下文，任务是主动找茬（不是检查格式，是证明分析有漏洞）
 const VERIFY_SCHEMA = {
@@ -171,6 +187,179 @@ log('插件路径: ' + (pluginPath || '未提供'))
 const step_log = []
 function recordStep(stepName, status, metrics) {
   step_log.push({ step: stepName, status: status || 'completed', at: new Date().toISOString(), loop: loopCount, ...(metrics || {}) })
+}
+
+// ── 不确定性连续跟踪 (UncertaintyTracker) ──
+// 模拟大脑额顶叶网络的 uncertainty 编码 (Badre & Nee, 2024)
+// 三种类型: ambiguity(歧义), risk(风险), ignorance(无知)
+const uncertaintyHistory = []
+function computeStepUncertainty(stepName, output = {}) {
+  let ambiguity = 0, risk = 0, ignorance = 0
+  let ambCount = 0, riskCount = 0, ignCount = 0
+
+  if (stepName === 'divergence') {
+    const contradictions = output?.contradictions?.length || 0
+    if (contradictions >= 5) ambiguity += 0.7; else if (contradictions >= 3) ambiguity += 0.4; else if (contradictions >= 1) ambiguity += 0.15
+    ambCount++
+  }
+
+  if (stepName === 'bagua') {
+    const scores = output?.dimensions?.map(d => d.score) || []
+    if (scores.length > 0) {
+      const mean = scores.reduce((a, b) => a + b, 0) / scores.length
+      const variance = scores.reduce((a, b) => a + (b - mean) ** 2, 0) / scores.length
+      ambiguity += Math.min(0.8, variance / 8); ambCount++
+    }
+    const conflicts = output?.conflicts?.length || 0
+    if (conflicts >= 5) ambiguity += 0.3; else if (conflicts >= 3) ambiguity += 0.15
+    ambCount++
+  }
+
+  // 风险: 自检通过率
+  const checks = output?.self_check || []
+  const passRate = checks.length > 0 ? checks.filter(c => c.passed).length / checks.length : 0.5
+  risk += (1 - passRate) * 0.4; riskCount++
+
+  // 验证问题
+  const issues = output?.issues || []
+  if (issues.length >= 3) risk += 0.4; else if (issues.length >= 1) risk += 0.15
+  riskCount++
+  const critCount = issues.filter(i => i.severity === 'critical').length
+  if (critCount > 0) risk += 0.35 * Math.min(1, critCount / 3)
+  riskCount++
+
+  // 无知: 用户问题
+  const userQs = output?.user_questions || []
+  if (userQs.length >= 3) ignorance += 0.7; else if (userQs.length >= 1) ignorance += 0.35
+  ignCount++
+
+  // 数据源覆盖
+  const dataSrcs = output?.data_sources || output?.directions?.flatMap(d => d.data_sources || []) || []
+  if (dataSrcs.length === 0) ignorance += 0.5; else if (dataSrcs.length <= 2) ignorance += 0.2
+  ignCount++
+
+  ambiguity = ambCount > 0 ? Math.min(1, ambiguity / ambCount * 1.5) : 0
+  risk = riskCount > 0 ? Math.min(1, risk / riskCount * 2) : 0
+  ignorance = ignCount > 0 ? Math.min(1, ignorance / ignCount * 1.5) : 0
+  const wAmb = WEIGHTS.uncertainty_ambiguity || 0.35
+  const wRisk = WEIGHTS.uncertainty_risk || 0.40
+  const wIgn = WEIGHTS.uncertainty_ignorance || 0.25
+  const composite = Math.min(1, ambiguity * wAmb + risk * wRisk + ignorance * wIgn)
+
+  return {
+    ambiguity: Math.round(ambiguity * 100) / 100,
+    risk: Math.round(risk * 100) / 100,
+    ignorance: Math.round(ignorance * 100) / 100,
+    composite: Math.round(composite * 100) / 100,
+  }
+}
+
+function recordUncertainty(stepName, u) {
+  uncertaintyHistory.push({ step: stepName, ...u })
+}
+
+function uncertaintyDecide(prevStepName, loopCount = 0) {
+  const last = uncertaintyHistory[uncertaintyHistory.length - 1]
+  if (!last) return { action: 'proceed', reason: '无不确定性数据' }
+  const c = last.composite
+  const lowThresh = WEIGHTS.uncertainty_low || 0.3
+  const midThresh = WEIGHTS.uncertainty_medium || 0.55
+  // 低不确定性 → 继续
+  if (c < lowThresh || loopCount >= 3) return { action: 'proceed', reason: `不确定性低(${c})`, target: 'next' }
+  // 中不确定性 → 按主导类型路由
+  if (c < midThresh) {
+    if (last.ambiguity >= last.risk && last.ambiguity >= last.ignorance)
+      return { action: 'diverge_more', reason: `歧义(${last.ambiguity})主导`, target: 'diverge' }
+    if (last.risk >= last.ambiguity && last.risk >= last.ignorance)
+      return { action: 'search_more', reason: `风险(${last.risk})主导`, target: 'simulate' }
+    return { action: 'ask_user', reason: `无知(${last.ignorance})主导`, target: 'constraint' }
+  }
+  // 高不确定性 → 修复
+  if (last.ambiguity >= last.risk && last.ambiguity >= last.ignorance)
+    return { action: 'deepen', reason: `高歧义(${last.ambiguity})`, target: 'diverge', fix: true }
+  if (last.risk >= last.ambiguity && last.risk >= last.ignorance)
+    return { action: 'deepen', reason: `高风险(${last.risk})`, target: 'verify', fix: true }
+  return { action: 'ask_user', reason: `高无知(${last.ignorance})`, target: 'constraint', fix: true }
+}
+
+// ── 事件边界检测 (Event Boundary Detection) ──
+// 模拟大脑在预测误差峰值处切分事件边界 (Richmond & Zacks, 2017)
+// 每个步骤转换处计算"边界预测误差": 上一步的输出在多大程度上"预测"了下一步的输入需求
+// 误差低→顺畅过渡, 误差高→在当前步骤原地加深(不比等全部做完再回退)
+// 加深/调整阈值从WeightRegistry加载，可自动学习调整
+function eventBoundaryCheck(fromStep, toStep, fromOutput, toOutput) {
+  const bDeep = WEIGHTS.boundary_deepen || 0.5
+  const bAdj = WEIGHTS.boundary_adjust || 0.25
+  const bDeepStrict = WEIGHTS.boundary_deepen_strict || 0.4  // 收敛→验证用更严格阈值
+  const bAdjStrict = WEIGHTS.boundary_adjust_strict || 0.15
+
+  // Step2→Step3: 发散覆盖到维度检查的映射
+  if (fromStep === 'divergence' && toStep === 'bagua') {
+    const pCount = fromOutput?.perspectives?.length || 0
+    const contradictions = fromOutput?.contradictions?.length || 0
+    const consensus = (fromOutput?.consensus || '').length
+    // 期望: ≥6视角, ≥2矛盾, 共识≥30字
+    let error = 0
+    if (pCount < 6) error += 0.3
+    if (contradictions < 2) error += 0.25
+    if (consensus < 30) error += 0.2
+    // 如果余下的误差可以被step3吸收→低边界误差
+    const boundaryError = Math.min(1, error)
+    return {
+      error: Math.round(boundaryError * 100) / 100,
+      action: boundaryError > bDeep ? 'deepen' : boundaryError > bAdj ? 'adjust' : 'proceed',
+      detail: boundaryError > bDeep ? `发散覆盖率不足(视角${pCount}/6, 矛盾${contradictions}/2)` :
+              boundaryError > bAdj ? `发散深度一般，step3需补充` : '发散充分',
+      target: boundaryError > bDeep ? 'divergence' : 'bagua',
+    }
+  }
+
+  // Step3→Step4: 维度分析到推演方向的映射
+  if (fromStep === 'bagua' && toStep === 'simulate') {
+    const dims = fromOutput?.dimensions?.length || 0
+    const conflicts = fromOutput?.conflicts?.length || 0
+    const keyFinding = (fromOutput?.key_finding || '').length
+    let error = 0
+    if (dims < 8) error += 0.25
+    if (conflicts < 3) error += 0.25
+    if (keyFinding < 20) error += 0.2
+    // 维度得分方差太低→缺乏区分度
+    const scores = fromOutput?.dimensions?.map(d => d.score) || []
+    const mean = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 5
+    const variance = scores.length > 0 ? scores.reduce((a, b) => a + (b - mean) ** 2, 0) / scores.length : 0
+    if (variance < 1) error += 0.3
+    const boundaryError = Math.min(1, error)
+    return {
+      error: Math.round(boundaryError * 100) / 100,
+      action: boundaryError > bDeep ? 'deepen' : boundaryError > bAdj ? 'adjust' : 'proceed',
+      detail: boundaryError > bDeep ? `维度区分度不足(方差${variance.toFixed(1)} < 1，冲突${conflicts}/3)` :
+              boundaryError > bAdj ? '维度分析基本完整，方向提取需注意' : '维度分析充分',
+      target: boundaryError > bDeep ? 'bagua' : 'simulate',
+    }
+  }
+
+  // Step5→Verify: 结论到验证的映射
+  if (fromStep === 'converge' && toStep === 'verify') {
+    const allClear = fromOutput?.all_clear
+    const checks = fromOutput?.self_check || []
+    const passed = checks.filter(c => c.passed).length
+    const chainLen = (fromOutput?.reasoning_chain || '').length
+    let error = 0
+    if (!allClear) error += 0.4
+    if (passed < Math.ceil(checks.length * 0.6)) error += 0.3
+    if (chainLen < 50) error += 0.2
+    const boundaryError = Math.min(1, error)
+    return {
+      error: Math.round(boundaryError * 100) / 100,
+      action: boundaryError > bDeepStrict ? 'deepen' : boundaryError > bAdjStrict ? 'adjust' : 'proceed',
+      detail: boundaryError > bDeepStrict ? `自检未通过(${passed}/${checks.length})，需回退收敛` :
+              boundaryError > bAdjStrict ? '自检部分通过，验证需严格' : '结论可靠',
+      target: boundaryError > bDeepStrict ? 'converge' : 'verify',
+    }
+  }
+
+  // 默认: 无边界错误
+  return { error: 0, action: 'proceed', detail: '无边界检查', target: 'next' }
 }
 
 // 回路知识即时存储 — 每完成一个回路立即存到MMA, 不等最后
@@ -276,6 +465,26 @@ if (pluginPath) {
   log('假设生成: ' + hypothesis.hypotheses.length + '个')
 }
 
+// ── 从WeightRegistry加载可学习权重 ──
+// 覆盖硬编码默认值，系数会随验证结果自动调整
+let WEIGHTS = {}
+let WEIGHTS_LOADED = false
+if (pluginPath) {
+  phase('权重加载')
+  const rawWeights = await agent(`加载当前最优权重配置:
+  运行: node ${pluginPath}/scripts/weights.js list-json
+  将返回的JSON原样输出。`, {
+    label: '加载可学习权重',
+    phase: '权重加载',
+    schema: WEIGHTS_SCHEMA,
+  })
+  if (rawWeights && Object.keys(rawWeights).length > 0) {
+    WEIGHTS = rawWeights
+    WEIGHTS_LOADED = true
+  }
+}
+log('权重: ' + (WEIGHTS_LOADED ? '已加载' : '使用默认值'))
+
 // ── 自校验主循环 ──
 do {
   loopCount++
@@ -339,14 +548,26 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
   log('Step2 complete: ' + step2.perspectives.length + '' perspectives')
   recordStep('divergence', 'ok', { count: step2.perspectives.length })
   storeCircuitKnowledge('divergence', step2.perspectives.map(p => ({ content: p.insight, tags: [p.name] })), pluginPath) // circuit-store
+  // 不确定性评估: 发散阶段
+  recordUncertainty('divergence', computeStepUncertainty('divergence', step2))
+  // 事件边界检测: 发散→维度 (预测误差低则顺畅过渡，高则立即加深)
+  const boundaryD2B = eventBoundaryCheck('divergence', 'bagua', step2, {})
+  if (boundaryD2B.error > 0.5) {
+    log('⏎ 边界误差[发散→八卦镜]: ' + boundaryD2B.detail + ' — 立即加深发散阶段')
+    fixContext = '【发散深度不足】' + boundaryD2B.detail + '。请在发散阶段增加更多真正不同的视角和矛盾点，当前发散不足以支撑维度分析。'
+    continue  // 跳过本轮后续步骤，直接进入下一轮加深发散
+  }
+  if (boundaryD2B.error > 0.3) log('边界误差[发散→八卦镜]: ' + boundaryD2B.detail + ' (误差=' + boundaryD2B.error + ')')
   } else { step2 = { perspectives: [] } }
 
-  // ── Step 3: 八卦镜8维检查 ──
+  // ── Step 3: 八卦镜8维检查 + DMN间歇(并行) ──
   let step3 = null
-  if (stepEnabled('bagua')) {
-  phase('八卦镜8维')
+  if (stepEnabled('bagua') || stepEnabled('dmn')) {
+  phase('八卦镜8维 + DMN间歇')
 
-  step3 = await agent(`你是Ponder框架的"检查师"。你的任务是执行八卦镜8维交叉检查。
+  const parallelBaguaDmn = []
+  if (stepEnabled('bagua')) {
+    parallelBaguaDmn.push(() => agent(`你是Ponder框架的"检查师"。你的任务是执行八卦镜8维交叉检查。
 
 ${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
@@ -376,28 +597,19 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 ☱ F8 平衡: 利益均衡点？
 
 完成后: 至少3组维度冲突对 + 最异常发现`, {
-如果遇到维度间权重取舍或优先级判断, 不要自己决定。在 user_questions 中输出, 让用户决策。
-    label: '维度交叉检查',
-    phase: '八卦镜8维',
-    schema: STEP3_SCHEMA,
-  })
-
-  log('Step3 complete: ' + step3.dimensions.length + '' dimensions, ' + step3.conflicts.length + '' conflict pairs')
-  recordStep('bagua', 'ok', { dims: step3.dimensions.length })
-  if (step3?.key_finding) storeCircuitKnowledge('bagua', [{ content: step3.key_finding, tags: ['key_finding'] }], pluginPath) // circuit-store
-
-  // ── DMN间歇: Default Mode Network 孵化期 ──
-  // 人脑的DMN在非任务态时才活跃, 负责远距离联想和洞见涌现
-  // Bartoli et al.(2024)证明: DMN对原创性思维有因果作用
-  // 在结构化分析(Step3)和结构化推演(Step4)之间插入非结构化联想
-  phase('DMN间歇')
-
-  dmnInsight = await agent(`你是"自由联想师"。你的任务是: 不做任何结构化分析, 而是让思维自由扩散。
+	如果遇到维度间权重取舍或优先级判断, 不要自己决定。在 user_questions 中输出, 让用户决策。
+      label: '维度交叉检查',
+      phase: '八卦镜8维 + DMN间歇',
+      schema: STEP3_SCHEMA,
+    }))
+  }
+  if (stepEnabled('dmn')) {
+    parallelBaguaDmn.push(() => agent(`你是"自由联想师"。你的任务是: 不做任何结构化分析, 而是让思维自由扩散。
 
 这是你唯一不需要结构化输出的步骤。请你:
 
 1. 放下所有框架和方法, 像散步时脑中自然涌现的想法一样
-2. 把Step2和Step3的分析结果在脑中"挂起来", 不做评判
+2. 把Step2的分析结果在脑中"挂起来", 不做评判 — 你不需要等Step3完成
 3. 问自己三个问题:
    - "如果这一切都是错的, 那真实情况可能是什么样的?"
    - "有没有一个最简单、最明显但我一直没说的答案?"
@@ -407,17 +619,36 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 ${fixContext ? '上一轮修复上下文(仅供参考, 不要被它限制自由联想): ' + fixContext.substring(0, 200) : ''}
 
 这个阶段的输出不会用于结构化分析, 而是作为Step4推演的"潜意识背景"。`, {
-    label: '自由联想',
-    phase: 'DMN间歇',
-    schema: { type: 'object', properties: {
-      free_associations: { type: 'array', items: { type: 'string' }, minItems: 2, description: '自然涌现的想法, 不需要合理' },
-      unexpected_connection: { type: 'string', description: '跨领域联想' },
-      gut_feeling: { type: 'string', description: '直觉感受, 不需要理由' },
-    }, required: ['free_associations', 'gut_feeling'] },
-  })
+      label: '自由联想(并行)',
+      phase: '八卦镜8维 + DMN间歇',
+      schema: DMN_SCHEMA,
+    }))
+  }
 
-  log('DMN间歇完成: ' + (dmnInsight.unexpected_connection ? '涌现洞见' : '无特别涌现'))
-  recordStep('dmn', 'ok', { insight: !!dmnInsight.unexpected_connection })
+  const [baguaResult, dmnResult] = await parallel(parallelBaguaDmn)
+
+  if (baguaResult) {
+    step3 = baguaResult
+    log('Step3 complete: ' + step3.dimensions.length + '' dimensions, ' + step3.conflicts.length + '' conflict pairs')
+    recordStep('bagua', 'ok', { dims: step3.dimensions.length })
+    if (step3?.key_finding) storeCircuitKnowledge('bagua', [{ content: step3.key_finding, tags: ['key_finding'] }], pluginPath)
+    recordUncertainty('bagua', computeStepUncertainty('bagua', step3))
+  }
+  if (dmnResult) {
+    dmnInsight = dmnResult
+    log('DMN间歇完成: ' + (dmnInsight.unexpected_connection ? '涌现洞见' : '无特别涌现'))
+    recordStep('dmn', 'ok', { insight: !!dmnInsight.unexpected_connection })
+  }
+    // 事件边界检测: 八卦镜→推演 (维度区分度决定推演质量，低则立即加深)
+    if (step3) {
+      const boundaryB2S = eventBoundaryCheck('bagua', 'simulate', step3, {})
+      if (boundaryB2S.error > 0.5) {
+        log('⏎ 边界误差[八卦镜→推演]: ' + boundaryB2S.detail + ' — 立即加深八卦镜分析')
+        fixContext = '【维度分析深度不足】' + boundaryB2S.detail + '。请在八卦镜分析中增加差异化维度和矛盾对，当前维度区分度不足以支撑推演。'
+        continue  // 跳过本轮后续步骤，直接进入下一轮加深八卦镜
+      }
+      if (boundaryB2S.error > 0.3) log('边界误差[八卦镜→推演]: ' + boundaryB2S.detail + ' (误差=' + boundaryB2S.error + ')')
+    }
   }
 
   // ── Step 4: 多场景推演（并行子Agent架构） ──
@@ -547,6 +778,7 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
     recommendation: step4Agg.recommendation,
   }
   log('Step4 complete: ' + step4.directions.length + '', aggregation complete')
+  recordUncertainty('simulate', computeStepUncertainty('simulate', step4))
 
   // ── 多场景辩论 (Scenario-based Debate) ──
   // 辩论方不是正反方, 而是来自Step4的不同分析场景
@@ -722,6 +954,7 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
 
   log('Step5 complete:  self-check' + (step5.all_clear ? ' all passed' : ' has issues'))
   recordStep('converge', step5.all_clear ? 'pass' : 'partial', { passed: step5.all_clear })
+  recordUncertainty('converge', computeStepUncertainty('converge', step5))
   }
 
   // ── 层级预测: Top-Down Prediction Pass (Hierarchical Predictive Coding) ──
@@ -767,6 +1000,17 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
   // 如果误差严重, 增加修复上下文
   if (topDown.error_severity === 'high') {
     fixContext = (fixContext ? fixContext + '\n' : '') + '【层级预测误差】\n' + topDown.prediction_errors.join('\n') + '\n' + (topDown.layer_gap ? '信息断裂层级: ' + topDown.layer_gap : '')
+  }
+
+  // 事件边界检测: 收敛→验证 (自检一致性决定验证的严格程度，低则立即加深)
+  if (step5) {
+    const boundaryC2V = eventBoundaryCheck('converge', 'verify', step5, {})
+    if (boundaryC2V.error > 0.5) {
+      log('⏎ 边界误差[收敛→验证]: ' + boundaryC2V.detail + ' — 立即加深收敛分析')
+      fixContext = (fixContext ? fixContext + '\n' : '') + '【收敛分析不足】' + boundaryC2V.detail + '。请在收敛阶段增加更严格的自检和更完整的推理链。'
+      continue  // 跳过本轮验证，直接进入下一轮加深收敛
+    }
+    if (boundaryC2V.error > 0.3) log('边界误差[收敛→验证]: ' + boundaryC2V.detail + ' (误差=' + boundaryC2V.error + ')')
   }
 
   // ── Step 5.5: 独立验证（fresh context，主动找茬） ──
@@ -862,7 +1106,16 @@ Step3关键发现: ${step3.key_finding}
     // 将行动计划存入args供主LLM呈现
     args._action_plan = actionPlan
     }
-    const verIssues = (verifyResult?.issues?.length || 0); const noDepth = (step5?.all_clear !== false if (!needsDepth || loopCount >= 3) breakif (!needsDepth || loopCount >= 3) break verIssues <= 1); if (noDepth || loopCount >= 3) break
+    // 不确定性驱动的断出决策 — 额顶叶网络编码的连续不确定性值决定是否需要修复
+    const vUncertainty = computeStepUncertainty('verify', { ...(verifyResult || {}), self_check: step5?.self_check || [] })
+    recordUncertainty('verify', vUncertainty)
+    const ucDecision = uncertaintyDecide('verify', loopCount)
+    const verIssues = (verifyResult?.issues?.length || 0)
+    const hasCritical = (verifyResult?.issues?.filter(i => i.severity === 'critical').length || 0) > 0
+    if (ucDecision.action === 'proceed' || loopCount >= MAX_LOOPS || (!hasCritical && verIssues <= 1 && verifyResult?.all_clear)) {
+      if (!verifyResult?.all_clear && loopCount >= MAX_LOOPS) log('⚠️ 仍有问题，已达最大修复轮次')
+      break
+    }
   }
 
   // ── 知识固化 Consolidation Phase (代码强制, LLM无法跳过) ──
@@ -940,7 +1193,7 @@ ${knowledgeEntries.map((k, i) => `
   const criticalCount = verifyResult.issues.filter(i => i.severity === 'critical').length
   if (criticalCount > 0 && loopCount >= MAX_LOOPS) {
     log('⚠️ 仍有' + criticalCount + '个关键问题，已达最大修复轮次，输出带警告')
-    const verIssues = (verifyResult?.issues?.length || 0); const noDepth = (step5?.all_clear !== false if (noDepth || loopCount >= 3) breakif (!needsDepth || loopCount >= 3) break verIssues <= 1); if (noDepth || loopCount >= 3) break
+    break  // 有关键问题且已达最大轮次，强制退出
   }
 
   const weakSteps = Object.entries(STEP_WEIGHTS).filter(([s, w]) => w < 0.7).map(([s]) => 'Step' + s).join(', ')
@@ -953,6 +1206,30 @@ ${knowledgeEntries.map((k, i) => `
   log('验证未通过: ' + issueCount + '个问题, 进入第' + (loopCount + 1) + '轮修复')
 
 } while (loopCount < MAX_LOOPS)
+
+// ── 权重自学习: 根据本次pipeline运行结果更新可学习权重 ──
+if (pluginPath && uncertaintyHistory.length > 0) {
+  const learnPayload = {
+    verifyResult: { all_clear: verifyResult?.all_clear, issues: verifyResult?.issues || [], verdict: verifyResult?.verdict },
+    uncertainty: { history: uncertaintyHistory },
+    free_energy: 0,  // 将在自由能计算后通过返回值学习
+    loopCount,
+    maxLoops: MAX_LOOPS,
+    boundaryTriggered: false,
+  }
+  // 通过子Agent执行权重学习(异步, 不阻塞返回)
+  await agent(`更新可学习权重注册表:
+  运行: node ${pluginPath}/scripts/weights.js learn '${JSON.stringify(learnPayload).replace(/'/g, "'\\''")}'
+  权重会根据本次验证结果自动调整，优化下次分析的系数。`, {
+    label: '权重自学习',
+    phase: '权重自学习',
+    schema: { type: 'object', properties: {
+      learned: { type: 'boolean' },
+      changes: { type: 'array', items: { type: 'string' } },
+    }, required: ['learned'] },
+  })
+  log('权重自学习完成')
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  返回结果 — 包含验证记录
@@ -970,7 +1247,10 @@ log('╚════════════════════════
 const verifyFailRate = verifyResult?.issues?.length ? Math.min(1, verifyResult.issues.length / 5) : 0
 const selfCheckFailRate = step5?.self_check ? (5 - step5.self_check.filter(s => s.passed).length) / 5 : 0
 const predErrorScore = topDown?.error_severity === 'high' ? 0.7 : topDown?.error_severity === 'medium' ? 0.3 : 0
-const freeEnergy = Math.round((verifyFailRate * 0.4 + selfCheckFailRate * 0.3 + predErrorScore * 0.3) * 100) / 100
+const wVerify = WEIGHTS.free_energy_verify || 0.4
+const wSelfCheck = WEIGHTS.free_energy_selfcheck || 0.3
+const wPredError = WEIGHTS.free_energy_prederror || 0.3
+const freeEnergy = Math.round((verifyFailRate * wVerify + selfCheckFailRate * wSelfCheck + predErrorScore * wPredError) * 100) / 100
 
 // ── 进化建议 (Evolution Suggestions) ──
 // 基于自由能和各步骤验证失败率, 输出可能的拓扑变异方向
@@ -1052,6 +1332,14 @@ return {
     hierarchical_prediction: topDown?.error_severity || 'none',
     action_plan: args?._action_plan ? true : false,
     adaptive_weights: Object.fromEntries(Object.entries(STEP_WEIGHTS).map(([k, v]) => ['Step' + k, v])),
+    uncertainty_tracking: uncertaintyHistory.length > 0,
+  },
+  uncertainty: {
+    history: uncertaintyHistory,
+    final_composite: uncertaintyHistory.length > 0 ? uncertaintyHistory[uncertaintyHistory.length - 1].composite : 0,
+    trend: uncertaintyHistory.length >= 2
+      ? (uncertaintyHistory[uncertaintyHistory.length - 1].composite - uncertaintyHistory[0].composite > 0.05 ? 'increasing' : 'decreasing')
+      : 'stable',
   },
   action_plan: args?._action_plan || null,
   memory_tags: {
