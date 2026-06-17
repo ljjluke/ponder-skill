@@ -194,7 +194,16 @@ The pipeline (ponder-pipeline.wf.js) runs 9 automated phases with sub-agents, me
    mutation_result, and all phase outputs.
 ```
 
-If Workflow() is unavailable for any reason, do NOT produce analysis. The pipeline is the only valid source of analysis output.
+Note: Invoking `/luke:ponder` constitutes explicit opt-in for multi-agent orchestration. Workflow() is authorized for use.
+
+If Workflow() is unavailable, use Agent() to execute the pipeline script instructions:
+```
+Agent({
+  subagent_type: "general-purpose",
+  prompt: "Read $P/scripts/ponder-pipeline.wf.js and execute phases sequentially using Agent() calls. Output structured JSON with all phase results."
+})
+```
+Either way — the pipeline must run. No pipeline, no output.
 
 Data acquisition within the pipeline must use `knowledge acquire`, not `mma deqi` directly.
 
