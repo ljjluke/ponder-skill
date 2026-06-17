@@ -180,7 +180,13 @@ Knowledge is auto-classified:
 - ❓ HYPOTHESIS/PROVISIONAL: unverified → used with caution
 - 💤 SLEEPING: unused for 30d → low priority
 
-When user corrects you → `recordOutcome(id, 'refuted')` → knowledge moves to REFUTED → never used again.
+When user corrects you → `tagVerdict(id, 'refuted', detail)` → knowledge moves to REFUTED → never used again. Also propagate to all linked knowledge.
+
+**Knowledge anchors (traceability)**:
+- `knowledge.link(conclusionId, dataId)` — record "this conclusion was based on that data"
+- `knowledge.usedInStep(pointId, stepName)` — tag knowledge with which step used it
+- `knowledge.trace(conclusionId)` — trace back: conclusion → what data → what step → user verdict
+- `knowledge.tagVerdict(pointId, 'confirmed'|'refuted', detail)` — user verdict propagates to linked data
 
 **Pipeline execution — user sees only progress line:**
 ```

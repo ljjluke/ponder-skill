@@ -54,7 +54,7 @@ function findMmaScript() {
  * @param {boolean} options.storeNew — whether to store new knowledge found via search (default true)
  * @returns {{ source: string, entries: object[] }}
  */
-function acquire(query, options = {}) {
+function acquire(query, options = {}, stepName = '') {
   const { tags = [], limit = 5, allowSearch = true, storeNew = true } = query || {};
   const result = { source: 'none', entries: [] };
 
@@ -71,6 +71,12 @@ function acquire(query, options = {}) {
           const valid = parsed.results.filter(r => r.point?.status !== 'REFUTED' && r.point?.status !== 'DISPUTED');
           if (valid.length > 0) {
             result.source = 'mma';
+            // Tag each recalled point with step usage
+            if (stepName) {
+              for (const v of valid) {
+                usedInStep(v.point.id, stepName);
+              }
+            }
             result.entries = valid.map(r => ({
               id: r.point.id,
               content: r.point.description,
@@ -197,7 +203,128 @@ function classify(kg) {
   return summary;
 }
 
-module.exports = { acquire, store, recordOutcome, classify };
+/**
+ * Link two knowledge points (traceability anchor).
+ * Records that conclusion `fromId` was based on data `toId`.
+ * Stored as a related_point with relation type.
+ */
+function link(fromId, toId, relation = 'based_on') {
+  if (!MMA_SCRIPT || !fromId || !toId) return;
+  const io = require('./mma/io');
+  const kg = io.loadMMA();
+  const from = io.findPointById(kg, fromId);
+  const to = io.findPointById(kg, toId);
+  if (!from || !to) return;
+  from.point.related_points = from.point.related_points || [];
+  if (!from.point.related_points.some(r => r.id === toId && r.relation === relation)) {
+    from.point.related_points.push({ id: toId, relation, at: new Date().toISOString() });
+    io.saveMMA(kg);
+  }
+}
+
+/**
+ * Mark that a conclusion was verified/refuted by the user.
+ * Propagates verdict to all linked knowledge points.
+ */
+function tagVerdict(pointId, verdict = 'confirmed', detail = '') {
+  if (!MMA_SCRIPT || !pointId) return;
+  const io = require('./mma/io');
+  const kg = io.loadMMA();
+  const point = io.findPointById(kg, pointId);
+  if (!point) return;
+
+  const p = point.point;
+  // Store verdict as a special tag
+  p.tags = p.tags || [];
+  const verdictTag = 'verdict:' + verdict;
+  if (!p.tags.includes(verdictTag)) p.tags.push(verdictTag);
+  if (detail && !p.tags.includes('correction:' + detail.substring(0, 20))) {
+    p.tags.push('correction:' + detail.substring(0, 20).replace(/\s+/g, '_'));
+  }
+
+  if (verdict === 'refuted' || verdict === 'corrected') {
+    // Propagate to all linked points: mark them as DISPUTED
+    const related = p.related_points || [];
+    for (const r of related) {
+      const linked = io.findPointById(kg, r.id);
+      if (linked && linked.point.status === 'CONFIRMED') {
+        linked.point.status = 'DISPUTED';
+        linked.point.tags = linked.point.tags || [];
+        if (!linked.point.tags.includes('disputed_by:' + pointId)) {
+          linked.point.tags.push('disputed_by:' + pointId);
+        }
+      }
+    }
+  } else if (verdict === 'confirmed') {
+    // Reinforce all linked points
+    const related = p.related_points || [];
+    for (const r of related) {
+      spawnSync('node', [MMA_SCRIPT, 'mma', 'reinforce', r.id, '0.1',
+        JSON.stringify({ source: 'user_confirmation_chain' })], { timeout: 3000 });
+    }
+  }
+
+  // Record the verdict as MMA knowledge
+  const verdictEntry = {
+    description: `[${verdict}] ${detail || pointId}`,
+    tags: ['verdict', verdict, 'anchor'],
+    emotion: verdict === 'confirmed' ? 'xi' : 'jing',
+    q: verdict === 'confirmed' ? 0.9 : 1.0,
+    source: 'user_' + verdict,
+  };
+  store(verdictEntry);
+  io.saveMMA(kg);
+}
+
+/**
+ * Record that a knowledge point was used in a specific pipeline step.
+ */
+function usedInStep(pointId, stepName) {
+  if (!MMA_SCRIPT || !pointId || !stepName) return;
+  const io = require('./mma/io');
+  const kg = io.loadMMA();
+  const point = io.findPointById(kg, pointId);
+  if (!point) return;
+  point.point.tags = point.point.tags || [];
+  const useTag = 'used_in:' + stepName;
+  if (!point.point.tags.includes(useTag)) {
+    point.point.tags.push(useTag);
+    io.saveMMA(kg);
+  }
+}
+
+/**
+ * Trace a conclusion back to its source knowledge.
+ * Returns: { conclusion_id, based_on: [{ id, description, tags, status }], step_usage: [] }
+ */
+function trace(pointId) {
+  if (!MMA_SCRIPT || !pointId) return null;
+  const io = require('./mma/io');
+  const kg = io.loadMMA();
+  const point = io.findPointById(kg, pointId);
+  if (!point) return null;
+
+  const p = point.point;
+  const related = (p.related_points || []).filter(r => r.relation === 'based_on');
+  const basedOn = related.map(r => {
+    const rp = io.findPointById(kg, r.id);
+    return rp ? { id: rp.point.id, description: (rp.point.description || '').substring(0, 80), tags: rp.point.tags, status: rp.point.status } : { id: r.id, status: 'not_found' };
+  });
+
+  const stepUsage = (p.tags || []).filter(t => t.startsWith('used_in:')).map(t => t.replace('used_in:', ''));
+
+  return {
+    conclusion_id: pointId,
+    description: (p.description || '').substring(0, 100),
+    verdict: (p.tags || []).filter(t => t.startsWith('verdict:')).map(t => t.replace('verdict:', '')),
+    based_on: basedOn,
+    step_usage: stepUsage,
+    status: p.status,
+    q: p.q,
+  };
+}
+
+module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace };
 
 if (require.main === module) {
   const cmd = process.argv[2];
