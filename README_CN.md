@@ -12,12 +12,6 @@
 
 ---
 
-<table>
-<tr>
-<td width="60%">
-
-### 这是什么
-
 大多数 LLM 工具会立即回答——然后答错。Ponder 不会在**全方位压力测试**之前给出答案：
 
 1. 🔍 **先访谈你** — 找到真实需求
@@ -28,29 +22,9 @@
 6. 🛡️ **对抗式验证** — 独立Agent试图证伪
 7. 🧠 **每次使用都学习** — 管道进化, 错误被记住
 
-</td>
-<td width="40%">
-
-### 快速开始
-
-```bash
-# 安装
-/plugin marketplace add https://github.com/ljjluke/ponder-skill
-/plugin install luke
-
-# 使用
+```
 /luke:ponder <你的问题>
 ```
-
-```
-✓ 无需配置
-✓ 数据不离机
-✓ 你的数据, 你的机器
-```
-
-</td>
-</tr>
-</table>
 
 ---
 
@@ -58,40 +32,27 @@
 
 ```mermaid
 flowchart TB
-    classDef user fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    classDef pipeline fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef memory fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
-    classDef evolve fill:#fce4ec,stroke:#c62828,stroke-width:2px
+    classDef user fill:#e8f5e9,stroke:#2e7d32
+    classDef pipe fill:#e3f2fd,stroke:#1565c0
+    classDef mem fill:#f3e5f5,stroke:#6a1b9a
+    classDef evolve fill:#fce4ec,stroke:#c62828
+    classDef check fill:#fff8e1,stroke:#f57f17
 
-    U(["你 / 用户"]):::user --> I["1. 访谈<br/>三层探询, 了解需求"]:::user
-
-    I --> ACQ["2. 数据采集<br/>acquire()"]:::data
-    ACQ --> MMA["(本地记忆<br/>已验证 / 已证伪)"]:::memory
-    ACQ --> WEB["(网络搜索<br/>补充)"]:::data
-
-    ACQ --> P["3. 分析管道<br/>9步自动化"]:::pipeline
-    P --> P1["多视角发散"]:::pipeline
-    P --> P2["维度检查"]:::pipeline
-    P --> P3["场景推演"]:::pipeline
-    P --> P4["多方辩论"]:::pipeline
-    P --> P5["综合判断"]:::pipeline
-    P --> P6["独立核验"]:::pipeline
-
-    P6 --> V{"核验: 够清晰?"}
-    V -->|不够| D["4. 重新辩论深挖<br/>(最多3轮)"]:::pipeline
-    D --> P
-    V -->|清晰| C["5. 知识固化<br/>(检查REFUTED, 自动存储)"]:::memory
-
-    C --> PRES["6. 呈现结果"]:::user
-    PRES --> U
-    U -.-> FB["7. 用户反馈<br/>标记正确 / 标记错误"]:::evolve
-    FB --> MMA
-
-    P -.->|步骤日志| EV["自进化<br/>(自由能计算→变异裁定)"]:::evolve
-    C -.->|知识存储| EV
-    FB -.->|分类更新| EV
-    EV -.->|进化配置| P
+    U(["你"]):::user --> I["1. 访谈"]:::user
+    I --> DQ["2. 收集数据<br/>记忆+网络"]:::mem
+    DQ --> PL["3. 分析<br/>(9步管道)"]:::pipe
+    PL --> V{"4. 核验"}:::check
+    V -->|不够| D["辩论深挖<br/>(最多3轮)"]:::pipe
+    D --> PL
+    V -->|清晰| C["5. 固化存储"]:::mem
+    C --> P["6. 呈现"]:::user
+    P --> U
+    U -.->|纠正/确认| F["7. 用户反馈"]:::evolve
+    F --> C
+    PL -.->|性能| E["自进化"]:::evolve
+    C -.->|知识| E
+    F -.->|分类| E
+    E -.->|进化| PL
 ```
 flowchart TB
     subgraph SE["自进化（从所有阶段采集数据）"]
@@ -198,6 +159,20 @@ LLM不决定进化方向——统计数据决定。全部本地运行。
 然后输入：`/luke:ponder <你的问题>`
 
 > 记忆数据：`~/.claude/data/skills/mcts-td-planner/` — 与技能代码物理隔离，升级不丢失。
+
+---
+
+## MCTS-TD CLI（可选，独立于管道）
+
+原始的 MCTS-TD 算法保留在代码中，作为独立的 CLI 命令使用：
+
+```bash
+node scripts/mcts.js tree init --solutions '[...]'   # MCTS树搜索
+node scripts/mcts.js compute ucb --v 0.5 --n 3       # UCB计算
+node scripts/mcts.js mma reinforce <id> <td_error>    # TD学习更新
+```
+
+这些不参与主管道流程，但保留给需要直接使用低层决策搜索的用户。
 
 ---
 

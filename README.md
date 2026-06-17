@@ -16,12 +16,6 @@
 
 ---
 
-<table>
-<tr>
-<td width="60%">
-
-### What it does
-
 Most LLM tools answer immediately — and get it wrong the first time. Ponder doesn't answer until it's **stress-tested from every angle**:
 
 1. 🔍 **Interviews you** — finds the real question underneath
@@ -32,29 +26,9 @@ Most LLM tools answer immediately — and get it wrong the first time. Ponder do
 6. 🛡️ **Adversarial verification** — independent agent tries to prove you wrong
 7. 🧠 **Learns from every use** — pipeline evolves, mistakes remembered
 
-</td>
-<td width="40%">
-
-### Quick start
-
-```bash
-# Install
-/plugin marketplace add https://github.com/ljjluke/ponder-skill
-/plugin install luke
-
-# Use
+```
 /luke:ponder <your question>
 ```
-
-```
-✓ No configuration
-✓ No data upload
-✓ Your data, your machine
-```
-
-</td>
-</tr>
-</table>
 
 ---
 
@@ -62,40 +36,27 @@ Most LLM tools answer immediately — and get it wrong the first time. Ponder do
 
 ```mermaid
 flowchart TB
-    classDef user fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    classDef pipeline fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef memory fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
-    classDef evolve fill:#fce4ec,stroke:#c62828,stroke-width:2px
+    classDef user fill:#e8f5e9,stroke:#2e7d32
+    classDef pipe fill:#e3f2fd,stroke:#1565c0
+    classDef mem fill:#f3e5f5,stroke:#6a1b9a
+    classDef evolve fill:#fce4ec,stroke:#c62828
+    classDef check fill:#fff8e1,stroke:#f57f17
 
-    U(["You / User"]):::user --> I["1. Interview<br/>3 layers, find real needs"]:::user
-
-    I --> ACQ["2. Data Acquisition<br/>acquire()"]:::data
-    ACQ --> MMA["(Local Memory<br/>CONFIRMED / REFUTED)"]:::memory
-    ACQ --> WEB["(Web Research<br/>fallback)"]:::data
-
-    ACQ --> P["3. Analysis Pipeline<br/>9 automated phases"]:::pipeline
-    P --> P1["Divergence"]:::pipeline
-    P --> P2["Dimension Check"]:::pipeline
-    P --> P3["Scenario Simulation"]:::pipeline
-    P --> P4["Multi-stance Debate"]:::pipeline
-    P --> P5["Convergence"]:::pipeline
-    P --> P6["Verification"]:::pipeline
-
-    P6 --> V{"Check: clear enough?"}
-    V -->|no| D["4. Re-debate & Deepen<br/>(up to 3 rounds)"]:::pipeline
-    D --> P
-    V -->|yes| C["5. Knowledge Consolidation<br/>(check vs REFUTED, auto-store)"]:::memory
-
-    C --> PRES["6. Present Result"]:::user
-    PRES --> U
-    U -.-> FB["7. User Feedback<br/>tagVerdict / recordOutcome"]:::evolve
-    FB --> MMA
-
-    P -.->|step_log| EV["Self-Evolution<br/>(free_energy calculation<br/>→ mutation_result)"]:::evolve
-    C -.->|knowledge stored| EV
-    FB -.->|classification| EV
-    EV -.->|evolved config| P
+    U(["You"]):::user --> I["1. Interview"]:::user
+    I --> DQ["2. Gather Data<br/>memory + web"]:::mem
+    DQ --> PL["3. Analyze<br/>(9-step pipeline)"]:::pipe
+    PL --> V{"4. Check"}:::check
+    V -->|unclear| D["Debate & deepen<br/>(max 3)"]:::pipe
+    D --> PL
+    V -->|clear| C["5. Consolidate<br/>& store"]:::mem
+    C --> P["6. Present"]:::user
+    P --> U
+    U -.->|correct / confirm| F["7. User Feedback"]:::evolve
+    F --> C
+    PL -.->|performance| E["Self-Evolution"]:::evolve
+    C -.->|knowledge| E
+    F -.->|classification| E
+    E -.->|improves| PL
 ```
 
 > **Self-Evolution** collects data from every phase: step performance, knowledge quality, user corrections. Between sessions, the pipeline adjusts based on this data — weights, order, even which steps exist.
@@ -181,6 +142,20 @@ No vague conclusions. Every claim must have data support.
 Then: `/luke:ponder <your question>`
 
 > Data location: `~/.claude/data/skills/mcts-td-planner/` — physically separate from skill code. Safe across upgrades.
+
+---
+
+## MCTS-TD CLI (available but separate)
+
+The original MCTS-TD algorithms remain in the codebase as standalone CLI commands:
+
+```bash
+node scripts/mcts.js tree init --solutions '[...]'   # MCTS tree search
+node scripts/mcts.js compute ucb --v 0.5 --n 3       # UCB calculation
+node scripts/mcts.js mma reinforce <id> <td_error>    # TD learning update
+```
+
+These are not part of the main pipeline but are available for direct use or integration. The pipeline uses the structured thinking approach (9 phases), while MCTS-TD provides lower-level decision search for users who need it.
 
 ---
 
