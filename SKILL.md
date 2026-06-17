@@ -208,38 +208,44 @@ When user corrects you → `tagVerdict(id, 'refuted', detail)` → knowledge mov
 
 After pipeline + convergence, evaluate. If conclusion is clear → present. If uncertain → **re-enter the debate phase with more data**, not a full pipeline restart.
 
+Every cycle starts with memory recall, not web search. The memory engine already has past expertise — use it before searching externally.
+
 ```
 Determine result quality:
 
   Conclusion is clear, self-check passed → ✅ Present to user
 
   Conclusion is vague/mixed/uncertain → Enter Debate Loop (max 3 cycles):
-    
+
+    Before each cycle → query MMA memory for relevant past cases:
+      knowledge.acquire(tags, {stepName: 'depth_cycle'})
+      If memory returns useful data → use it (faster, already validated)
+      If memory returns nothing → then WebSearch (new knowledge)
+
     Cycle 1: 
-      → Identify specific uncertainties (what exactly is unclear?)
-      → Each debater searches for NEW evidence addressing those gaps
-      → Re-debate with new evidence
+      → Each debater recalls memory: "have I seen this uncertainty before?"
+      → If found → use past experience. If not → search web.
+      → Re-debate with all gathered evidence
       → Re-converge
     
     Cycle 2 (if still uncertain):
-      → Each debater searches for MORE specific evidence
-      → Each must explicitly address: why is the other side's evidence weak?
-      → Re-debate with credibility attacks
-      → Re-converge
+      → Each debater digs deeper into memory with refined tags
+      → Attack the OTHER side's evidence credibility (status matters)
+      → Re-debate → Re-converge
     
     Cycle 3 (last round):
-      → All available evidence exhausted
-      → If still uncertain → honest report: "After analysis, the following uncertainties remain: [list]"
-      → Provide conditions under which analysis should be revisited
+      → All available memory + web evidence exhausted
+      → If still uncertain → honest report: uncertainties remain
+      → Provide conditions for re-analysis
 
-    Between cycles: display progress in user's language, e.g. "📊 Deepening analysis..."
+    Between cycles: display progress in user's language
     After cycle end: present results regardless of certainty
 ```
 
 Decision routing within each debate cycle:
-- Missing data → each side searches for what THEY need
+- Missing data → memory first, web second
 - Contradiction → each side attacks the OTHER's evidence credibility
-- User preference → each side asks clarifying questions (collected, presented to user after debate)
+- User preference → collected, presented to user after debate
 
 **Never let the LLM decide.** Every fork must be backed by data or user input. If you can't justify why you chose one path over another, you're guessing — and that's not allowed.
 
