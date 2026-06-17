@@ -778,6 +778,67 @@ Step3关键发现: ${step3.key_finding}
     break
   }
 
+  // ── 知识固化 Consolidation Phase (代码强制, LLM无法跳过) ──
+  // 所有步骤的关键输出在此统一存储到MMA, 不依赖LLM自觉
+  phase('知识固话')
+  const knowledgeEntries = []
+
+  // 收集发散阶段的洞察
+  if (step2?.perspectives) {
+    for (const p of step2.perspectives) {
+      if (p.insight && p.insight.length > 10) {
+        knowledgeEntries.push({ desc: p.insight, tags: ['divergence', p.name.replace(/[^a-zA-Z0-9一-鿿]/g, '_')], q: 0.6 })
+      }
+    }
+  }
+  // 收集八卦镜的关键发现
+  if (step3?.key_finding) {
+    knowledgeEntries.push({ desc: step3.key_finding, tags: ['bagua', 'key_finding'], q: 0.7 })
+  }
+  // 收集推演结论
+  if (step4?.recommendation) {
+    knowledgeEntries.push({ desc: step4.recommendation, tags: ['simulation', 'recommendation'], q: 0.7 })
+  }
+  // 收集最终结论
+  if (step5?.conclusion) {
+    knowledgeEntries.push({ desc: step5.conclusion, tags: ['conclusion', 'final'], q: 0.8 })
+  }
+
+  // 通过子Agent固化知识(代码强制, LLM不可跳过)
+  if (knowledgeEntries.length > 0 && pluginPath) {
+    await agent(`你是记忆管理员。需要将以下分析结果存入本地记忆系统。
+
+【存储前的检查 — 不可跳过】
+1. 先查询过去被推翻的知识(listRefuted):
+   node ${pluginPath}/scripts/mcts.js knowledge refuted
+2. 对每条新知识, 语义对比是否与 REFUTED 思路一致:
+   - 一致? → 不存储, 标记 "与[ID]思路一致, 跳过"
+   - 不确定? → 存储但标记 'suspected_refuted'
+   - 全新思路? → 正常存储
+
+【存储指令】
+${knowledgeEntries.map((k, i) => `
+条目 ${i+1}:
+  内容: ${k.desc}
+  标签: ${k.tags.join(', ')}
+  权重: ${k.q}
+`).join('\n')}
+
+执行完上述检查后, 逐一存储通过的条目。
+每条存储: node ${pluginPath}/scripts/mcts.js mma ashi '{"description":"...","tags":[...],"category":"tools_and_means","emotion":"an","q":...}'
+
+全部完成后汇报: 存了几条, 跳过几条, 跳过原因。`, {
+      label: '知识固化',
+      phase: '知识固话',
+      schema: { type: 'object', properties: {
+        stored_count: { type: 'number' },
+        skipped_count: { type: 'number' },
+        skipped_reasons: { type: 'array', items: { type: 'string' } },
+      }, required: ['stored_count'] },
+    })
+    log('知识固话: ' + knowledgeEntries.length + '条处理完成')
+  }
+
   // ── 未通过: 记录各步骤失败次数(自适应权重) ──
   for (const issue of verifyResult.issues) {
     if (issue.step >= 2 && issue.step <= 5) {
@@ -875,6 +936,7 @@ if (freeEnergy <= 0.4) {
 
 return {
   step_log: step_log,
+  knowledge_stored: knowledgeEntries ? knowledgeEntries.length : 0,
   user_request: userRequest,
   free_energy: freeEnergy,
   mutation_result: mutationResult,
