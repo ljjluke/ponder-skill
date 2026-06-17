@@ -156,14 +156,12 @@ const pluginPath = args?.plugin_path || ''
 const memoryContext = args?.memory_context || '(无历史记忆上下文)'
 
 const memoryRecallNote = pluginPath
-  ? `[UNIFIED DATA ENTRY] All knowledge needs go through the same path:
-   node ${pluginPath}/scripts/mcts.js knowledge acquire '{"tags":["<keywords>"],"limit":3}'
-   → Phase 1: Check MMA memory (deqi) — excludes REFUTED/DISPUTED
-   → Phase 2: Found? → Use it (C0NFIRMED > PROVISIONAL > HYPOTHESIS)
-   → Phase 3: Not found? → WebSearch → store as HYPOTHESIS → return
-   → NEVER fabricate. If nothing found, report evidence_gap honestly.
-
-   Current memory context: ${memoryContext}\n`
+  ? `[MANDATORY — you MUST run this before analyzing]
+   (1) Search memory: node ${pluginPath}/scripts/mcts.js knowledge acquire '{"tags":["<keywords>"],"limit":5}'
+   (2) Include recall results in your analysis
+   (3) If nothing found → WebSearch. NEVER fabricate.
+   (4) Report evidence_gap honestly if still nothing found.
+   SKIPPING MEMORY SEARCH = INVALID ANALYSIS. DO NOT SKIP.\n`
   : ''
 
 log('用户请求: ' + userRequest)

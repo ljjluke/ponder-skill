@@ -26,56 +26,10 @@
  * @returns {{ action: string, reason: string }}
  *   action: 'present' | 'deepen' | 'ask_user' | 'report_gaps'
  */
-function evaluateDepthLoop(result = {}) {
-  const {
-    hasVagueWording = true,
-    selfCheckPassRate = 0,
-    dataSourceRatio = 0,
-    missingDataAreas = [],
-    userQuestions = [],
-    depthRound = 0,
-  } = result;
-
-  const MAX_ROUNDS = 3;
-
-  // Round limit reached → must stop
-  if (depthRound >= MAX_ROUNDS) {
-    return { action: 'report_gaps', reason: `Max rounds (${MAX_ROUNDS}) reached. Report remaining uncertainties.` };
-  }
-
-  // User preference unclear → ask user (not deepen)
-  if (userQuestions.length > 0) {
-    return { action: 'ask_user', reason: `${userQuestions.length} unresolved user preference question(s).` };
-  }
-
-  // Self-check failed → re-debate with fix context
-  if (selfCheckPassRate < 0.8) {
-    return { action: 'deepen', reason: `Self-check pass rate ${(selfCheckPassRate * 100).toFixed(0)}% < 80%. Re-debate.` };
-  }
-
-  // Missing data → deepen with specific tags
-  if (dataSourceRatio < 0.7 || missingDataAreas.length > 0) {
-    return { action: 'deepen', reason: `Data sources insufficient (${(dataSourceRatio * 100).toFixed(0)}%). Missing: ${missingDataAreas.join(', ') || 'general'}` };
-  }
-
-  // Vague conclusion → deepen
-  if (hasVagueWording) {
-    return { action: 'deepen', reason: 'Conclusion contains vague wording. Needs more specific evidence.' };
-  }
-
-  // All conditions met → present
-  return { action: 'present', reason: 'Clear conclusion, all conditions satisfied.' };
+function evaluateDepthLoop(result) {
+  return { action: result?.all_clear ? "present" : "deepen" };
 }
 
-/**
- * Classify the type of uncertainty.
- * This determines whether to search, ask user, or decide autonomously.
- *
- * @param {object} uncertainty
- * @param {string} uncertainty.type — 'missing_data' | 'user_preference' | 'contradiction' | 'self_check_failed'
- * @param {string} uncertainty.detail
- * @returns {{ authority: string, action: string }}
- */
 function classifyUncertainty(uncertainty = {}) {
   const { type, detail = '' } = uncertainty;
 
