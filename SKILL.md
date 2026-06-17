@@ -155,6 +155,11 @@ Assumptions: ...
 
 ### Circuits 2-7: Reasoning Circuit + Adaptive Depth Loop
 
+**⛔ RULE: The pipeline MUST execute for every analysis.**
+The pipeline (ponder-pipeline.wf.js) runs 9 automated phases with sub-agents, memory checks, structured self-check, and knowledge consolidation. If the pipeline does NOT run — do NOT produce analysis output. Free-text analysis without pipeline execution is INVALID.
+
+Data acquisition within the pipeline must use `knowledge acquire`, not `mma deqi` directly.
+
 **New: Hypothesis-first phase** — Before analyzing, the pipeline generates predictions based on existing memory. Data collection then targets confirming or refuting these predictions. This mirrors the brain's predictive processing (Friston's Free Energy Principle).
 
 **Decision authority rule — LLM never decides on its own:**
@@ -172,18 +177,11 @@ Every decision during the pipeline and depth loop must fall into one of three ca
 
 If you're tempted to make a judgment call without data or user input → STOP. Either find data or ask the user.
 
-**Unified data acquisition**: Every data need goes through the same path. **Store knowledge with multiple precise tags** so recall works without expansion. One concept → multiple concrete tags.
+**Unified data acquisition — MANDATORY**: Every data need goes through `scripts/knowledge.js acquire()`. **Do NOT use `mma deqi` directly.** The `acquire()` function handles memory check → web fallback → REFUTED filtering in one call.
 
 ```
-When storing: tag with ALL precise terms the concept relates to
-  e.g. { description: "..." tags: ["stock", "equity", "market", "investment", "risk"] }
-  → searching any of these tags will find it
-
-When acquiring: use the most specific tags for what you need
-  acquire(["relevant", "tags"], {stepName: 'current_step'})
-
-acquire(tags) → ① Check MMA memory
-             → ② Found? → Return (exclude REFUTED/DISPUTED)
+acquire(tags) → ① Check MMA memory (excludes REFUTED/DISPUTED)
+             → ② Found? → Return (with classification)
              → ③ Not found? → WebSearch → store as HYPOTHESIS → return
 ```
 
