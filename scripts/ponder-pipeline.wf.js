@@ -4,13 +4,16 @@
 
 export const meta = {
   name: 'ponder-pipeline',
-  description: 'Self-correcting pipeline: Step2(发散)→Step3(八卦镜)→Step4(推演)→Step5(收敛)→验证(独立Agent)→不通过回退',
+  description: 'Structured analysis pipeline: divergence → examination → simulation → debate → convergence → verification',
   phases: [
-    { title: '6尺度发散', detail: '从6个观测位置审视问题' },
-    { title: '八卦镜8维', detail: '8维度交叉检查' },
-    { title: '多场景推演', detail: '2-3方向×3场景模拟' },
-    { title: '收敛自检', detail: '综合判断 + 5问自检' },
-    { title: '独立验证', detail: 'fresh context找茬——主动证明分析有漏洞' },
+    { title: '多视角发散', detail: '从6个不同尺度审视问题' },
+    { title: '维度交叉分析', detail: '8个维度的系统检查' },
+    { title: '自由联想', detail: '跨领域关联思考' },
+    { title: '多场景推演', detail: '多个方向的独立模拟' },
+    { title: '多方辩论', detail: '不同立场的观点碰撞' },
+    { title: '综合判断', detail: '收敛分析+自检' },
+    { title: '回溯验证', detail: '验证推理链条' },
+    { title: '独立核验', detail: '从反面角度审查结论' },
   ],
 }
 
@@ -241,7 +244,7 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
 - 每个视角至少20字洞见+40字分析
 - 6个视角必须真正不同，不能相互重复
 - 最后综合出矛盾点和共识点`, {
-    label: 'Step2: 6尺度发散',
+    label: '多视角发散分析',
     phase: '6尺度发散',
     schema: STEP2_SCHEMA,
   })
@@ -284,7 +287,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 ☱ F8 平衡: 利益均衡点？
 
 完成后: 至少3组维度冲突对 + 最异常发现`, {
-    label: 'Step3: 八卦镜8维',
+    label: '维度交叉检查',
     phase: '八卦镜8维',
     schema: STEP3_SCHEMA,
   })
@@ -312,7 +315,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 ${fixContext ? '上一轮修复上下文(仅供参考, 不要被它限制自由联想): ' + fixContext.substring(0, 200) : ''}
 
 这个阶段的输出不会用于结构化分析, 而是作为Step4推演的"潜意识背景"。`, {
-    label: 'DMN: 自由联想',
+    label: '自由联想',
     phase: 'DMN间歇',
     schema: { type: 'object', properties: {
       free_associations: { type: 'array', items: { type: 'string' }, minItems: 2, description: '自然涌现的想法, 不需要合理' },
@@ -342,7 +345,7 @@ ${JSON.stringify(step3, null, 2)}
 1. 基于至少1组Step3的维度冲突（conflict_source字段）
 2. 代表真实可行的路径（不是幻想）
 3. 方向之间必须有本质差异`, {
-    label: 'Step4a: 方向提取',
+    label: '推演方向提取',
     phase: '多场景推演',
     schema: DIRECTION_PLAN_SCHEMA,
   })
@@ -420,7 +423,7 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
 - common_ground 至少40字
 - key_risks 至少2个
 - recommendation 至少40字`, {
-    label: 'Step4c: 汇总',
+    label: '推演结果汇总',
     phase: '多场景推演',
     schema: STEP4_AGGREGATE_SCHEMA,
   })
@@ -448,7 +451,7 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
-      label: '辩方A: 乐观',
+      label: '正方: 推进',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
@@ -462,7 +465,7 @@ ${JSON.stringify(step4, null, 2)}`, {
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
-      label: '辩方B: 悲观',
+      label: '反方: 风险',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
@@ -476,7 +479,7 @@ ${JSON.stringify(step4, null, 2)}`, {
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
-      label: '辩方C: 异见',
+      label: '第三方: 新思路',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
@@ -494,7 +497,7 @@ ${JSON.stringify(step4, null, 2)}`, {
 你的原始陈词: ${debateArgs[0].argument}
 B的陈词: ${debateArgs[1].argument}
 C的陈词: ${debateArgs[2].argument}`, {
-      label: 'A回应',
+      label: '正方回应',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         rebuttal: { type: 'string', minLength: 30 },
@@ -506,7 +509,7 @@ C的陈词: ${debateArgs[2].argument}`, {
 你的原始陈词: ${debateArgs[1].argument}
 A的陈词: ${debateArgs[0].argument}
 C的陈词: ${debateArgs[2].argument}`, {
-      label: 'B回应',
+      label: '反方回应',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         rebuttal: { type: 'string', minLength: 30 },
@@ -578,7 +581,7 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
 5.3 有漏洞→标注"待确认"并说明
 
 约束: 自检5问全部回答、all_clear明确、follow_up_signals至少2个、结论含what+why+what_if_wrong`, {
-    label: 'Step5: 收敛与自检',
+    label: '综合判断',
     phase: '收敛自检',
     schema: STEP5_SCHEMA,
   })
@@ -611,7 +614,7 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
 实际Step2发散: ${JSON.stringify(step2, null, 2)}
 实际Step3八卦镜: ${JSON.stringify(step3, null, 2)}
 实际Step4推演: ${JSON.stringify(step4, null, 2)}`, {
-    label: '层级预测: top-down',
+    label: '推理验证',
     phase: '层级预测',
     schema: { type: 'object', properties: {
       predicted_step2_focus: { type: 'array', items: { type: 'string' }, description: '结论预测Step2应关注的视角' },
@@ -673,7 +676,7 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
 - 自检可能过于乐观(self-bias)——你要发现自检没看到的问题
 - 具体引用报告中的内容作为证据
 - "all_clear=false" + 详细的fix_prompt = 最好的修复`, {
-    label: '独立验证',
+    label: '结论核验',
     phase: '独立验证',
     schema: VERIFY_SCHEMA,
   })
@@ -707,7 +710,7 @@ Step3关键发现: ${step3.key_finding}
 你的任务: 提出1个具体、可执行、可观察结果的行动建议。
 这个行动应该是用户看完分析后可以直接做的。
 如果用户执行了, 应该观察什么结果来判断分析是否正确？`, {
-      label: '行动建议',
+      label: '行动规划',
       phase: '具身行动',
       schema: { type: 'object', properties: {
         proposed_action: { type: 'string', minLength: 30, description: '具体可执行行动' },

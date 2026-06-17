@@ -76,22 +76,37 @@ Before writing ANY message to the user, run this mental checklist. If any item f
 
 ## Flow
 
-### Step 1: Requirements Divergence (you talk to user)
+### Step 1: Requirements Divergence — Iterative Interview
 
-Self-examination (in your head, not output), then 3-layer interview, then 5-dimension profile.
+Self-examination (in your head), then **iterative multi-round interview**, then profile synthesis.
 
 **Self-examination** (do not output):
 - What is my first reaction? What if the opposite is true?
 - What default assumptions do I hold about this domain?
 - If all first reactions are wrong, what might the truth be?
 
-**3-layer interview**:
+**Interview — iterative, not one-pass**:
+
+Do NOT ask 3 fixed questions and stop. Each answer should generate deeper questions. The interview is done only when you have a clear, multi-dimensional picture of what the user actually needs.
+
 ```
-Layer 1: Align surface
-"You said [paraphrase], correct? Anything to add?"
-Layer 2: Dig motivation  
-"Why are you focused on this now? What will you DO after this analysis?"
-Layer 3: Constraints (AskUserQuestion with options)
+Round 1 — Open:
+  "What are you trying to figure out?" + "What triggered this now?"
+
+Round 2 — Deepen based on Round 1 answers:
+  If they said "I want to analyze market" → "什么类型的市场? 什么时间范围? 你的角色是?"
+  If they said "I need to make a decision" → "什么决策? 有几种选择? 最担心什么?"
+  Always ask: "If you had the answer, what would you DO with it?"
+
+Round 3+ — Challenge and validate:
+  Probe contradictions the user hasn't noticed.
+  Ask "有想过相反的可能性吗?"
+  If answers are still vague → dig deeper, don't proceed.
+
+Stop when:
+  □ You can describe the user's situation back to them and they say "对, 就是这样"
+  □ The 5 dimensions have enough information to score
+  □ At least 1 assumption is marked "pending" (means you're honest about uncertainty)
 ```
 
 **Profile output** (user's language, 5 dimensions + assumptions):
@@ -101,7 +116,7 @@ Rules=?/10     Essence=?/10
 Assumptions: ...
 ```
 
-⛔ User hasn't answered constraint questions → cannot enter pipeline.
+⛔ Don't rush through the interview. 3 questions are almost never enough.
 
 ---
 
