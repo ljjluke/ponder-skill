@@ -135,7 +135,19 @@ This is NOT a linear "ask 3 questions → done" process. It's a cycle:
 ⑤ Repeat ②→④ until stopping condition is met
 ```
 
-**Stopping condition** — only stop when ALL of these are true:
+**Dimension probes — dig deeper, not wider:**
+
+For each of the 5 dimensions, probe until you can score it with confidence:
+
+| Dimension | What to ask | Keep probing if... |
+|-----------|-------------|-------------------|
+| 天 Timing | When does this need to be done? Is there a deadline? What's the window of opportunity? Is the timing flexible or fixed? | They say "as soon as possible" without specifying |
+| 地 Resources | What do you already have? What's missing? What's your budget/capacity? Who else is involved? | They only mention one resource (time/money/people) |
+| 人 People | Who else is affected? Who needs to agree? Who will use the result? Who opposes this? | They only mention themselves |
+| 法 Rules | What rules must be followed? What's off limits? What are the constraints? What happens if rules are broken? | They say "no constraints" — there are always constraints |
+| 物 Essence | What does success look like? How will you know it's done right? What's the real goal behind this? | They describe the solution, not the problem |
+
+Not all dimensions need equal depth. Spend more time on dimensions where the user's answers are vague or contradictory.
 ```
 □ Each of the 5 dimensions has enough info to score (even if uncertainty is high)
 □ You can describe the situation back to the user in 2-3 sentences and they confirm
