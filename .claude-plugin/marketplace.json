@@ -1,5 +1,5 @@
 {
-  "name": "ponder",
+  "name": "luke",
   "version": "1.14.0",
   "description": "Universal thinking framework — Zhuangzi-inspired Free Wandering divergence + MCTS × TD × Eight-Facet Mirror. Brain-inspired hierarchical cognitive pipeline.",
   "owner": {
@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "ponder",
+      "name": "luke",
       "description": "Brain-inspired cognitive pipeline: MMA memory + predictive coding + multi-perspective divergence + self-correcting loop + sleep consolidation.",
       "source": "./",
       "version": "1.14.0",
