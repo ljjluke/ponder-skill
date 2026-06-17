@@ -76,38 +76,63 @@ Before writing ANY message to the user, run this mental checklist. If any item f
 
 ## Flow
 
-### Step 1: Requirements Divergence — Iterative Interview
+### Step 1: Requirements Divergence — Spiral Divergence
 
-Self-examination (in your head), then **iterative multi-round interview**, then profile synthesis.
+Self-examination (in your head), then **spiral divergence interview** — each answer branches into new questions until blind spots are eliminated.
 
 **Self-examination** (do not output):
 - What is my first reaction? What if the opposite is true?
 - What default assumptions do I hold about this domain?
 - If all first reactions are wrong, what might the truth be?
 
-**Interview — iterative, not one-pass**:
+**Spiral divergence — the cycle**:
 
-Do NOT ask 3 fixed questions and stop. Each answer should generate deeper questions. The interview is done only when you have a clear, multi-dimensional picture of what the user actually needs.
+This is NOT a linear "ask 3 questions → done" process. It's a cycle:
 
 ```
-Round 1 — Open:
-  "What are you trying to figure out?" + "What triggered this now?"
-
-Round 2 — Deepen based on Round 1 answers:
-  If they said "I want to analyze market" → "什么类型的市场? 什么时间范围? 你的角色是?"
-  If they said "I need to make a decision" → "什么决策? 有几种选择? 最担心什么?"
-  Always ask: "If you had the answer, what would you DO with it?"
-
-Round 3+ — Challenge and validate:
-  Probe contradictions the user hasn't noticed.
-  Ask "有想过相反的可能性吗?"
-  If answers are still vague → dig deeper, don't proceed.
-
-Stop when:
-  □ You can describe the user's situation back to them and they say "对, 就是这样"
-  □ The 5 dimensions have enough information to score
-  □ At least 1 assumption is marked "pending" (means you're honest about uncertainty)
+          ┌─────────────────────────────────────┐
+          │   Ask → Listen → Analyze → Find gap │
+          │         ↑                    ↓       │
+          │         └─── Deeper question ────────┘
+          │                                     │
+          │  Each cycle: one layer of blind spot │
+          │  removed. Stop when no more blind    │
+          │  spots can be identified.            │
+          └─────────────────────────────────────┘
 ```
+
+**Execution:**
+
+```
+Cycle 1 — Broad open:
+  Ask what the user wants. Listen for what's NOT said.
+  "你说的是[复述], 对吗? 还有什么我没问到的?"
+
+Cycle 2 — Expand:
+  Based on Cycle 1, what dimensions are still empty?
+  → Timing? Resources? People? Rules? Essence?
+  Ask targeted questions for each empty dimension.
+
+Cycle 3 — Challenge:
+  Look for contradictions or assumptions in the user's answers.
+  "你说的X和Y听起来有矛盾——你觉得呢?"
+  "如果相反的情况才是对的, 你会怎么看?"
+
+Cycle 4+ — Verify coverage:
+  Go through each of the 5 dimensions. If any is still unclear, ask.
+  After answering, ask: "你觉得我理解对了吗?"
+  If user corrects you → that's a blind spot. Go deeper.
+```
+
+**Stopping condition** — only stop when ALL of these are true:
+```
+□ Each of the 5 dimensions has enough info to score (even if uncertainty is high)
+□ You can describe the situation back to the user in 2-3 sentences and they confirm
+□ You have at least 1 "pending" assumption (you know what you don't know)
+□ More importantly: you cannot think of any additional question that would change your approach
+```
+
+If you can still think of a question that matters → ask it. Do not proceed.
 
 **Profile output** (user's language, 5 dimensions + assumptions):
 ```
@@ -116,7 +141,7 @@ Rules=?/10     Essence=?/10
 Assumptions: ...
 ```
 
-⛔ Don't rush through the interview. 3 questions are almost never enough.
+⛛ One-pass interviews (3 questions and done) are not allowed. Each answer must generate new questions.
 
 ---
 
