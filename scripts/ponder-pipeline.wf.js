@@ -305,7 +305,7 @@ if (stepEnabled('verify')) {
 
   step2 = await agent(`你是Ponder框架的"发散师"。你的任务是执行6尺度发散分析。
 
-${memoryRecallNote}${mctsSimNote}
+${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
 输入（来自Step1需求发散）:
 ${JSON.stringify(step1Result, null, 2)}
@@ -447,7 +447,22 @@ ${JSON.stringify(step3, null, 2)}
   recordStep('simulate_plan', 'ok', { dirs: directionPlan.directions.length })
   }
 
-  // 4b: 每个方向独立推演（并行）
+  // MCTS树预初始化 — 代码强制创建真实树, 非LLM模拟
+let mctsSessionId = ''
+if (pluginPath && directionPlan.directions.length > 0) {
+  const initSc = directionPlan.directions.slice(0, 3).map(d => ({
+    name: d.name || 'Scenario',
+    description: (d.focus_area || d.name || '').substring(0, 50),
+  }))
+  const initResult = await agent(, {
+    label: 'MCTS初始化',
+    phase: '多场景推演',
+    schema: { type: 'object', properties: { session_id: { type: 'string' } }, required: ['session_id'] },
+  })
+  mctsSessionId = initResult?.session_id || ''
+}
+
+// 4b: 每个方向独立推演（并行）
   const directionResults = await parallel(
     directionPlan.directions.map(d => () => agent(`你是独立的推演分析师。你的任务是: 对 "${d.name}" 这个方向做真实推演。
 
