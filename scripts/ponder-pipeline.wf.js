@@ -452,16 +452,26 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
   // 不是"多角度看问题", 而是"不同立场的人争论"
   phase('社会认知辩论')
 
+  // 证据项: 每条证据附带来源和可信度状态
+  const EVIDENCE_ITEM = {
+    type: 'object', properties: {
+      content: { type: 'string', description: '证据内容' },
+      source: { type: 'string', description: '来源(MMA记忆/WebSearch/推理)' },
+      status: { type: 'string', enum: ['CONFIRMED','PROVISIONAL','HYPOTHESIS','DEFAULT'], description: '知识状态: CONFIRMED=高可信, PROVISIONAL=中等, HYPOTHESIS=未验证, DEFAULT=非记忆来源' },
+    }, required: ['content', 'source', 'status'],
+  }
+
   debateArgs = await Promise.all([
     agent(`你是一名称职的辩论分析师。你的立场是: "正方: 推进"——找机会, 看正面。
 
-在写陈词前, 你要先做信息收集:
-1. 从记忆中召回支持"推进"立场的证据(关注机会/增长/利好):
-   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js mma deqi \'{"tags":["opportunity","growth","positive","推进"],"limit":3}\'' : '(查询记忆)'}
-2. 如果记忆中没有, 用 WebSearch 搜索真实案例
-3. 基于你找到的证据写陈词
+在写陈词前, 先做信息收集, 注意每条证据的可信度:
+1. 从记忆引擎召回支持"推进"的证据 — 注意返回结果的状态(status): CONFIRMED=高可信, PROVISIONAL=中等可信, HYPOTHESIS=未验证(弱证据)
+   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js knowledge acquire \'{"tags":["opportunity","growth","positive","推进"],"limit":3}\'' : '(查询记忆)'}
+2. CONFIRMED 证据最强 → 优先使用。HYPOTHESIS 证据弱 → 标注"待验证"。
+3. 记忆中没有 → WebSearch, 标记为 DEFAULT(非记忆来源)。
+4. 输出每条证据时附带其可信度状态。
 
-Step2-4分析作为背景参考:
+背景参考: Step2-4分析
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
@@ -469,19 +479,19 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        data_sources: { type: 'array', items: { type: 'string' }, description: '你引用的证据来源' },
-        memory_hit: { type: 'boolean', description: '是否从记忆中找到有力证据' },
-      }, required: ['argument', 'data_sources'] },
+        evidence: { type: 'array', items: EVIDENCE_ITEM, minItems: 1, description: '引用的证据(每条带可信度状态)' },
+      }, required: ['argument', 'evidence'] },
     }),
     agent(`你一名称职的辩论分析师。你的立场是: "反方: 风险"——找问题, 防风险, 看负面。
 
-在写陈词前, 你要先做信息收集:
-1. 从记忆中召回支持"风险"立场的证据(关注风险/失败案例/下行):
-   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js mma deqi \'{"tags":["risk","failure","downside","风险"],"limit":3}\'' : '(查询记忆)'}
-2. 如果记忆中没有, 用 WebSearch 搜索真实案例
-3. 基于你找到的证据写陈词
+在写陈词前, 先做信息收集, 注意每条证据的可信度:
+1. 从记忆引擎召回支持"风险"的证据 — 注意返回结果的状态(status): CONFIRMED=高可信, PROVISIONAL=中等, HYPOTHESIS=未验证
+   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js knowledge acquire \'{"tags":["risk","failure","downside","风险"],"limit":3}\'' : '(查询记忆)'}
+2. CONFIRMED 优先用。HYPOTHESIS 弱证据标注"待验证"。
+3. 没有则 WebSearch, 标记 DEFAULT。
+4. 每条证据附带可信度状态。
 
-Step2-4分析作为背景参考:
+背景参考: Step2-4分析
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
@@ -489,19 +499,19 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        data_sources: { type: 'array', items: { type: 'string' }, description: '你引用的证据来源' },
-        memory_hit: { type: 'boolean', description: '是否从记忆中找到有力证据' },
-      }, required: ['argument', 'data_sources'] },
+        evidence: { type: 'array', items: EVIDENCE_ITEM, minItems: 1 },
+      }, required: ['argument', 'evidence'] },
     }),
     agent(`你一名称职的辩论分析师。你的立场是: "第三方: 新思路"——找前两者都没看到的盲区。
 
-在写陈词前, 你要先做信息收集:
-1. 从记忆中召回前两者可能忽略的信息(关注 overlooked/alternative/unexpected):
-   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js mma deqi \'{"tags":["alternative","unexpected","blindspot","创新","盲区"],"limit":3}\'' : '(查询记忆)'}
-2. 如果记忆中没有, 用 WebSearch 搜索真实案例
-3. 基于你找到的证据写陈词
+在写陈词前, 先做信息收集, 注意每条证据的可信度:
+1. 从记忆引擎召回前两者可能忽略的信息:
+   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js knowledge acquire \'{"tags":["alternative","unexpected","blindspot","创新","盲区"],"limit":3}\'' : '(查询记忆)'}
+2. CONFIRMED 优先用, HYPOTHESIS 标注待验证。
+3. 没有则 WebSearch, 标记 DEFAULT。
+4. 每条证据附带可信度状态。
 
-Step2-4分析作为背景参考:
+背景参考: Step2-4分析
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
@@ -509,8 +519,8 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        blindspot: { type: 'string', description: 'A和B共同的盲区' },
-      }, required: ['argument'] },
+        evidence: { type: 'array', items: EVIDENCE_ITEM, minItems: 1 },
+      }, required: ['argument', 'evidence'] },
     }),
   ])
 
@@ -518,39 +528,54 @@ ${JSON.stringify(step4, null, 2)}`, {
 
   // 辩论回应: 各方阅读对方陈词后反驳
   const debateRebuttals = await Promise.all([
-    agent(`你听到反方和第三方的论点。回应他们的证据, 然后修正或强化你的立场。
+    agent(`你听到反方和第三方的论点。你需要做两件事:
+1. 攻击对方证据的可信度 → 对方证据是 HYPOTHESIS(未验证) 还是 CONFIRMED(已验证)?
+2. 基于对方的攻击来修正或强化你的立场。
 
 你的原始陈词: ${debateArgs[0].argument}
-你用的证据: ${(debateArgs[0].data_sources || []).join(', ')}
+你的证据: ${JSON.stringify(debateArgs[0].evidence || [])}
 反方陈词: ${debateArgs[1].argument}
-反方证据: ${(debateArgs[1].data_sources || []).join(', ')}
+反方证据: ${JSON.stringify(debateArgs[1].evidence || [])}
 第三方陈词: ${debateArgs[2].argument}
-第三方证据: ${(debateArgs[2].data_sources || []).join(', ')}
+第三方证据: ${JSON.stringify(debateArgs[2].evidence || [])}
 
-如果对方的证据比你强→修正立场。如果只是视角不同→强化立场。`, {
+攻击策略:
+- 对方证据是 HYPOTHESIS → 直接质疑:"你这个证据未经验证, 不可靠"
+- 对方证据是 CONFIRMED → 难以质疑, 考虑吸收
+- 对方证据是 PROVISIONAL → "这个证据只有部分验证, 还不足以支撑结论"
+- 你自己的证据是 HYPOTHESIS → 在修正立场时坦承"我方这点证据较弱"`, {
       label: '正方回应',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         rebuttal: { type: 'string', minLength: 30 },
         revised_stance: { type: 'string' },
-        conceded_points: { type: 'array', items: { type: 'string' }, description: '你认可对方哪些论点' },
+        conceded_points: { type: 'array', items: { type: 'string' } },
+        evidence_attacks: { type: 'array', items: { type: 'string' }, description: '你攻击了对方哪些证据的可信度' },
       }, required: ['rebuttal', 'revised_stance'] },
     }),
-    agent(`你听到正方和第三方的论点。回应他们的证据, 然后修正或强化你的立场。
+    agent(`你听到正方和第三方的论点。你需要做两件事:
+1. 攻击对方证据的可信度 → HYPOTHESIS? CONFIRMED?
+2. 基于对方的攻击来修正或强化你的立场。
 
 你的原始陈词: ${debateArgs[1].argument}
-你用的证据: ${(debateArgs[1].data_sources || []).join(', ')}
+你的证据: ${JSON.stringify(debateArgs[1].evidence || [])}
 正方陈词: ${debateArgs[0].argument}
-正方证据: ${(debateArgs[0].data_sources || []).join(', ')}
+正方证据: ${JSON.stringify(debateArgs[0].evidence || [])}
 第三方陈词: ${debateArgs[2].argument}
-第三方证据: ${(debateArgs[2].data_sources || []).join(', ')}
+第三方证据: ${JSON.stringify(debateArgs[2].evidence || [])}
 
-如果对方的证据比你强→修正立场。如果只是视角不同→强化立场。`, {
+攻击策略:
+- HYPOTHESIS → 质疑不可靠
+- CONFIRMED → 难以质疑, 考虑吸收
+- PROVISIONAL → 部分验证, 不足支撑
+- 自己证据弱 → 坦承`, {
       label: '反方回应',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         rebuttal: { type: 'string', minLength: 30 },
         revised_stance: { type: 'string' },
+        conceded_points: { type: 'array', items: { type: 'string' } },
+        evidence_attacks: { type: 'array', items: { type: 'string' } },
       }, required: ['rebuttal', 'revised_stance'] },
     }),
   ])
@@ -576,15 +601,15 @@ ${JSON.stringify(step4, null, 2)}
 Step2发散: ${JSON.stringify(step2, null, 2)}
 Step3八卦镜: ${JSON.stringify(step3, null, 2)}
 DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
-辩论摘要(含证据来源):
-  正方: ${debateArgs[0].argument.substring(0, 150)}..
-  正方证据: ${(debateArgs[0].data_sources||[]).join(", ")}
-  反方: ${debateArgs[1].argument.substring(0, 150)}..
-  反方证据: ${(debateArgs[1].data_sources||[]).join(", ")}
-  第三方: ${debateArgs[2].argument.substring(0, 150)}..
-  第三方证据: ${(debateArgs[2].data_sources||[]).join(", ")}
+辩论摘要及证据可信度:
+  正方: ${debateArgs[0].argument.substring(0, 100)}...
+  正方证据可信度: ${JSON.stringify((debateArgs[0].evidence||[]).map(e => ({s: e.source, st: e.status})))}
+  反方: ${debateArgs[1].argument.substring(0, 100)}...
+  反方证据可信度: ${JSON.stringify((debateArgs[1].evidence||[]).map(e => ({s: e.source, st: e.status})))}
+  第三方: ${debateArgs[2].argument.substring(0, 100)}...
+  第三方证据可信度: ${JSON.stringify((debateArgs[2].evidence||[]).map(e => ({s: e.source, st: e.status})))}
 
-【自检 = 辩论】— 每个问题先写正方论点, 再写反方论点, 然后判定谁赢。
+在自检时考虑: 反方是否成功攻击了正方的弱证据? 正方是否吸收了反方的CONFIRMED证据?【自检 = 辩论】— 每个问题先写正方论点, 再写反方论点, 然后判定谁赢。
 反方赢 → passed=false。
 
 ① 正方:" Step2覆盖全面" 反方:"但X视角被过度依赖" 谁赢?
