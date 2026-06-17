@@ -78,6 +78,21 @@ Before writing ANY message to the user, run this mental checklist. If any item f
 
 ---
 
+## Activation Header
+
+When the user invokes `/luke:ponder`, the very first output should be this activation header:
+
+```
+╔══════════════════════════════════════╗
+║     🧠 Ponder Cognitive Circuit     ║
+║  Activating reasoning pipeline...   ║
+╚══════════════════════════════════════╝
+```
+
+After this header, proceed to Step 1. Do not add any other text before or after the header — just the header, then immediately start the interview.
+
+---
+
 ## Flow — Strict Sequence
 
 **You CANNOT produce analysis output yourself. The pipeline produces analysis. Your job: Step 1 (interview) → launch pipeline → present pipeline's results.**
