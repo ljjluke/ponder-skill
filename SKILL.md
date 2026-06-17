@@ -78,13 +78,24 @@ Before writing ANY message to the user, run this mental checklist. If any item f
 
 ---
 
-## Flow
+## Flow — Strict Sequence
 
-**Rule: ALL steps execute for ALL problems, regardless of size.** Simple question or complex strategy — every step runs fully. The pipeline (9 phases, sub-agent enforced) guarantees this. No step can be skipped.
+**You CANNOT produce analysis output yourself. The pipeline produces analysis. Your job: Step 1 (interview) → launch pipeline → present pipeline's results.**
 
-"Simple problem" only means the depth loop may trigger fewer rounds. It never means skipping interview, divergence, examination, simulation, debate, or verification. If a step seems unnecessary — that's a signal to examine why, not a signal to skip.
+```
+SEQUENCE:
+  [You]  Step 1: Interview → output profile ONLY
+  [You]  Display "📊 Analysis in progress..." → launch pipeline
+  [Code] Pipeline: 9 phases, sub-agents, memory, knowledge consolidation
+  [Code] Returns: structured results + step_log + mutation_result
+  [You]  Step 8: Read pipeline results → present to user in their language
+```
+
+You do NOT write analysis. You do NOT output conclusions that didn't come from the pipeline. If the pipeline doesn't run → no analysis output. Period.
 
 ### Step 1: Requirements Divergence — Spiral Divergence
+
+Do NOT output analysis here. Only output the profile. Analysis comes from the pipeline.
 
 Self-examination (in your head), then **spiral divergence interview** — each answer branches into new questions until blind spots are eliminated.
 
@@ -246,9 +257,9 @@ If mutation_result[0].execute === false:
 The LLM does NOT decide whether to mutate. The pipeline code determines mutation necessity.
 The LLM only executes the commands. No judgment calls.
 
-**Presentation — user sees complete analysis in their language**:
+**Presentation — pipeline results only, translated to user's language**:
 
-After depth loop ends, present final results:
+After pipeline returns, read the structured results and present them. Do NOT add analysis of your own — the pipeline already produced it. Translate the structured data to the user's language:
 
 ```
 ▎Divergence Summary
