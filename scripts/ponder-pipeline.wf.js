@@ -175,6 +175,29 @@ function recordStep(stepName, status, metrics) {
   step_log.push({ step: stepName, status: status || 'completed', at: new Date().toISOString(), loop: loopCount, ...(metrics || {}) })
 }
 
+// MCTS推演指令 — 注入到推演Agent的prompt中
+const mctsSimNote = pluginPath ? `
+【MCTS树搜索推理 — 不是单次推演, 是多轮探索】
+用MCTS树搜索做多轮推理, 而不是一次出结论。每次selection→simulation→backprop为一轮。
+
+① 初始化树:
+   node ${pluginPath}/scripts/mcts.js tree init --solutions '[
+     {"name":"乐观场景","description":"有利条件全部成立"},
+     {"name":"现实场景","description":"部分有利部分不利"},
+     {"name":"悲观场景","description":"不利条件触发"}
+   ]'
+
+② 多轮探索(至少3轮):
+   Round N: node ${pluginPath}/scripts/mcts.js tree round-start --session <id>
+            → 自动完成 selection + (你用WebSearch数据展开) + simulation + backprop
+
+③ 收敛后读取结果:
+   node ${pluginPath}/scripts/mcts.js tree status
+   → V值最高 = 最可能路径
+
+④ 基于MCTS收敛结果填写场景
+` : ''
+
 const MAX_LOOPS = 2
 let loopCount = 0
 let fixContext = ''
@@ -237,7 +260,7 @@ if (stepEnabled('verify')) {
 
   step2 = await agent(`你是Ponder框架的"发散师"。你的任务是执行6尺度发散分析。
 
-${memoryRecallNote}
+${memoryRecallNote}${mctsSimNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
 输入（来自Step1需求发散）:
 ${JSON.stringify(step1Result, null, 2)}
