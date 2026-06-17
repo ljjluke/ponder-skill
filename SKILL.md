@@ -158,6 +158,8 @@ Every decision during the pipeline and depth loop must fall into one of three ca
 | 👤 User-driven | Decision depends on user preference/goal | **Ask the user** (AskUserQuestion) |
 | ❌ LLM guessing | LLM "feels" it's right without data | **NOT ALLOWED** |
 
+**Handling sub-agent user_questions**: When the pipeline returns results containing `user_questions` fields, do NOT answer them yourself. Each question is a user-preference decision that a sub-agent couldn't resolve. Present each one to the user with options.
+
 If you're tempted to make a judgment call without data or user input → STOP. Either find data or ask the user.
 
 **Memory**: Already loaded by hooks. No commands needed.

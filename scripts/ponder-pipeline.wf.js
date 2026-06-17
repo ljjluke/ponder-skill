@@ -33,11 +33,14 @@ const PERSPECTIVE = {
   }, required: ['name', 'insight', 'detail']
 }
 
+const USER_QUESTION = { type: 'string', description: '需要用户决策的问题(涉及偏好/选择/价值判断, LLM不应猜测)' }
+
 const STEP2_SCHEMA = {
   type: 'object', properties: {
     perspectives: { type: 'array', items: PERSPECTIVE, minItems: 6, maxItems: 6 },
     contradictions: { type: 'array', items: { type: 'string' }, minItems: 2 },
     consensus: { type: 'string', minLength: 30 },
+    user_questions: { type: 'array', items: USER_QUESTION, description: '发散阶段遇到的用户决策点' },
   }, required: ['perspectives', 'contradictions', 'consensus']
 }
 
@@ -58,6 +61,7 @@ const STEP3_SCHEMA = {
       pair: { type: 'string' }, tension: { type: 'string' }, severity: { type: 'number', minimum: 1, maximum: 10 },
     }, required: ['pair', 'tension'] }, minItems: 3 },
     key_finding: { type: 'string', minLength: 30 },
+    user_questions: { type: 'array', items: USER_QUESTION },
   }, required: ['dimensions', 'conflicts', 'key_finding']
 }
 
@@ -103,6 +107,7 @@ const STEP4_AGGREGATE_SCHEMA = {
     common_ground: { type: 'string', minLength: 40, description: '所有方向共同指向的结论（即使在分歧中也有共识）' },
     key_risks: { type: 'array', items: { type: 'string' }, minItems: 2, description: '所有方向共有的关键风险' },
     recommendation: { type: 'string', minLength: 40, description: '基于用户风格的最终推荐' },
+    user_questions: { type: "array", items: { type: "string" } },
   }, required: ['comparison', 'common_ground', 'key_risks', 'recommendation']
 }
 
@@ -119,7 +124,8 @@ const STEP5_SCHEMA = {
     what_if_wrong: { type: 'string' },
     self_check: { type: 'array', items: SELF_CHECK_ITEM, minItems: 5, maxItems: 5 },
     all_clear: { type: 'boolean' },
-    follow_up_signals: { type: 'array', items: { type: 'string' }, minItems: 2 },
+    follow_up_signals: { type: "array", items: { type: "string" }, minItems: 2 },
+    user_questions: { type: "array", items: { type: "string" } },
   }, required: ['conclusion', 'reasoning_chain', 'self_check', 'all_clear']
 }
 
@@ -241,6 +247,7 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
 ⑥ 无立场视角（至人无己）: 剥离立场后的系统最优解？
 
 约束:
+如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
 - 每个视角至少20字洞见+40字分析
 - 6个视角必须真正不同，不能相互重复
 - 最后综合出矛盾点和共识点`, {
@@ -287,6 +294,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 ☱ F8 平衡: 利益均衡点？
 
 完成后: 至少3组维度冲突对 + 最异常发现`, {
+如果遇到维度间权重取舍或优先级判断, 不要自己决定。在 user_questions 中输出, 让用户决策。
     label: '维度交叉检查',
     phase: '八卦镜8维',
     schema: STEP3_SCHEMA,
@@ -419,6 +427,7 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
 4. 基于用户风格给出推荐
 
 约束:
+如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
 - comparison 至少60字
 - common_ground 至少40字
 - key_risks 至少2个
@@ -581,6 +590,8 @@ Damasio(1994)的躯体标记假说: VMPFC受损的患者有完整推理能力但
 5.3 有漏洞→标注"待确认"并说明
 
 约束: 自检5问全部回答、all_clear明确、follow_up_signals至少2个、结论含what+why+what_if_wrong`, {
+涉及用户风险偏好的推荐→在 user_questions 中输出让用户选择, 不自己假设。
+如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
     label: '综合判断',
     phase: '收敛自检',
     schema: STEP5_SCHEMA,
