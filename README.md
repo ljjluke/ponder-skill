@@ -176,10 +176,8 @@ User intent → Constraint Collection
 
 ## 🚀 Install
 
-### First-time install
-
 ```bash
-# GitHub (International) — latest stable release
+# GitHub (International)
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
 /plugin install luke
 
@@ -188,39 +186,15 @@ User intent → Constraint Collection
 /plugin install luke
 ```
 
-### Install a specific version
-
-Releases are tagged: [github.com/ljjluke/mcts-skill/releases](https://github.com/ljjluke/mcts-skill/releases)
-
-```bash
-# Install v1.13.0 specifically
-/plugin remove luke
-/plugin marketplace add https://github.com/ljjluke/mcts-skill
-/plugin install luke@luke        # installs latest
-# Then manually replace with a specific release:
-git clone --branch v1.13.0 https://github.com/ljjluke/mcts-skill.git
-/plugin add luke --local --path ./mcts-skill
-```
-
-Or from a local copy:
-```bash
-git clone https://github.com/ljjluke/mcts-skill.git
-cd mcts-skill
-git checkout tags/v1.13.0        # check out the version you want
-/plugin add luke --local --path .
-```
+> See [Releases](https://github.com/ljjluke/mcts-skill/releases) for version history.
 
 ## 🔄 Upgrade
 
 ```bash
-# To latest release
 /plugin marketplace update luke
 /plugin install luke
 /reload-plugins
 ```
-
-> If GitHub is unreachable, re-register with Gitee: `/plugin marketplace add https://gitee.com/luke2438107466/mcts-skill`, then upgrade.
-> Old versions auto-cleaned by hooks (only latest kept).
 
 Type any task. When you see the ⚡, it's working.
 
