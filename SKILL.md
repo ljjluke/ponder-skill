@@ -193,6 +193,15 @@ Knowledge is auto-classified:
 
 When user corrects you → `tagVerdict(id, 'refuted', detail)` → knowledge moves to REFUTED → never used again. Also propagate to all linked knowledge.
 
+**Before storing new knowledge, semantically check against REFUTED entries:**
+```
+listRefuted() → get all past refuted knowledge
+Compare new info with each refuted entry semantically (not tag matching)
+If semantically same or highly similar → do NOT store. Log as potential repeat.
+If semantically different → safe to store.
+LLM understands semantics — use that, not string matching.
+```
+
 **Knowledge anchors (traceability)**:
 - `knowledge.link(conclusionId, dataId)` — record "this conclusion was based on that data"
 - `knowledge.usedInStep(pointId, stepName)` — tag knowledge with which step used it

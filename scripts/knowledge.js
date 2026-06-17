@@ -99,7 +99,26 @@ function acquire(query, options = {}, stepName = '') {
 }
 
 /**
+ * List all REFUTED entries — for LLM to semantically review before storing new knowledge.
+ */
+function listRefuted(limit = 20) {
+  if (!MMA_SCRIPT) return [];
+  const io = require('./mma/io');
+  const kg = io.loadMMA();
+  const refuted = [];
+  for (const [, m] of Object.entries(kg.meridians)) {
+    for (const p of m.points) {
+      if ((p.status === 'REFUTED' || p.status === 'DISPUTED') && !p.hidden) {
+        refuted.push({ id: p.id, description: (p.description || '').substring(0, 100), tags: p.tags, status: p.status });
+      }
+    }
+  }
+  return refuted.slice(0, limit);
+}
+
+/**
  * Store acquired knowledge into MMA.
+ * LLM should semantically review against REFUTED entries before calling this.
  *
  * @param {object} entry
  * @param {string} entry.description
@@ -312,7 +331,7 @@ function trace(pointId) {
   };
 }
 
-module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace };
+module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, listRefuted };
 
 if (require.main === module) {
   const cmd = process.argv[2];
@@ -328,11 +347,14 @@ if (require.main === module) {
     console.log(`\n❓ 未验证 (HYPOTHESIS/PROVISIONAL): ${summary.uncertain.length}`);
     summary.uncertain.forEach(k => console.log(`   ${k.id} [${k.status}] q=${k.q}: ${k.desc}`));
     console.log(`\n💤 休眠 (SLEEPING/ARCHIVED): ${summary.unused.length}`);
+  } else if (cmd === 'refuted') {
+    const list = listRefuted();
+    console.log(JSON.stringify(list, null, 2));
   } else if (cmd === 'acquire') {
     const tags = JSON.parse(process.argv[3] || '[]');
     const result = acquire({ tags });
     console.log(JSON.stringify(result, null, 2));
   } else {
-    console.log('Usage: node scripts/knowledge.js <status|acquire>');
+    console.log('Usage: node scripts/knowledge.js <status|acquire|refuted>');
   }
 }
