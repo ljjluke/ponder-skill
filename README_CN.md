@@ -1,11 +1,13 @@
-# 🧠 MCTS-TD
+<p align="center">
+  <img src="https://img.shields.io/badge/v1.14.0-blue?style=flat-square" alt="版本">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="许可">
+</p>
 
-*一个 Claude Code 技能。本地训练认知管道。每次 `/luke:ponder` 进化一次。*
+<h1 align="center">🧠 MCTS-TD</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/版本-1.14.0-blue" alt="版本">
-  <img src="https://img.shields.io/badge/许可-MIT-yellow" alt="许可">
-  <img src="https://img.shields.io/github/last-commit/ljjluke/mcts-skill" alt="最后提交">
+  <b>本地训练认知管道 · 适用于 Claude Code</b><br>
+  <sub>访谈 → 发散 → 推演 → 辩论 → 验证 → 进化</sub>
 </p>
 
 ---
