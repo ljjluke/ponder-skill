@@ -42,12 +42,68 @@ function findMmaScript() {
   return null;
 }
 
+// ── 近义词扩展 — 提高记忆命中率 ──
+// 搜索"股票"时也应该命中"A股"、"市场"、"equity"等标签
+const SYNONYM_MAP = {
+  // 金融
+  '股票': ['股市', 'A股', '市场', 'equity', 'stock', 'market', '投资'],
+  '股市': ['股票', 'A股', '市场', 'stock', 'market', '投资'],
+  'A股': ['股票', '股市', '市场', 'stock', 'market', '中国股市'],
+  '市场': ['market', '股市', '股票', '行情'],
+  '投资': ['invest', 'investment', '理财', '资产'],
+  '风险': ['risk', 'danger', '下行', '损失', 'volatility'],
+  '机会': ['opportunity', '增长', 'growth', '利好', 'positive'],
+  // 技术
+  '技术': ['tech', 'technology', '架构', '系统', '开发'],
+  '架构': ['architecture', '系统设计', 'system', '结构'],
+  '系统': ['system', '平台', '架构', 'platform'],
+  // 通用
+  '分析': ['analysis', 'review', '评估', '诊断', '研判'],
+  '策略': ['strategy', '战略', 'plan', '规划', '方向'],
+  '决策': ['decision', '判断', '选择', 'decide', 'option'],
+  '增长': ['growth', '增长', '发展', 'expansion'],
+  '失败': ['failure', 'refute', '错误', 'wrong', '问题'],
+  '评估': ['assessment', '评价', '估值', '评分', 'evaluation'],
+  '趋势': ['trend', 'direction', '走向', '方向', 'momentum'],
+}
+
+// 对中文标签做字符级扩展: "股票" → ["股", "股票"]
+function charExpand(tag) {
+  const results = [tag]
+  if (/[一-鿿]/.test(tag) && tag.length > 1) {
+    // 对双字中文词, 拆单字加入
+    const chars = tag.split('')
+    for (const c of chars) {
+      if (c.length === 1 && results.indexOf(c) < 0) results.push(c)
+    }
+  }
+  return results
+}
+
+// 扩展搜索标签: 原标签 + 近义词 + 字符级扩展
+function expandTags(tags) {
+  const expanded = new Set(tags)
+  for (const tag of tags) {
+    // 近义词
+    const syns = SYNONYM_MAP[tag]
+    if (syns) syns.forEach(s => expanded.add(s))
+    // 反向近义词: 如果"股票"→"市场", 那么"市场"也关联到"股票"
+    for (const [key, vals] of Object.entries(SYNONYM_MAP)) {
+      if (vals.includes(tag)) expanded.add(key)
+    }
+    // 字符级扩展(中文)
+    const ce = charExpand(tag)
+    ce.forEach(c => expanded.add(c))
+  }
+  return Array.from(expanded)
+}
+
 /**
- * Acquire knowledge for a set of tags.
+ * Acquire knowledge for a set of tags. Tags are auto-expanded with synonyms.
  * Priority: MMA memory → WebSearch → store as HYPOTHESIS
  *
  * @param {object} query
- * @param {string[]} query.tags — tags to search for
+ * @param {string[]} query.tags — tags to search for (auto-expanded)
  * @param {number} query.limit — max results (default 5)
  * @param {object} options
  * @param {boolean} options.allowSearch — whether to fallback to WebSearch (default true)
@@ -58,9 +114,12 @@ function acquire(query, options = {}, stepName = '') {
   const { tags = [], limit = 5, allowSearch = true, storeNew = true } = query || {};
   const result = { source: 'none', entries: [] };
 
-  // Phase 1: Check MMA memory
-  if (MMA_SCRIPT && tags.length > 0) {
-    const mmaResult = spawnSync('node', [MMA_SCRIPT, 'mma', 'deqi', JSON.stringify({ tags, limit })], {
+  // Phase 0: Expand tags with synonyms for higher recall
+  const expandedTags = expandTags(tags);
+  if (expandedTags.length > tags.length) {
+    // Try with expanded tags first (broader recall)
+    if (MMA_SCRIPT && expandedTags.length > 0) {
+      const mmaResult = spawnSync('node', [MMA_SCRIPT, 'mma', 'deqi', JSON.stringify({ tags: expandedTags, limit })], {
       timeout: 10000, encoding: 'utf-8',
     });
     if (mmaResult.status === 0) {
@@ -89,7 +148,8 @@ function acquire(query, options = {}, stepName = '') {
         }
       } catch (e) {}
     }
-  }
+    } // if MMA_SCRIPT
+  } // if expanded
 
   // Phase 2: If MMA has results, return them
   if (result.entries.length > 0) return result;
@@ -324,7 +384,7 @@ function trace(pointId) {
   };
 }
 
-module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace };
+module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, expandTags };
 
 if (require.main === module) {
   const cmd = process.argv[2];
