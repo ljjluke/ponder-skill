@@ -6,11 +6,11 @@ export const meta = {
   name: 'ponder-pipeline',
   description: 'Structured analysis pipeline: divergence → examination → simulation → debate → convergence → verification',
   phases: [
-    { title: '多视角发散', detail: '从6个不同尺度审视问题' },
-    { title: '维度交叉分析', detail: '8个维度的系统检查' },
-    { title: '自由联想', detail: '跨领域关联思考' },
+    { title: '6尺度发散', detail: '从6个观测位置审视问题' },
+    { title: '八卦镜8维', detail: '8维度交叉检查' },
+    { title: 'DMN间歇', detail: '自由联想期' },
     { title: '多场景推演', detail: '多个方向的独立模拟' },
-    { title: '多方辩论', detail: '不同立场的观点碰撞' },
+    { title: '社会认知辩论', detail: '多立场观点碰撞' },
     { title: '综合判断', detail: '收敛分析+自检' },
     { title: '回溯验证', detail: '验证推理链条' },
     { title: '独立核验', detail: '从反面角度审查结论' },
@@ -221,7 +221,7 @@ topDown = null
 if (stepEnabled('hierarchy')) {
 verifyResult = null
 if (stepEnabled('verify')) {
-  phase('多视角发散')
+  phase('6尺度发散')
 
   step2 = await agent(`你是Ponder框架的"发散师"。你的任务是执行6尺度发散分析。
 
@@ -262,7 +262,7 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
   // ── Step 3: 八卦镜8维检查 ──
   let step3 = null
   if (stepEnabled('bagua')) {
-  phase('维度交叉分析')
+  phase('八卦镜8维')
 
   step3 = await agent(`你是Ponder框架的"检查师"。你的任务是执行八卦镜8维交叉检查。
 
@@ -306,7 +306,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
   // 人脑的DMN在非任务态时才活跃, 负责远距离联想和洞见涌现
   // Bartoli et al.(2024)证明: DMN对原创性思维有因果作用
   // 在结构化分析(Step3)和结构化推演(Step4)之间插入非结构化联想
-  phase('自由联想')
+  phase('DMN间歇')
 
   dmnInsight = await agent(`你是"自由联想师"。你的任务是: 不做任何结构化分析, 而是让思维自由扩散。
 
@@ -450,7 +450,7 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
   // ── 社会认知: 多立场辩论 (Social Cognition / Theory of Mind) ──
   // 人脑的社会认知核心: 不同的"他人"视角相互碰撞
   // 不是"多角度看问题", 而是"不同立场的人争论"
-  phase('多方辩论')
+  phase('社会认知辩论')
 
   // 证据项: 每条证据附带来源和可信度状态
   const EVIDENCE_ITEM = {
@@ -642,7 +642,7 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
   // 当前管道已经走完bottom-up: 数据→发散→检查→推演→收敛
   // 现在做top-down: 从Step5结论反推"预期中Step2-4应该有什么"
   // 然后计算预测误差
-  phase('推理验证')
+  phase('层级预测')
 
   topDown = await agent(`你是"层级预测师"。你的任务是: 从结论反向验证分析链条。
 
