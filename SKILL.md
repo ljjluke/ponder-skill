@@ -215,26 +215,17 @@ LLM understands semantics — use that, not string matching.
 📊 Analysis in progress...
 ```
 
-**Depth loop — code-driven decision**:
+**Depth loop — code-enforced in pipeline**:
 
-After pipeline + convergence, use `scripts/decisions.js evaluateDepthLoop()` to determine next action. The function receives the pipeline result and returns `{action, reason}`:
+The depth loop runs automatically after verification. The workflow code checks:
 
-```
-evaluateDepthLoop({hasVagueWording, selfCheckPassRate, dataSourceRatio,
-                   missingDataAreas, userQuestions, depthRound})
+- Is the conclusion vague (contains "maybe", "perhaps", "不确定")?
+- Are all scenarios converging to the same outcome?
+- Has max depth been reached (3 rounds)?
 
-Returns:
-  {action: 'present'}     → ✅ Show to user. Conditions satisfied.
-  {action: 'deepen'}      → 🔍 Each debater: acquire(tags) → memory first, web second
-                            → Re-debate → Re-converge
-  {action: 'ask_user'}    → 👤 Ask user the pending questions, don't guess
-  {action: 'report_gaps'} → 📋 Max rounds reached. Honest report of uncertainties.
-```
+If depth is needed → `fixContext` is set → the self-correction loop re-runs debate with memory recall. The LLM doesn't decide — the code does.
 
-Max 3 depth rounds. Between cycles: display progress in user's language.
-The decision logic is in code — the LLM only reads the result and executes.
-
-**Never let the LLM decide.** Every fork must be backed by data or user input.
+Decisions made by the pipeline code, not by LLM judgment:
 
 **Auto-evolution — read mutation_result from pipeline return, then execute:**
 

@@ -145,17 +145,25 @@ Then: `/luke:ponder <your question>`
 
 ---
 
-## MCTS-TD CLI (available but separate)
+## MCTS Tree Search (integrated into pipeline)
 
-The original MCTS-TD algorithms remain in the codebase as standalone CLI commands:
+MCTS is not a separate tool — it's built into the pipeline. The simulation phase uses MCTS tree search for multi-round reasoning:
 
 ```bash
-node scripts/mcts.js tree init --solutions '[...]'   # MCTS tree search
-node scripts/mcts.js compute ucb --v 0.5 --n 3       # UCB calculation
-node scripts/mcts.js mma reinforce <id> <td_error>    # TD learning update
+# Each simulation sub-agent runs internal MCTS:
+tree init --solutions '[...]'        # initialize scenarios
+tree select <node-id>                # UCB-based branch selection  
+tree simulate <leaf> --v <V>         # roll-out simulation
+tree backprop <leaf>                 # propagate results
 ```
 
-These are not part of the main pipeline but are available for direct use or integration. The pipeline uses the structured thinking approach (9 phases), while MCTS-TD provides lower-level decision search for users who need it.
+All sub-agents connect to the memory system via `knowledge.acquire()` — past experience, real data from web search, and REFUTED checks are standard across the pipeline.
+
+Standalone CLI also available:
+```bash
+node scripts/mcts.js tree <command>  # independent MCTS operations
+node scripts/mcts.js compute <cmd>   # UCB/value calculations
+```
 
 ---
 
