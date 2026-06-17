@@ -6,28 +6,31 @@
 <h1 align="center">🧠 MCTS-TD</h1>
 
 <p align="center">
-  <b>A locally-trained cognitive pipeline for Claude Code</b><br>
-  <sub>Interview → Diverse → Simulate → Debate → Verify → Evolve</sub>
+  <b>Ask once. Get an answer that's been stress-tested from every angle.</b><br>
+  <i>Then watch your pipeline get smarter — because it learns from every question.</i>
 </p>
 
 ---
 
-## What is this?
+**Most of the time, Claude answers immediately. But for hard questions — decisions with trade-offs, uncertain outcomes, conflicting priorities — a single pass isn't enough.**
 
-MCTS-TD is a Claude Code skill that adds a structured thinking pipeline to LLM interactions. Instead of the LLM guessing an answer, it:
+MCTS-TD adds a structured thinking layer. Instead of one answer, it:
 
-1. **Interviews** you to understand what you actually need
-2. **Diverges** across 6 perspectives × 8 dimensions to avoid blind spots
-3. **Simulates** multiple scenarios in parallel with real data
-4. **Debates** from different stances (optimist / pessimist / contrarian)
-5. **Verifies** its own conclusions with an independent adversarial agent
-6. **Evolves** its own pipeline based on usage — each session makes it slightly smarter
+1. **Interviews you** — finds the real question under the question
+2. **Looks from 6 perspectives × 8 dimensions** — no blind spots
+3. **Searches for real data** — not LLM guesses
+4. **Simulates multiple scenarios in parallel** — each backed by real web research
+5. **Debates itself** — optimist vs pessimist vs contrarian, then rebuts
+6. **Verifies its own conclusion** — with an independent agent that tries to prove it wrong
+7. **Only then gives you an answer**
 
-Everything runs locally. Your data stays on your machine.
+**And it learns.** Every time you use it, it evaluates its own performance and adjusts its pipeline — step weights, order, even which steps exist. Not by LLM magic — by statistics.
 
 ```
 /luke:ponder <your question>
 ```
+
+No configuration. No training data. No data leaves your machine.
 
 ---
 
