@@ -120,27 +120,19 @@ This is NOT a linear "ask 3 questions → done" process. It's a cycle:
           └─────────────────────────────────────┘
 ```
 
-**Execution:**
+**Execution — keep asking until stopping condition is met:**
 
 ```
-Cycle 1 — Broad open:
-  Ask what the user wants. Listen for what's NOT said.
-  "So you said [paraphrase], correct? What haven't I asked?"
-
-Cycle 2 — Expand:
-  Based on Cycle 1, what dimensions are still empty?
-  → Timing? Resources? People? Rules? Essence?
-  Ask targeted questions for each empty dimension.
-
-Cycle 3 — Challenge:
-  Look for contradictions or assumptions in the user's answers.
-  "X and Y seem contradictory — what do you think?"
-  "What if the opposite scenario is true?"
-
-Cycle 4+ — Verify coverage:
-  Go through each of the 5 dimensions. If any is still unclear, ask.
-  After answering, ask: "Did I understand correctly?"
-  If user corrects you → that's a blind spot. Go deeper.
+① Start: "You said [paraphrase] — correct? What haven't I asked?"
+② Expand: Are there still empty dimensions? (Timing? Resources? People? Rules? Essence?)
+   → Ask about each empty dimension
+③ Challenge: Any contradictions or assumptions to probe?
+   → "X and Y sound contradictory — what do you think?"
+   → "What if the opposite is true?"
+④ Verify: "Did I understand correctly?"
+   → User corrects you? → That's a blind spot → go back to ②
+   → User confirms? → Check stopping condition
+⑤ Repeat ②→④ until stopping condition is met
 ```
 
 **Stopping condition** — only stop when ALL of these are true:
