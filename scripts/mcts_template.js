@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MCTS-TD Template Engine — Markdown template rendering from structured JSON.
+ * Ponder Template Engine — Markdown template rendering from structured JSON.
  * Usage: node mcts_template.js <command> --data '<JSON>' [--json]
  * Default output: raw Markdown. --json flag: JSON wrapper.
  */
@@ -94,7 +94,7 @@ function renderDecisionReport(d) {
     const checkpoints = (d.memory_checkpoints || []).map(cp => `   ☐ ${cp.name}: ${cp.status}`).join('\n');
     const points = (d.session_points || []).join(', ') || 'None';
     const lg = d.language_guard || {};
-    return `【MCTS-TD Decision Report】\n Task: ${d.task || ''} | Date: ${d.date || ''} | Iterations: ${d.iterations || 0} | Solutions: ${d.solutions_count || 0}\n\n Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + Body-Use):\n${rankHeader}\n${rankRows}\n\n Self-Check: ${VERDICT_SYMBOLS[sc.verdict] || '❓'} ${sc.verdict || ''} [${sc.findings || ''}]\n Blindspot Audit: ${VERDICT_SYMBOLS[ba.verdict] || '❓'} ${ba.verdict || ''} [${ba.details || ''}]\n 言意(Yan-Yi) Gap Check: ${VERDICT_SYMBOLS[yy.verdict] || '❓'} ${yy.verdict || ''} [${yy.gaps != null ? yy.gaps + ' gaps' : ''}]\n\n Execution Plan: ${ep.solution || ''} → [${(ep.steps || []).join(', ')}] → [${ep.key_risks || ''}] | [${ep.fallback || ''}]\n\n Knowledge Update: ${ku || 'None'}\n\n Memory Agent Checkpoints:\n${checkpoints || '   None'}\n\n Session Points: ${points}\n\n Language Guard: ${lg.check || ''} [${lg.lang || ''}]`;
+    return `【Ponder Decision Report】\n Task: ${d.task || ''} | Date: ${d.date || ''} | Iterations: ${d.iterations || 0} | Solutions: ${d.solutions_count || 0}\n\n Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + Body-Use):\n${rankHeader}\n${rankRows}\n\n Self-Check: ${VERDICT_SYMBOLS[sc.verdict] || '❓'} ${sc.verdict || ''} [${sc.findings || ''}]\n Blindspot Audit: ${VERDICT_SYMBOLS[ba.verdict] || '❓'} ${ba.verdict || ''} [${ba.details || ''}]\n 言意(Yan-Yi) Gap Check: ${VERDICT_SYMBOLS[yy.verdict] || '❓'} ${yy.verdict || ''} [${yy.gaps != null ? yy.gaps + ' gaps' : ''}]\n\n Execution Plan: ${ep.solution || ''} → [${(ep.steps || []).join(', ')}] → [${ep.key_risks || ''}] | [${ep.fallback || ''}]\n\n Knowledge Update: ${ku || 'None'}\n\n Memory Agent Checkpoints:\n${checkpoints || '   None'}\n\n Session Points: ${points}\n\n Language Guard: ${lg.check || ''} [${lg.lang || ''}]`;
 }
 
 function renderSolutionList(d) {
@@ -259,7 +259,7 @@ function main() {
             case "six-views": md = sixViews(); break;
             case "bagua-questions": md = baguaQuestions(); break;
             default:
-                log(`MCTS-TD Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n  interview-script 3-step user interview template\n  forbidden-check  Forbidden rules checklist\n  translate-guide  Concept translation guide\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
+                log(`Ponder Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n  interview-script 3-step user interview template\n  forbidden-check  Forbidden rules checklist\n  translate-guide  Concept translation guide\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
                 process.exit(0);
         }
         emit(o, cmd, d, md);

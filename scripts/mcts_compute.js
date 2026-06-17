@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MCTS-TD Compute Engine (Pure Node.js — no Python dependency)
+ * Ponder Compute Engine (Pure Node.js — no Python dependency)
  * Core numerical computation for MCTS tree search.
  * Usage: node mcts_compute.js <command> [args...]
  */

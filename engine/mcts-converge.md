@@ -1,11 +1,11 @@
 ---
 name: mcts-converge
-description: MCTS-TD Step 3~3.6 — Converge Engine. CLT-UCB ranking + self-check + blindspot audit + TD write-back.
+description: Ponder Step 3~3.6 — Converge Engine. CLT-UCB ranking + self-check + blindspot audit + TD write-back.
 ---
 
 # Step 3~3.6: Converge Engine
 
-> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [Ponder] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. Phases: Aggregate → Self-Check → Blindspot → Decision Report
@@ -160,7 +160,7 @@ Code: li-shi-split --insight '<JSON>'
 ## Decision Report Format
 
 
-【MCTS-TD Decision Report】
+【Ponder Decision Report】
  Task: [...] | Date: [...] | Iterations: [N] | Solutions: [5-8]
 
  Ranking (V_final = 0.5×V_feas + 0.3×V_robust + 0.2×V_persp + Body-Use):

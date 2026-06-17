@@ -1,13 +1,13 @@
 ---
 name: memory-agent
-description: "MCTS-TD Memory Agent — Direct-call observer: Historian + Remonstrance. Records knowledge into MMA via CLI."
+description: "Ponder Memory Agent — Direct-call observer: Historian + Remonstrance. Records knowledge into MMA via CLI."
 model: inherit
 ---
 
 # Memory Agent — Court Historian + Remonstrance Official
 
 Direct-call observer. LLM calls MMA commands directly — no daemon, no buffer.
-**Path**: Set $P = plugin path from [MCTS-TD] Plugin: log. Use node $P/scripts/mcts.js (absolute path, works on all OS).
+**Path**: Set $P = plugin path from [Ponder] Plugin: log. Use node $P/scripts/mcts.js (absolute path, works on all OS).
 
 ## Checkpoints — Exact CLI Commands
 

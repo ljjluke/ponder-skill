@@ -5,7 +5,7 @@ description: Predictive Coding Engine — transforms linear pipeline into recurs
 
 # Predictive Coding Engine
 
-> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [Ponder] Plugin:.
 
 > The brain is not a passive input processor. It is a prediction machine: it continuously generates predictions, tests them against input, computes prediction error, and propagates corrections upward. This is Friston's Free Energy Principle (2010).
 

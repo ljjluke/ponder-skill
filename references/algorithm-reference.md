@@ -1,6 +1,6 @@
 ---
 name: algorithm-reference
-description: MCTS-TD hybrid algorithm reference — formulas, tetris_mcts design decisions, and correspondence mapping
+description: Ponder hybrid algorithm reference — formulas, tetris_mcts design decisions, and correspondence mapping
 metadata:
   type: reference
 ---
@@ -130,7 +130,7 @@ tetris_mcts/
 │   ├── policy.py           # 策略函数（clt, gauss, max, greedy, random）
 │   ├── special.py          # 特殊数学函数（分位数计算）
 │   ├── helper.py           # 辅助函数
-│   ├── ValueSim.py         # 核心MCTS-TD混合Agent（本Skill主要参考）
+│   ├── ValueSim.py         # 核心Ponder混合Agent（本Skill主要参考）
 │   ├── ValueSim2.py        # ValueSim变体
 │   ├── ValueSimLP.py       # ValueSim改进版（LP = Learned Policy）
 │   ├── ValueSimBayes.py    # 贝叶斯UCB变体

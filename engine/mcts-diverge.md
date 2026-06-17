@@ -1,11 +1,11 @@
 ---
 name: mcts-diverge
-description: MCTS-TD Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangzi-inspired multi-perspective divergence + Eight-Facet Mirror × 诸子百家 sub-lenses → Cluster/Complete/Cull/Crystallize.
+description: Ponder Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangzi-inspired multi-perspective divergence + Eight-Facet Mirror × 诸子百家 sub-lenses → Cluster/Complete/Cull/Crystallize.
 ---
 
 # Step 1: Diverge Engine — 逍遥游 (Free Wandering) × 齐物 (Equalizing) × 庖丁解牛
 
-> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [Ponder] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. Phase order: 心斋→逍遥游→八卦镜→齐物→庖丁解牛→Info Gap→方案收敛

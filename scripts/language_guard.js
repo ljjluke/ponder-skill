@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Language guard for MCTS-TD Planner.
+ * Language guard for Ponder Planner.
  *
  * ZERO hardcoded script ranges. Uses Unicode character properties
  * via regex \p{Script=...} — works for ALL scripts without any manual lists.

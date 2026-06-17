@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════
- *  MCTS-TD 统一CLI入口 (Unified CLI Gateway)
+ *  Ponder 统一CLI入口 (Unified CLI Gateway)
  *  "枢机之发，荣辱之主也" —《易经·系辞》
  * ═══════════════════════════════════════════════════════════════
  *
@@ -88,7 +88,7 @@ const ENGINES = {
 };
 
 function usage() {
-    console.log("MCTS-TD Unified CLI — node scripts/mcts.js <engine> <command> [args...]");
+    console.log("Ponder Unified CLI — node scripts/mcts.js <engine> <command> [args...]");
     console.log("");
     for (const [name, cfg] of Object.entries(ENGINES)) {
         console.log(`  ${name.padEnd(10)} — ${cfg.desc}`);

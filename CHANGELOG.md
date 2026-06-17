@@ -159,7 +159,7 @@
 ## 1.0.0 (2026-06-03)
 
 ### Initial Release
-- MCTS-TD Planner Skill core framework
+- Ponder Planner Skill core framework
 - Multi-solution independent simulation decision engine
 - Knowledge graph value function management
 - Cross-session continuous learning

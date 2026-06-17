@@ -1,6 +1,6 @@
 ---
 name: culture-algorithm-reference
-description: 文化概念→算法映射学术参考 — 中国古典文化如何对应MCTS-TD算法组件，每项映射有论文支撑
+description: 文化概念→算法映射学术参考 — 中国古典文化如何对应Ponder算法组件，每项映射有论文支撑
 metadata:
   type: reference
 ---

@@ -1,11 +1,11 @@
 ---
 name: mcts-simulate
-description: MCTS-TD Step 2 — MCTS Tree Search. Multi-round iteration: Selection→Expansion→Simulation→Backpropagation + Knowledge Update.
+description: Ponder Step 2 — MCTS Tree Search. Multi-round iteration: Selection→Expansion→Simulation→Backpropagation + Knowledge Update.
 ---
 
 # Step 2: MCTS Tree Search Simulation
 
-> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [Ponder] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES:**
 > 1. OUTPUT in user language | 2. 4 phases per round visible to user

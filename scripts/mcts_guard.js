@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════
- *  MCTS-TD 引擎合规守护 (Engine Compliance Guard)
+ *  Ponder 引擎合规守护 (Engine Compliance Guard)
  *  "法者，天下之程式也，万事之仪表也" —《管子·明法解》
  * ═══════════════════════════════════════════════════════════════
  *
- *  MCTS-TD 引擎的执行规则都在 Markdown 文件中，LLM 靠"理解"遵守。
+ *  Ponder 引擎的执行规则都在 Markdown 文件中，LLM 靠"理解"遵守。
  *  当上下文变长/注意力稀释时，规则可能被跳过。
  *  这个守护提供可编程的检查点，在关键节点发出"必须执行"的信号。
  *
@@ -1109,7 +1109,7 @@ function output(data) { log(JSON.stringify(data, null, 2)); }
 function main() {
     const args = process.argv.slice(2);
     if (args.length < 1) {
-        log("MCTS-TD Engine Compliance Guard (引擎合规守护)");
+        log("Ponder Engine Compliance Guard (引擎合规守护)");
         log("  法者，天下之程式也 — Guanzi");
         log("");
         log("Usage: node mcts_guard.js <command> [args...]");

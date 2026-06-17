@@ -8,7 +8,7 @@ version: 1.14.0
 license: MIT
 ---
 
-# MCTS-TD
+# Ponder
 
 ## Abstract Decision Principles
 

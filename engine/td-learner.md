@@ -5,7 +5,7 @@ description: TDL (Temporal Difference Learning) Engine's core inference rules. B
 
 # TD Learning Engine
 
-> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [MCTS-TD] Plugin:.
+> **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, use node <plugin>/scripts/mcts.js <args> — <plugin> = path from SessionStart [Ponder] Plugin:.
 
 > **🔒 COMPRESSION-SAFE RULES (Always apply, even if context is compressed):****
 > 1. **KNOWLEDGE LIFECYCLE**: `HYPOTHESIS`(0.1) → `PROVISIONAL`(0.3) → `CONFIRMED`(1.0) → `DISPUTED`(0.2) → `REFUTED`(0.0). `SLEEPING`(0.15) after 30d unused, ARCHIVED after 90d.

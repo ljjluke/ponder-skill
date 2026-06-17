@@ -1,4 +1,4 @@
-// MCTS-TD Self-Correcting Pipeline
+// Ponder Self-Correcting Pipeline
 // Generate → Critique → Refine loop with independent verification
 // Inspired by Self-Refine (Madaan 2023) + ultragoal + BoT (prompt self-evolution)
 
@@ -214,7 +214,7 @@ verifyResult = null
 if (stepEnabled('verify')) {
   phase('6尺度发散')
 
-  step2 = await agent(`你是MCTS-TD框架的"发散师"。你的任务是执行6尺度发散分析。
+  step2 = await agent(`你是Ponder框架的"发散师"。你的任务是执行6尺度发散分析。
 
 ${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
@@ -254,7 +254,7 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
   if (stepEnabled('bagua')) {
   phase('八卦镜8维')
 
-  step3 = await agent(`你是MCTS-TD框架的"检查师"。你的任务是执行八卦镜8维交叉检查。
+  step3 = await agent(`你是Ponder框架的"检查师"。你的任务是执行八卦镜8维交叉检查。
 
 ${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}
@@ -521,7 +521,7 @@ C的陈词: ${debateArgs[2].argument}`, {
   // ── Step 5: 收敛与自检 ──
   phase('收敛自检')
 
-  step5 = await agent(`你是MCTS-TD框架的"收敛师"。你的任务是执行收敛判断和自检。
+  step5 = await agent(`你是Ponder框架的"收敛师"。你的任务是执行收敛判断和自检。
 
 ${memoryRecallNote}
 ${fixContext ? '【本轮是修复重做】\n上一轮验证发现的问题:\n' + fixContext + '\n请务必解决这些问题。\n' : ''}

@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="许可">
 </p>
 
-<h1 align="center">🧠 MCTS-TD</h1>
+<h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
   <b>本地训练认知管道 · 适用于 Claude Code</b><br>
@@ -14,7 +14,7 @@
 
 **大多数时候，Claude 会立即回答。但对于难题——需要权衡的决策、不确定的结果、冲突的优先级——单次回答是不够的。**
 
-MCTS-TD 增加了一层结构化思考。不是一个答案，而是：
+Ponder 增加了一层结构化思考。不是一个答案，而是：
 
 1. **先访谈你** — 找到问题背后真正的问题
 2. **从6视角×8维度审视** — 没有盲区
@@ -153,7 +153,7 @@ LLM不决定进化方向——统计数据决定。全部本地运行。
 
 ```bash
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
-/plugin install luke
+/plugin install ponder
 ```
 
 然后输入：`/luke:ponder <你的问题>`

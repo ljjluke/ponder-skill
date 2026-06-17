@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license">
 </p>
 
-<h1 align="center">🧠 MCTS-TD</h1>
+<h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
   <b>Ask once. Get an answer that's been stress-tested from every angle.</b><br>
@@ -14,7 +14,7 @@
 
 **Most of the time, Claude answers immediately. But for hard questions — decisions with trade-offs, uncertain outcomes, conflicting priorities — a single pass isn't enough.**
 
-MCTS-TD adds a structured thinking layer. Instead of one answer, it:
+Ponder adds a structured thinking layer. Instead of one answer, it:
 
 1. **Interviews you** — finds the real question under the question
 2. **Looks from 6 perspectives × 8 dimensions** — no blind spots
@@ -156,7 +156,7 @@ No vague conclusions. Every claim must have data support.
 
 ```bash
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
-/plugin install luke
+/plugin install ponder
 ```
 
 Then: `/luke:ponder <your question>`

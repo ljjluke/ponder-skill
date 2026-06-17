@@ -255,7 +255,7 @@ memory/mcts-td-value-archive.md
 markdown
 ---
 name: mcts-td-value-archive
-description: MCTS-TD Engine cross-session value function archive
+description: Ponder Engine cross-session value function archive
 metadata:
   type: reference
 ---
