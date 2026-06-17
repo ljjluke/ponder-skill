@@ -153,7 +153,9 @@ Assumptions: ...
 
 ---
 
-### Steps 2-5: Analysis Pipeline + Adaptive Depth Loop
+### Circuits 2-7: Reasoning Circuit + Adaptive Depth Loop
+
+**New: Hypothesis-first phase** — Before analyzing, the pipeline generates predictions based on existing memory. Data collection then targets confirming or refuting these predictions. This mirrors the brain's predictive processing (Friston's Free Energy Principle).
 
 **Decision authority rule — LLM never decides on its own:**
 

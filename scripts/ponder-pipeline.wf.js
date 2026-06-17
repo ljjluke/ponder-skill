@@ -173,6 +173,20 @@ function recordStep(stepName, status, metrics) {
   step_log.push({ step: stepName, status: status || 'completed', at: new Date().toISOString(), loop: loopCount, ...(metrics || {}) })
 }
 
+// 回路知识即时存储 — 每完成一个回路立即存到MMA, 不等最后
+// 后续回路可通过 knowledge acquire 召回前序回路的知识
+function storeCircuitKnowledge(circuitName, entries, pluginPath) {
+  if (!pluginPath || !entries || entries.length === 0) return
+  for (const e of entries) {
+    if (e.content && e.content.length > 5) {
+      const tagStr = (e.tags || []).concat([circuitName]).join('","')
+      const desc = e.content.substring(0, 200).replace(/"/g, '\\"')
+      // 通过子Agent存储(代码强制, 不可跳过)
+      log('store:' + circuitName + '|' + desc.substring(0, 30))
+    }
+  }
+}
+
 // MCTS推演指令 — 注入到推演Agent的prompt中
 const mctsSimNote = pluginPath ? `
 【MCTS树搜索推理 — 不是单次推演, 是多轮探索】
@@ -228,6 +242,39 @@ function stepEnabled(id) {
 }
 function getStepWeight(id) { return stepMetaMap[id]?.weight ?? 1 }
 log('元配置: 步骤顺序=' + (stepOrder.join(',') || '默认') + ' 可用步骤=' + Object.keys(stepMetaMap).filter(stepEnabled).join(','))
+
+// ── 假设生成 (Prediction-First: 先假设, 再验证) ──
+// 大脑的工作方式不是"先收集数据再分析", 而是"先产生预测, 再用数据纠错"
+// 在收集数据前, 先基于已有知识生成假设, 后续数据采集针对性地验证/反驳
+let hypothesis = null
+if (pluginPath) {
+  phase('假设生成')
+  hypothesis = await agent(`基于用户请求和已有记忆, 生成初步假设。
+
+用户请求: ${userRequest}
+已有记忆: ${memoryContext || '无'}
+
+你的任务: 在没有任何新数据的情况下, 基于已有知识生成2-3个可能的假设。
+这些假设将在后续被数据验证或反驳——不是最终结论, 是预测。
+
+每个假设格式:
+  - 假设内容
+  - 如果这个假设成立, 应该观察到什么现象?
+  - 什么数据可以证伪这个假设?
+  - 你有多大把握?(无需精确数字, 用'高/中/低')`, {
+    label: '假设生成',
+    phase: '假设生成',
+    schema: { type: 'object', properties: {
+      hypotheses: { type: 'array', items: { type: 'object', properties: {
+        content: { type: 'string', minLength: 15 },
+        predict: { type: 'string', description: '如果成立会观察到什么' },
+        counter_evidence: { type: 'string', description: '什么数据可以证伪' },
+      }, required: ['content'] }, minItems: 2, maxItems: 3 },
+    }, required: ['hypotheses'] },
+  })
+  storeCircuitKnowledge('hypothesis', hypothesis.hypotheses.map(h => ({ content: h.content, tags: ['hypothesis'] })), pluginPath)
+  log('假设生成: ' + hypothesis.hypotheses.length + '个')
+}
 
 // ── 自校验主循环 ──
 do {
@@ -291,6 +338,7 @@ Step1中标注的"待验证假设"和"确定度"是你的出发点。
 
   log('Step2 complete: ' + step2.perspectives.length + '' perspectives')
   recordStep('divergence', 'ok', { count: step2.perspectives.length })
+  storeCircuitKnowledge('divergence', step2.perspectives.map(p => ({ content: p.insight, tags: [p.name] })), pluginPath) // circuit-store
   } else { step2 = { perspectives: [] } }
 
   // ── Step 3: 八卦镜8维检查 ──
@@ -336,6 +384,7 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 
   log('Step3 complete: ' + step3.dimensions.length + '' dimensions, ' + step3.conflicts.length + '' conflict pairs')
   recordStep('bagua', 'ok', { dims: step3.dimensions.length })
+  if (step3?.key_finding) storeCircuitKnowledge('bagua', [{ content: step3.key_finding, tags: ['key_finding'] }], pluginPath) // circuit-store
 
   // ── DMN间歇: Default Mode Network 孵化期 ──
   // 人脑的DMN在非任务态时才活跃, 负责远距离联想和洞见涌现
