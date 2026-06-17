@@ -16,25 +16,45 @@
 
 ---
 
-**Most of the time, Claude answers immediately. But for hard questions — decisions with trade-offs, uncertain outcomes, conflicting priorities — a single pass isn't enough.**
+<table>
+<tr>
+<td width="60%">
 
-Ponder adds a structured thinking layer. Instead of one answer, it:
+### What it does
 
-1. **Interviews you** — finds the real question under the question
-2. **Looks from 6 perspectives × 8 dimensions** — no blind spots
-3. **Searches for real data** — not LLM guesses
-4. **Simulates multiple scenarios in parallel** — each backed by real web research
-5. **Debates itself** — optimist vs pessimist vs contrarian, then rebuts
-6. **Verifies its own conclusion** — with an independent agent that tries to prove it wrong
-7. **Only then gives you an answer**
+Most LLM tools answer immediately — and get it wrong the first time. Ponder doesn't answer until it's **stress-tested from every angle**:
 
-**And it learns.** Every time you use it, it evaluates its own performance and adjusts its pipeline — step weights, order, even which steps exist. Not by LLM magic — by statistics.
+1. 🔍 **Interviews you** — finds the real question underneath
+2. 👁️ **6 perspectives × 8 dimensions** — no blind spots
+3. 📡 **Real data, not guesses** — memory first, web second
+4. 🎲 **Parallel scenario simulation** — each backed by live research
+5. ⚖️ **Self-debate** — optimist vs pessimist vs contrarian, then rebuts
+6. 🛡️ **Adversarial verification** — independent agent tries to prove you wrong
+7. 🧠 **Learns from every use** — pipeline evolves, mistakes remembered
 
-```
+</td>
+<td width="40%">
+
+### Quick start
+
+```bash
+# Install
+/plugin marketplace add https://github.com/ljjluke/ponder-skill
+/plugin install luke
+
+# Use
 /luke:ponder <your question>
 ```
 
-No configuration. No training data. No data leaves your machine.
+```
+✓ No configuration
+✓ No data upload
+✓ Your data, your machine
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -42,30 +62,43 @@ No configuration. No training data. No data leaves your machine.
 
 ```mermaid
 flowchart TB
-    subgraph SE["Self-Evolution (collects data from all phases)"]
-        direction LR
-        SE_IN["Interview patterns<br/>Step performance<br/>Free energy scores<br/>User corrections"] --> SE_OUT["Data-driven mutation<br/>applied next session"]
-    end
+    classDef user fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef pipeline fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef memory fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef evolve fill:#fce4ec,stroke:#c62828,stroke-width:2px
 
-    A["1. Interview"] --> B["2. Analyze"]
-    B --> C{"3. Check"}
-    C -->|no| D["4. Debate & deepen"]
-    D --> B
-    C -->|yes| E["5. Present"]
-    E --> F["6. User feedback"]
+    U(["You / User"]):::user --> I["1. Interview<br/>3 layers, find real needs"]:::user
 
-    A -.->|feeds| SE_IN
-    B -.->|feeds| SE_IN
-    C -.->|feeds| SE_IN
-    D -.->|feeds| SE_IN
-    F -.->|feeds| SE_IN
-    SE_OUT -.->|next time| B
+    I --> ACQ["2. Data Acquisition<br/>acquire()"]:::data
+    ACQ --> MMA["(Local Memory<br/>CONFIRMED / REFUTED)"]:::memory
+    ACQ --> WEB["(Web Research<br/>fallback)"]:::data
+
+    ACQ --> P["3. Analysis Pipeline<br/>9 automated phases"]:::pipeline
+    P --> P1["Divergence"]:::pipeline
+    P --> P2["Dimension Check"]:::pipeline
+    P --> P3["Scenario Simulation"]:::pipeline
+    P --> P4["Multi-stance Debate"]:::pipeline
+    P --> P5["Convergence"]:::pipeline
+    P --> P6["Verification"]:::pipeline
+
+    P6 --> V{"Check: clear enough?"}
+    V -->|no| D["4. Re-debate & Deepen<br/>(up to 3 rounds)"]:::pipeline
+    D --> P
+    V -->|yes| C["5. Knowledge Consolidation<br/>(check vs REFUTED, auto-store)"]:::memory
+
+    C --> PRES["6. Present Result"]:::user
+    PRES --> U
+    U -.-> FB["7. User Feedback<br/>tagVerdict / recordOutcome"]:::evolve
+    FB --> MMA
+
+    P -.->|step_log| EV["Self-Evolution<br/>(free_energy calculation<br/>→ mutation_result)"]:::evolve
+    C -.->|knowledge stored| EV
+    FB -.->|classification| EV
+    EV -.->|evolved config| P
 ```
 
-
----
-
-## Core Features
+> **Self-Evolution** collects data from every phase: step performance, knowledge quality, user corrections. Between sessions, the pipeline adjusts based on this data — weights, order, even which steps exist.
 
 ### Pipeline (9 phases, sub-agent enforced)
 

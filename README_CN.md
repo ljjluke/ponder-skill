@@ -12,31 +12,87 @@
 
 ---
 
-**大多数时候，Claude 会立即回答。但对于难题——需要权衡的决策、不确定的结果、冲突的优先级——单次回答是不够的。**
+<table>
+<tr>
+<td width="60%">
 
-Ponder 增加了一层结构化思考。不是一个答案，而是：
+### 这是什么
 
-1. **先访谈你** — 找到问题背后真正的问题
-2. **从6视角×8维度审视** — 没有盲区
-3. **搜索真实数据** — 不是 LLM 的猜测
-4. **并行推演多个场景** — 每个基于真实的网络搜索
-5. **自我辩论** — 乐观派 vs 悲观派 vs 异见者，然后反驳
-6. **验证自己的结论** — 用一个独立的Agent去证明它错了
-7. **然后才给你答案**
+大多数 LLM 工具会立即回答——然后答错。Ponder 不会在**全方位压力测试**之前给出答案：
 
-**而且它会学习。**每次使用后，它评估自己的表现并调整管道——步骤权重、顺序，甚至哪些步骤该存在。不是靠 LLM 魔法，是靠统计数据。
+1. 🔍 **先访谈你** — 找到真实需求
+2. 👁️ **6视角×8维度** — 没有盲区
+3. 📡 **真实数据** — 记忆优先, 网络次之
+4. 🎲 **并行推演** — 每个场景基于实时搜索
+5. ⚖️ **自我辩论** — 乐观·悲观·异见三方
+6. 🛡️ **对抗式验证** — 独立Agent试图证伪
+7. 🧠 **每次使用都学习** — 管道进化, 错误被记住
 
-```
+</td>
+<td width="40%">
+
+### 快速开始
+
+```bash
+# 安装
+/plugin marketplace add https://github.com/ljjluke/ponder-skill
+/plugin install luke
+
+# 使用
 /luke:ponder <你的问题>
 ```
 
-无需配置。无需训练数据。数据不离机。
+```
+✓ 无需配置
+✓ 数据不离机
+✓ 你的数据, 你的机器
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## 架构
 
 ```mermaid
+flowchart TB
+    classDef user fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef pipeline fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef memory fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef evolve fill:#fce4ec,stroke:#c62828,stroke-width:2px
+
+    U(["你 / 用户"]):::user --> I["1. 访谈<br/>三层探询, 了解需求"]:::user
+
+    I --> ACQ["2. 数据采集<br/>acquire()"]:::data
+    ACQ --> MMA["(本地记忆<br/>已验证 / 已证伪)"]:::memory
+    ACQ --> WEB["(网络搜索<br/>补充)"]:::data
+
+    ACQ --> P["3. 分析管道<br/>9步自动化"]:::pipeline
+    P --> P1["多视角发散"]:::pipeline
+    P --> P2["维度检查"]:::pipeline
+    P --> P3["场景推演"]:::pipeline
+    P --> P4["多方辩论"]:::pipeline
+    P --> P5["综合判断"]:::pipeline
+    P --> P6["独立核验"]:::pipeline
+
+    P6 --> V{"核验: 够清晰?"}
+    V -->|不够| D["4. 重新辩论深挖<br/>(最多3轮)"]:::pipeline
+    D --> P
+    V -->|清晰| C["5. 知识固化<br/>(检查REFUTED, 自动存储)"]:::memory
+
+    C --> PRES["6. 呈现结果"]:::user
+    PRES --> U
+    U -.-> FB["7. 用户反馈<br/>标记正确 / 标记错误"]:::evolve
+    FB --> MMA
+
+    P -.->|步骤日志| EV["自进化<br/>(自由能计算→变异裁定)"]:::evolve
+    C -.->|知识存储| EV
+    FB -.->|分类更新| EV
+    EV -.->|进化配置| P
+```
 flowchart TB
     subgraph SE["自进化（从所有阶段采集数据）"]
         direction LR
