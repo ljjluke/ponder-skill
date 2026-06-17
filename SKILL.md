@@ -178,9 +178,9 @@ When storing: tag with ALL precise terms the concept relates to
   → searching any of these tags will find it
 
 When acquiring: use the most specific tags for what you need
-  acquire(["stock", "market"], {stepName: 'divergence'})
+  acquire(["relevant", "tags"], {stepName: 'current_step'})
 
-acquire(tags) → ① Check MMA (deqi recall)
+acquire(tags) → ① Check MMA memory
              → ② Found? → Return (exclude REFUTED/DISPUTED)
              → ③ Not found? → WebSearch → store as HYPOTHESIS → return
 ```
@@ -204,48 +204,24 @@ When user corrects you → `tagVerdict(id, 'refuted', detail)` → knowledge mov
 📊 Analysis in progress...
 ```
 
-**Depth loop — re-debate on uncertainty**:
+**Depth loop — code-driven decision**:
 
-After pipeline + convergence, evaluate. If conclusion is clear → present. If uncertain → **re-enter the debate phase with more data**, not a full pipeline restart.
-
-Every cycle starts with memory recall, not web search. The memory engine already has past expertise — use it before searching externally.
+After pipeline + convergence, use `scripts/decisions.js evaluateDepthLoop()` to determine next action. The function receives the pipeline result and returns `{action, reason}`:
 
 ```
-Determine result quality:
+evaluateDepthLoop({hasVagueWording, selfCheckPassRate, dataSourceRatio,
+                   missingDataAreas, userQuestions, depthRound})
 
-  Conclusion is clear, self-check passed → ✅ Present to user
-
-  Conclusion is vague/mixed/uncertain → Enter Debate Loop (max 3 cycles):
-
-    Before each cycle → query MMA memory for relevant past cases:
-      knowledge.acquire(tags, {stepName: 'depth_cycle'})
-      If memory returns useful data → use it (faster, already validated)
-      If memory returns nothing → then WebSearch (new knowledge)
-
-    Cycle 1: 
-      → Each debater recalls memory: "have I seen this uncertainty before?"
-      → If found → use past experience. If not → search web.
-      → Re-debate with all gathered evidence
-      → Re-converge
-    
-    Cycle 2 (if still uncertain):
-      → Each debater digs deeper into memory with refined tags
-      → Attack the OTHER side's evidence credibility (status matters)
-      → Re-debate → Re-converge
-    
-    Cycle 3 (last round):
-      → All available memory + web evidence exhausted
-      → If still uncertain → honest report: uncertainties remain
-      → Provide conditions for re-analysis
-
-    Between cycles: display progress in user's language
-    After cycle end: present results regardless of certainty
+Returns:
+  {action: 'present'}     → ✅ Show to user. Conditions satisfied.
+  {action: 'deepen'}      → 🔍 Each debater: acquire(tags) → memory first, web second
+                            → Re-debate → Re-converge
+  {action: 'ask_user'}    → 👤 Ask user the pending questions, don't guess
+  {action: 'report_gaps'} → 📋 Max rounds reached. Honest report of uncertainties.
 ```
 
-Decision routing within each debate cycle:
-- Missing data → memory first, web second
-- Contradiction → each side attacks the OTHER's evidence credibility
-- User preference → collected, presented to user after debate
+Max 3 depth rounds. Between cycles: display progress in user's language.
+The decision logic is in code — the LLM only reads the result and executes.
 
 **Never let the LLM decide.** Every fork must be backed by data or user input. If you can't justify why you chose one path over another, you're guessing — and that's not allowed.
 

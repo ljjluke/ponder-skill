@@ -72,6 +72,11 @@ const ENGINES = {
         desc: 'Unified data acquisition: MMA memory → WebSearch → store → classify',
         commands: ['status', 'acquire'],
     },
+    decisions: {
+        script: 'decisions.js',
+        desc: 'Decision routing engine — depth loop / uncertainty classification / output filter',
+        commands: [],
+    },
     template: {
         script: 'mcts_template.js',
         desc: '模板渲染 — Markdown格式化输出(Review Map/Portrait/Recon/MCTS Round/Decision Report等)',
