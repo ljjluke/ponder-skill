@@ -21,7 +21,7 @@ export const meta = {
 //  Schema定义 — JSON Schema为强制约束，子Agent不可跳过
 // ═══════════════════════════════════════════════════════════════
 
-const MEMORY_TAG = { type: 'string', description: '用于mma deqi召回的标签' }
+const MEMORY_TAG = { type: 'string', description: '用于knowledge acquire召回的标签' }
 
 const PERSPECTIVE = {
   type: 'object', properties: {
@@ -156,7 +156,14 @@ const pluginPath = args?.plugin_path || ''
 const memoryContext = args?.memory_context || '(无历史记忆上下文)'
 
 const memoryRecallNote = pluginPath
-  ? `【记忆召回规则 - 不能自己编造】\n前置步骤: 运行以下命令查询历史经验:\n  node ${pluginPath}/scripts/mcts.js mma deqi '{"tags":["<分析相关关键词>"],"limit":3}'\n\n情况A: 查询返回结果 > 0 → 将历史记忆融入当前分析，引用具体记忆内容\n情况B: 查询返回结果 = 0 或无明显相关 → 绝对不能自己编造一个"记忆"来冒充\n  → 必须使用 WebSearch 搜索真实资料/数据/案例作为分析依据\n  → 将搜索到的真实信息标记为: _memory_tag = "new:关键词"\n  → 这是新知识的唯一合法来源\n\n完成分析后，在输出中标记最有价值的洞见（_memory_tag字段）。\n当前已有记忆上下文: ${memoryContext}\n`
+  ? `[UNIFIED DATA ENTRY] All knowledge needs go through the same path:
+   node ${pluginPath}/scripts/mcts.js knowledge acquire '{"tags":["<keywords>"],"limit":3}'
+   → Phase 1: Check MMA memory (deqi) — excludes REFUTED/DISPUTED
+   → Phase 2: Found? → Use it (C0NFIRMED > PROVISIONAL > HYPOTHESIS)
+   → Phase 3: Not found? → WebSearch → store as HYPOTHESIS → return
+   → NEVER fabricate. If nothing found, report evidence_gap honestly.
+
+   Current memory context: ${memoryContext}\n`
   : ''
 
 log('用户请求: ' + userRequest)
