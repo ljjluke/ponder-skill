@@ -51,14 +51,26 @@ Not compromise — dynamic balance. Every "should I go deeper?" decision must be
 
 ---
 
-## Output Rules
+## Output Filter (MANDATORY — check before every message)
 
-- **Everything the user sees must be in their language**. Chinese user → full Chinese output, including agent labels, progress messages, error messages.
-- **Hide all technical operations**. No commands, JSON, Agent tasks, "Thought for Xs".
-- **Final conclusion must be complete, readable, jargon-free**.
-- **Every claim must have data support**. No "maybe" or "perhaps" — uncertainty triggers depth loop.
+Before writing ANY message to the user, run this mental checklist. If any item fails, DO NOT output — fix it first.
 
-Only the analysis results are visible. All machinery is hidden.
+```
+□ 用户说的什么语言？→ 全程用这个语言输出。不得中英混杂。
+□ 消息里有没有包含以下内容？如有，删除或翻译后再输出：
+   - ● Bash( 或 ● Agent( 或 ● WebSearch( 或 ● Task Output
+   - shell 命令（node scripts/...）
+   - JSON 输出（{ "count": ... }）
+   - Agent 任务 ID（类似于 a193b9e15c3fcf2f8）
+   - "Thought for Xs"
+   - 框架英文术语（MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA）
+   - 框架内部术语：五诊画像、Pipeline、元配置、元数据、层级预测、八卦镜、DMN、自检、哈希、排序、迭代、数组、权重、向量、矩阵、节点、回路、Schema、正则、回调、异步
+□ 以上术语用户不需要看到。如果非要提，必须翻译成用户语言，比如"五诊画像"→"需求分析"，"Pipeline"→"分析流程"。
+□ 每个结论有没有数据支撑？没有 → 去搜，不要编。
+□ 这个输出对用户来说有意义吗？还是只是展示"我正在做什么"？如果是后者，不要输出。
+```
+
+**原则：只输出用户需要看到的东西。技术操作、内部步骤、工具调用——都不需要用户看到。**
 
 ---
 
@@ -97,7 +109,15 @@ Assumptions: ...
 
 After profile is ready, enter the pipeline. **If result is uncertain, automatically deepen — until a data-supported judgment is possible**.
 
-**Execution — user sees only a progress line, no technical details:**
+**Memory is already loaded by SessionStart hooks.** Do NOT run `mma deqi` commands. Use the memory info from `[PONDER] Memory loaded: ...` hook output.
+
+If past experience is relevant, display one line:
+```
+"🧠 正在检索历史经验..." or "🧠 Recalling past experience..."
+```
+Then run memory recall only if needed for specific tags. If 0 results → WebSearch (never fabricate).
+
+**Pipeline execution — user sees only progress, no technical details:**
 ```
 📊 Analysis in progress...
 ```
@@ -107,7 +127,7 @@ After profile is ready, enter the pipeline. **If result is uncertain, automatica
 2. Only deepen unclear dimensions; skip those already clear
 3. Feel the problem's texture — where information density is lowest, cut there
 
-Run in background: read meta → memory recall | WebSearch → pipeline (step selection based on Cook Ding principle)
+Run in background: no visible commands, no visible tool calls.
 
 **Depth loop — uncertain result triggers automatic deepening**:
 
