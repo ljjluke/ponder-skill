@@ -147,59 +147,53 @@ Assumptions: ...
 
 ### Steps 2-5: Analysis Pipeline + Adaptive Depth Loop
 
-After profile is ready, enter the pipeline. **If result is uncertain, automatically deepen — until a data-supported judgment is possible**.
+**Decision authority rule — LLM never decides on its own:**
 
-**Memory is already loaded by SessionStart hooks.** Do NOT run `mma deqi` commands. Use the memory info from `[PONDER] Memory loaded: ...` hook output.
+Every decision during the pipeline and depth loop must fall into one of three categories:
 
-If past experience is relevant, display one line:
-```
-"🧠 正在检索历史经验..." or "🧠 Recalling past experience..."
-```
-Then run memory recall only if needed for specific tags. If 0 results → WebSearch (never fabricate).
+| Authority | When | What to do |
+|-----------|------|------------|
+| 🖥️ Context-driven | Existing data supports the decision | Decide autonomously |
+| 🔍 Data-driven | Missing data causes uncertainty | Search more (WebSearch) |
+| 👤 User-driven | Decision depends on user preference/goal | **Ask the user** (AskUserQuestion) |
+| ❌ LLM guessing | LLM "feels" it's right without data | **NOT ALLOWED** |
 
-**Pipeline execution — user sees only progress, no technical details:**
+If you're tempted to make a judgment call without data or user input → STOP. Either find data or ask the user.
+
+**Memory**: Already loaded by hooks. No commands needed.
+
+**Pipeline execution — user sees only progress line:**
 ```
 📊 Analysis in progress...
 ```
 
-**Step selection (Cook Ding's Ox principle)**: Do not mechanically execute all 9 steps:
-1. Attention gate identifies the most uncertain dimensions (the "joints")
-2. Only deepen unclear dimensions; skip those already clear
-3. Feel the problem's texture — where information density is lowest, cut there
+**Depth loop — decision routing**:
 
-Run in background: no visible commands, no visible tool calls.
-
-**Depth loop — uncertain result triggers automatic deepening**:
-
-After pipeline returns, evaluate conclusion confidence before presenting.
+After pipeline returns, evaluate uncertainty. The response depends on the TYPE of uncertainty:
 
 ```
-① Evaluate:
-   - Is the conclusion vague ("might need more data", "maybe", "uncertain")?
-   - Are all direction scenarios converging to the same outcome? (uniformity = no conclusion)
-   - Did self-check pass?
-   - Does each claim have specific data support (numbers, sources, citations)?
+Uncertainty detected → classify it:
 
-② If uncertain (any condition unmet):
-   → Evaluate information gain this round (Zhong Yong principle):
-      - Round 1 uncertain → deepen naturally
-      - Round 2+ uncertain → assess gain:
-        Quality improved? → continue (positive gain)
-        No change? → stop (more harms)
-   → Display: "📊 Deepening analysis..."
-   → Focused collection on specific gaps
-   → Re-execute pipeline
+  Missing data? (no evidence, no source, vague numbers)
+    → 🔍 Data-driven: search more, deepen
+    → Display: "📊 正在补充数据..."
 
-③ Continue/stop determined by information gain trend, NOT fixed rounds:
-   - Large gain (new key data, conflicts resolved) → continue
-   - Small gain (similar conclusions) → naturally stop
-   - Zero gain (data saturated) → stop, present current results
+  User's preference unclear? ("would they prefer X or Y?")
+    → 👤 User-driven: ASK, don't guess
+    → "我倾向于X方向, 但需要你确认: [AskUserQuestion with options]"
 
-④ After stopping:
-   → Clear with data support → present
-   → Still uncertain but data saturated → honestly tell user the gaps
-   → List conditions for re-analysis
+  Contradiction in data? (two sources say opposite things)
+    → 🖥️ Context-driven: search for tiebreaker data
+    → If tiebreaker not found, present both sides to user
+
+  Self-check failed?
+    → 🖥️ Context-driven: re-run specific step with fix context
+
+  All conditions met, result is clear?
+    → ✅ Present to user
 ```
+
+**Never let the LLM decide.** Every fork must be backed by data or user input. If you can't justify why you chose one path over another, you're guessing — and that's not allowed.
 
 **Presentation — user sees complete analysis in their language**:
 
