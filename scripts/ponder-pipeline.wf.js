@@ -453,10 +453,15 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
   phase('社会认知辩论')
 
   debateArgs = await Promise.all([
-    agent(`你是辩论方A: "乐观推进者"。你的立场是: 找机会, 推方案, 看正面。
+    agent(`你是一名称职的辩论分析师。你的立场是: "正方: 推进"——找机会, 看正面。
 
-阅读Step2-4的分析结果, 写一份辩论陈词(200字内)。
-你的任务: 为最积极的方向辩护, 指出悲观分析中的漏洞。
+在写陈词前, 你要先做信息收集:
+1. 从记忆中召回支持"推进"立场的证据(关注机会/增长/利好):
+   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js mma deqi \'{"tags":["opportunity","growth","positive","推进"],"limit":3}\'' : '(查询记忆)'}
+2. 如果记忆中没有, 用 WebSearch 搜索真实案例
+3. 基于你找到的证据写陈词
+
+Step2-4分析作为背景参考:
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
@@ -464,13 +469,19 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        attack_weakness: { type: 'string', description: '你反驳的对方论点' },
-      }, required: ['argument'] },
+        data_sources: { type: 'array', items: { type: 'string' }, description: '你引用的证据来源' },
+        memory_hit: { type: 'boolean', description: '是否从记忆中找到有力证据' },
+      }, required: ['argument', 'data_sources'] },
     }),
-    agent(`你是辩论方B: "风险警告者"。你的立场是: 找问题, 防风险, 看负面。
+    agent(`你一名称职的辩论分析师。你的立场是: "反方: 风险"——找问题, 防风险, 看负面。
 
-阅读Step2-4的分析结果, 写一份辩论陈词(200字内)。
-你的任务: 为最保守的方向辩护, 指出乐观分析中的风险。
+在写陈词前, 你要先做信息收集:
+1. 从记忆中召回支持"风险"立场的证据(关注风险/失败案例/下行):
+   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js mma deqi \'{"tags":["risk","failure","downside","风险"],"limit":3}\'' : '(查询记忆)'}
+2. 如果记忆中没有, 用 WebSearch 搜索真实案例
+3. 基于你找到的证据写陈词
+
+Step2-4分析作为背景参考:
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
@@ -478,13 +489,19 @@ ${JSON.stringify(step4, null, 2)}`, {
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        attack_weakness: { type: 'string', description: '你反驳的对方论点' },
-      }, required: ['argument'] },
+        data_sources: { type: 'array', items: { type: 'string' }, description: '你引用的证据来源' },
+        memory_hit: { type: 'boolean', description: '是否从记忆中找到有力证据' },
+      }, required: ['argument', 'data_sources'] },
     }),
-    agent(`你是辩论方C: "异见者"。你的立场与A和B都不同——你提出第三个方向。
+    agent(`你一名称职的辩论分析师。你的立场是: "第三方: 新思路"——找前两者都没看到的盲区。
 
-阅读Step2-4的分析结果, 写一份辩论陈词(200字内)。
-你的任务: 提出A和B都没看到的第三条路, 指出双方的共同盲区。
+在写陈词前, 你要先做信息收集:
+1. 从记忆中召回前两者可能忽略的信息(关注 overlooked/alternative/unexpected):
+   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js mma deqi \'{"tags":["alternative","unexpected","blindspot","创新","盲区"],"limit":3}\'' : '(查询记忆)'}
+2. 如果记忆中没有, 用 WebSearch 搜索真实案例
+3. 基于你找到的证据写陈词
+
+Step2-4分析作为背景参考:
 ${JSON.stringify(step2, null, 2)}
 ${JSON.stringify(step3, null, 2)}
 ${JSON.stringify(step4, null, 2)}`, {
@@ -499,25 +516,36 @@ ${JSON.stringify(step4, null, 2)}`, {
 
   log('社会认知辩论完成: 3方陈词')
 
-  // 辩论回应: A和B听完对方后反驳
+  // 辩论回应: 各方阅读对方陈词后反驳
   const debateRebuttals = await Promise.all([
-    agent(`你听到了B(风险警告者)和C(异见者)的论点。回应他们, 然后修正或强化你的立场。
+    agent(`你听到反方和第三方的论点。回应他们的证据, 然后修正或强化你的立场。
 
 你的原始陈词: ${debateArgs[0].argument}
-B的陈词: ${debateArgs[1].argument}
-C的陈词: ${debateArgs[2].argument}`, {
+你用的证据: ${(debateArgs[0].data_sources || []).join(', ')}
+反方陈词: ${debateArgs[1].argument}
+反方证据: ${(debateArgs[1].data_sources || []).join(', ')}
+第三方陈词: ${debateArgs[2].argument}
+第三方证据: ${(debateArgs[2].data_sources || []).join(', ')}
+
+如果对方的证据比你强→修正立场。如果只是视角不同→强化立场。`, {
       label: '正方回应',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
         rebuttal: { type: 'string', minLength: 30 },
         revised_stance: { type: 'string' },
+        conceded_points: { type: 'array', items: { type: 'string' }, description: '你认可对方哪些论点' },
       }, required: ['rebuttal', 'revised_stance'] },
     }),
-    agent(`你听到了A(乐观推进者)和C(异见者)的论点。回应他们, 然后修正或强化你的立场。
+    agent(`你听到正方和第三方的论点。回应他们的证据, 然后修正或强化你的立场。
 
 你的原始陈词: ${debateArgs[1].argument}
-A的陈词: ${debateArgs[0].argument}
-C的陈词: ${debateArgs[2].argument}`, {
+你用的证据: ${(debateArgs[1].data_sources || []).join(', ')}
+正方陈词: ${debateArgs[0].argument}
+正方证据: ${(debateArgs[0].data_sources || []).join(', ')}
+第三方陈词: ${debateArgs[2].argument}
+第三方证据: ${(debateArgs[2].data_sources || []).join(', ')}
+
+如果对方的证据比你强→修正立场。如果只是视角不同→强化立场。`, {
       label: '反方回应',
       phase: '社会认知辩论',
       schema: { type: 'object', properties: {
@@ -548,10 +576,13 @@ ${JSON.stringify(step4, null, 2)}
 Step2发散: ${JSON.stringify(step2, null, 2)}
 Step3八卦镜: ${JSON.stringify(step3, null, 2)}
 DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
-辩论摘要:
-  正方(推进): ${debateArgs[0].argument.substring(0, 200)}
-  反方(风险): ${debateArgs[1].argument.substring(0, 200)}
-  第三方(新思路): ${debateArgs[2].argument.substring(0, 200)}
+辩论摘要(含证据来源):
+  正方: ${debateArgs[0].argument.substring(0, 150)}..
+  正方证据: ${(debateArgs[0].data_sources||[]).join(", ")}
+  反方: ${debateArgs[1].argument.substring(0, 150)}..
+  反方证据: ${(debateArgs[1].data_sources||[]).join(", ")}
+  第三方: ${debateArgs[2].argument.substring(0, 150)}..
+  第三方证据: ${(debateArgs[2].data_sources||[]).join(", ")}
 
 【自检 = 辩论】— 每个问题先写正方论点, 再写反方论点, 然后判定谁赢。
 反方赢 → passed=false。
