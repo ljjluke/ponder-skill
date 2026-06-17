@@ -3,7 +3,7 @@ name: ponder
 alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
-  `/luke:ponder` triggers full 5-step flow. Every step mandatory. No skipping.
+  `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
 version: 1.14.1
 license: MIT
 ---

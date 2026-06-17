@@ -3,7 +3,7 @@ name: mcts-constraint
 description: Ponder Step 0 — Constraint Collection + Xuanxue/Zhanbu Enhancements
 ---
 
-# Step 0: Requirement Constraint Collection
+# Phase 0: Requirement Constraint Collection
 
 > **Path note**: Commands use node $P/scripts/mcts.js (relative). When executing, replace with node <plugin>/scripts/mcts.js <args> — <plugin> = path from [Ponder] Plugin: in SessionStart log.
 
