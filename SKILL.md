@@ -173,6 +173,29 @@ Assumptions: ...
 **⛔ RULE: The pipeline MUST execute for every analysis.**
 The pipeline (ponder-pipeline.wf.js) runs 9 automated phases with sub-agents, memory checks, structured self-check, and knowledge consolidation. If the pipeline does NOT run — do NOT produce analysis output. Free-text analysis without pipeline execution is INVALID.
 
+**Launch the pipeline using the Workflow tool:**
+
+```
+1. Get $P from SessionStart log: [PONDER] Plugin: <path>
+2. Read pipeline config:
+   $P/scripts/pipeline.js status   (if exists)
+3. Launch:
+   Workflow({
+     scriptPath: '$P/scripts/ponder-pipeline.wf.js',
+     args: {
+       user_request: '<raw user request>',
+       step1: '<Step 1 profile output>',
+       plugin_path: '<$P>',
+       memory_context: '<deqi recall summary>',
+       meta_config: <meta config object or null>
+     }
+   })
+4. Read the return value — it contains step_log, free_energy,
+   mutation_result, and all phase outputs.
+```
+
+If Workflow() is unavailable for any reason, do NOT produce analysis. The pipeline is the only valid source of analysis output.
+
 Data acquisition within the pipeline must use `knowledge acquire`, not `mma deqi` directly.
 
 **New: Hypothesis-first phase** — Before analyzing, the pipeline generates predictions based on existing memory. Data collection then targets confirming or refuting these predictions. This mirrors the brain's predictive processing (Friston's Free Energy Principle).
