@@ -95,11 +95,15 @@ You do NOT write analysis. You do NOT output conclusions that didn't come from t
 
 ### Step 1: Requirements Divergence — Spiral Divergence
 
-Do NOT output analysis here. Only output the profile. Analysis comes from the pipeline.
+**Output rules for Step 1:**
+- You ONLY ask questions and output the profile. Do NOT output any analysis.
+- Self-examination: think it in your head, never write it as output.
+- Ask ONE question at a time. Wait for user answer. Then ask based on that answer.
+- Never ask multiple questions in one message. One question per message.
 
-Self-examination (in your head), then **spiral divergence interview** — each answer branches into new questions until blind spots are eliminated.
+Step 1 produces ONLY the profile. No analysis, no conclusions, no judgments.
 
-**Self-examination** (do not output):
+**Self-examination** (in your head ONLY — never output this):
 - What is my first reaction? What if the opposite is true?
 - What default assumptions do I hold about this domain?
 - If all first reactions are wrong, what might the truth be?
@@ -120,19 +124,26 @@ This is NOT a linear "ask 3 questions → done" process. It's a cycle:
           └─────────────────────────────────────┘
 ```
 
-**Execution — keep asking until stopping condition is met:**
+**Execution — ONE question per message. Wait for answer. Then next.**
 
 ```
-① Start: "You said [paraphrase] — correct? What haven't I asked?"
-② Expand: Are there still empty dimensions? (Timing? Resources? People? Rules? Essence?)
-   → Ask about each empty dimension
-③ Challenge: Any contradictions or assumptions to probe?
-   → "X and Y sound contradictory — what do you think?"
-   → "What if the opposite is true?"
+① Start: Ask ONE opening question:
+   "You said [paraphrase] — correct? What haven't I asked?"
+   → WAIT for user answer. Read it. Find gaps.
+
+② Based on the answer, ask ONE follow-up about the dimmest dimension:
+   → "You mentioned [X] — what about [Timing/Resources/People/Rules/Essence]?"
+   → WAIT for user answer. Update your understanding. Find the next gap.
+
+③ Challenge one assumption per message (max 1 challenge per exchange):
+   → "[X] and [Y] seem contradictory — what do you think?"
+   → WAIT for user answer.
+
 ④ Verify: "Did I understand correctly?"
-   → User corrects you? → That's a blind spot → go back to ②
+   → User corrects? → Go back to ②
    → User confirms? → Check stopping condition
-⑤ Repeat ②→④ until stopping condition is met
+
+⑤ Repeat ②→④. Stop only when ALL stopping conditions are met.
 ```
 
 **Dimension probes — dig deeper, not wider:**
