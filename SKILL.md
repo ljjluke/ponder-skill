@@ -193,6 +193,8 @@ Knowledge is auto-classified:
 
 When user corrects you → `tagVerdict(id, 'refuted', detail)` → knowledge moves to REFUTED → never used again. Also propagate to all linked knowledge.
 
+**Step-level performance data**: The pipeline returns `step_log` — an array recording each step's completion status and metrics. This data feeds into self-evolution: which steps consistently perform well, which need adjustment, and where the pipeline should change next session.
+
 **Before storing new knowledge, semantically check against REFUTED entries:**
 ```
 listRefuted() → get all past refuted knowledge
