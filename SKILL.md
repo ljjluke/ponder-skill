@@ -187,31 +187,42 @@ When user corrects you → `recordOutcome(id, 'refuted')` → knowledge moves to
 📊 Analysis in progress...
 ```
 
-**Depth loop — decision routing**:
+**Depth loop — re-debate on uncertainty**:
 
-After pipeline returns, evaluate uncertainty. The response depends on the TYPE of uncertainty:
+After pipeline + convergence, evaluate. If conclusion is clear → present. If uncertain → **re-enter the debate phase with more data**, not a full pipeline restart.
 
 ```
-Uncertainty detected → classify it:
+Determine result quality:
 
-  Missing data? (no evidence, no source, vague numbers)
-    → 🔍 Data-driven: search more, deepen
-    → Display: "📊 正在补充数据..."
+  Conclusion is clear, self-check passed → ✅ Present to user
 
-  User's preference unclear? ("would they prefer X or Y?")
-    → 👤 User-driven: ASK, don't guess
-    → "我倾向于X方向, 但需要你确认: [AskUserQuestion with options]"
+  Conclusion is vague/mixed/uncertain → Enter Debate Loop (max 3 cycles):
+    
+    Cycle 1: 
+      → Identify specific uncertainties (what exactly is unclear?)
+      → Each debater searches for NEW evidence addressing those gaps
+      → Re-debate with new evidence
+      → Re-converge
+    
+    Cycle 2 (if still uncertain):
+      → Each debater searches for MORE specific evidence
+      → Each must explicitly address: why is the other side's evidence weak?
+      → Re-debate with credibility attacks
+      → Re-converge
+    
+    Cycle 3 (last round):
+      → All available evidence exhausted
+      → If still uncertain → honest report: "分析后仍存在以下不确定性: [list]"
+      → Provide conditions under which analysis should be revisited
 
-  Contradiction in data? (two sources say opposite things)
-    → 🖥️ Context-driven: search for tiebreaker data
-    → If tiebreaker not found, present both sides to user
-
-  Self-check failed?
-    → 🖥️ Context-driven: re-run specific step with fix context
-
-  All conditions met, result is clear?
-    → ✅ Present to user
+    Between cycles: display "📊 辩论深入分析中..."
+    After cycle end: present results regardless of certainty
 ```
+
+Decision routing within each debate cycle:
+- Missing data → each side searches for what THEY need
+- Contradiction → each side attacks the OTHER's evidence credibility
+- User preference → each side asks clarifying questions (collected, presented to user after debate)
 
 **Never let the LLM decide.** Every fork must be backed by data or user input. If you can't justify why you chose one path over another, you're guessing — and that's not allowed.
 
