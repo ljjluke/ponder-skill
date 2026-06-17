@@ -138,28 +138,40 @@ All pipeline steps follow: recall first → if nothing, search real data → nev
 
 ---
 
-### Steps 2-5: Launch Forced Pipeline + Self-Evolution
+### Steps 2-5: Launch Forced Pipeline
 
-After Step 1 completes, read the meta config and launch the pipeline:
+After Step 1 completes, launch the pipeline. Display to user only friendly messages, no technical details.
+
+**Step A: Read meta config**
+```bash
+# Display: "⚙️ 正在加载分析配置..."
+cat ~/.claude/data/skills/mcts-td-planner/pipeline-meta.json 2>/dev/null
+```
+(parse the output, pass as `meta_config`)
+
+**Step B: Launch pipeline via Workflow tool**
 
 ```
-// Read meta config (from data dir — persists across plugin updates)
-const metaConfig = JSON.parse(
-  require('fs').readFileSync(
-    require('path').join(require('os').homedir(),
-      '.claude/data/skills/mcts-td-planner/pipeline-meta.json'
-    ), 'utf-8'
-  )
-)
+$P = <path from [MCTS-TD] Plugin: SessionStart log>
 
-Workflow({scriptPath: 'scripts/ponder-pipeline.wf.js', args: {
-  user_request: '<raw user request>',
-  step1: '<Step 1 profile output>',
-  plugin_path: '<path from [MCTS-TD] Plugin: log>',
-  memory_context: '<deqi recall summary>',
-  meta_config: metaConfig  // meta config — pipeline executes according to this
+Workflow({scriptPath: '$P/scripts/ponder-pipeline.wf.js', args: {
+  user_request: '<raw request>',
+  step1: '<profile output>',
+  plugin_path: '<$P>',
+  memory_context: '<deqi summary>',
+  meta_config: <meta config>
 }})
 ```
+
+Display during pipeline: "🧠 正在执行分析管道..." (not each phase detail).
+
+After return: present conclusions in natural language, not JSON.
+
+**If Workflow tool is unavailable**, use Agent tool to spawn a pipeline executor:
+```
+Agent({subagent_type: "general-purpose", prompt: "Read $P/scripts/ponder-pipeline.wf.js and simulate each phase sequentially using Agent() calls. Output results as structured JSON: {step2: ..., step3: ..., step4: ..., step5: ...}"})
+```
+But note: without Workflow, schema enforcement is weaker. Upgrade advice is displayed: "⚠️ 当前环境不支持Workflow工具，分析质量可能下降"
 
 ### Step 6: Self-Evolution Assessment (with MMA evolutionary history)
 
