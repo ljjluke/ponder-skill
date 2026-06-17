@@ -6,6 +6,10 @@
 <h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
+  <a href="README_CN.md">🇨🇳 中文</a>
+</p>
+
+<p align="center">
   <b>Ask once. Get an answer that's been stress-tested from every angle.</b><br>
   <i>Then watch your pipeline get smarter — because it learns from every question.</i>
 </p>
