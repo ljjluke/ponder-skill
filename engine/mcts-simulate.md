@@ -35,7 +35,7 @@ Verify: simulate-layer-guard --state '{solutions:[...]}'
 
 ## Tree Data Structure (REAL — persisted to disk)
 
-**⛔ MCTS now uses a real tree stored in ~/.claude/data/skills/mcts-td-planner/memory/trees/.**
+**⛔ MCTS now uses a real tree stored in ~/.claude/data/skills/ponder/memory/trees/.**
 This is NOT just a thought process. Every node is a real data object with CRUD operations.
 
 API: node $P/scripts/mcts.js tree <command>

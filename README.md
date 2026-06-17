@@ -97,7 +97,7 @@ flowchart TB
 /luke:ponder <your question>
 ```
 
-Data stays local: `~/.claude/data/skills/mcts-td-planner/`
+Data stays local: `~/.claude/data/skills/ponder/`
 
 ---
 

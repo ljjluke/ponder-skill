@@ -97,7 +97,7 @@ flowchart TB
 /luke:ponder <你的问题>
 ```
 
-数据本地存储：`~/.claude/data/skills/mcts-td-planner/`
+数据本地存储：`~/.claude/data/skills/ponder/`
 
 ---
 

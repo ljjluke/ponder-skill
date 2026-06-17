@@ -780,5 +780,5 @@ Memory file stores complete knowledge graph. **Knowledge divided into "active" a
 
 Archive/recall/cleanup operations:
 node $P/scripts/mcts.js mma status
-Storage path: ~/.claude/data/skills/mcts-td-planner/memory/
+Storage path: ~/.claude/data/skills/ponder/memory/
 (physically isolated from skill code)
