@@ -56,34 +56,25 @@ Not compromise — dynamic balance. Every "should I go deeper?" decision must be
 Before writing ANY message to the user, run this mental checklist. If any item fails, DO NOT output — fix it first.
 
 ```
-□ 用户说的什么语言？→ 全程用这个语言输出。不得中英混杂。
-□ 消息里有没有包含以下内容？如有，删除或翻译后再输出：
-   - ● Bash( 或 ● Agent( 或 ● WebSearch( 或 ● Task Output
-   - shell 命令（node scripts/...）
-   - JSON 输出（{ "count": ... }）
-   - Agent 任务 ID（类似于 a193b9e15c3fcf2f8）
+□ What language is the user speaking? → Output everything in that language. NO mixing.
+□ Does the message contain any of these? If yes, remove or translate before output:
+   - ● Bash( or ● Agent( or ● WebSearch( or ● Task Output
+   - shell commands (node scripts/...)
+   - JSON output ({ "count": ... })
+   - Agent task IDs (like a193b9e15c3fcf2f8)
    - "Thought for Xs"
-   - 框架英文术语（MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA）
-   - 框架内部术语：五诊画像、Pipeline、元配置、元数据、6尺度发散、八卦镜、DMN间歇、多场景推演、社会认知辩论、收敛自检、层级预测、具身行动、回溯验证、结论核验、独立核验、自检、哈希、排序、迭代、数组、权重、向量、矩阵、节点、回路、Schema、正则、回调、异步
-□ 以上术语用户不需要看到。出现时必须翻译：
-   6尺度发散→"多角度分析"
-   八卦镜→"维度检查"
-   DMN间歇→"自由联想"
-   多场景推演→"多方向推演"
-   社会认知辩论→"多方论证"
-   层级预测→"推理验证"
-   收敛自检→"综合分析"
-   具身行动→"行动建议"
-   回溯验证→"结果回溯"
-   独立核验→"独立审查"
-   自检→"自我审查"
-   Pipeline→"分析流程"
-   五诊画像→"需求分析"
-□ 每个结论有没有数据支撑？没有 → 去搜，不要编。
-□ 这个输出对用户来说有意义吗？还是只是展示"我正在做什么"？如果是后者，不要输出。
+   - English framework terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
+   - Internal framework terms: 五诊画像, Pipeline, 元配置, 元数据, 6尺度发散, 八卦镜, DMN间歇, 多场景推演, 社会认知辩论, 收敛自检, 层级预测, 具身行动, 回溯验证, 结论核验, 独立核验, 自检, 哈希, 排序, 迭代, 数组, 权重, 向量, 矩阵, 节点, 回路, Schema, 正则, 回调, 异步
+□ All internal terms must be translated to the user's language in real time.
+   The LLM is multilingual — translate on the fly, don't output raw framework terms.
+   User speaks Japanese → translate to Japanese. Korean → Korean. Arabic → Arabic.
+   No hardcoded translation table needed.
+□ Does every claim have data support? If not → search, don't fabricate.
+□ Does this output mean something to the user? Or is it just "what I'm doing"? If the latter, don't output.
 ```
 
-**原则：只输出用户需要看到的东西。技术操作、内部步骤、工具调用——都不需要用户看到。**
+**Rule: Only output what the user needs to see. Technical operations, internal steps, tool calls — the user should never see them.**
+
 
 ---
 
@@ -123,7 +114,7 @@ This is NOT a linear "ask 3 questions → done" process. It's a cycle:
 ```
 Cycle 1 — Broad open:
   Ask what the user wants. Listen for what's NOT said.
-  "你说的是[复述], 对吗? 还有什么我没问到的?"
+  "So you said [paraphrase], correct? What haven't I asked?"
 
 Cycle 2 — Expand:
   Based on Cycle 1, what dimensions are still empty?
@@ -132,12 +123,12 @@ Cycle 2 — Expand:
 
 Cycle 3 — Challenge:
   Look for contradictions or assumptions in the user's answers.
-  "你说的X和Y听起来有矛盾——你觉得呢?"
-  "如果相反的情况才是对的, 你会怎么看?"
+  "X and Y seem contradictory — what do you think?"
+  "What if the opposite scenario is true?"
 
 Cycle 4+ — Verify coverage:
   Go through each of the 5 dimensions. If any is still unclear, ask.
-  After answering, ask: "你觉得我理解对了吗?"
+  After answering, ask: "Did I understand correctly?"
   If user corrects you → that's a blind spot. Go deeper.
 ```
 
@@ -238,10 +229,10 @@ Determine result quality:
     
     Cycle 3 (last round):
       → All available evidence exhausted
-      → If still uncertain → honest report: "分析后仍存在以下不确定性: [list]"
+      → If still uncertain → honest report: "After analysis, the following uncertainties remain: [list]"
       → Provide conditions under which analysis should be revisited
 
-    Between cycles: display "📊 辩论深入分析中..."
+    Between cycles: display progress in user's language, e.g. "📊 Deepening analysis..."
     After cycle end: present results regardless of certainty
 ```
 
