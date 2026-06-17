@@ -41,15 +41,25 @@ No configuration. No training data. No data leaves your machine.
 ## Architecture
 
 ```mermaid
-flowchart LR
-    A["1. Interview<br/>(find real needs)"] --> B["2. Analyze<br/>(multi-perspective pipeline)"]
-    B --> C{"3. Check<br/>clear enough?"}
-    C -->|no| D["4. Debate & deepen<br/>(up to 3 rounds)"]
+flowchart TB
+    subgraph SE["Self-Evolution (collects data from all phases)"]
+        direction LR
+        SE_IN["Interview patterns<br/>Step performance<br/>Free energy scores<br/>User corrections"] --> SE_OUT["Data-driven mutation<br/>applied next session"]
+    end
+
+    A["1. Interview"] --> B["2. Analyze"]
+    B --> C{"3. Check"}
+    C -->|no| D["4. Debate & deepen"]
     D --> B
-    C -->|yes| E["5. Present result"]
-    E --> F["6. User feedback<br/>(correct or confirm)"]
-    F -.->|learns| G["7. Self-Evolution<br/>(improves next time)"]
-    G -.->|better pipeline| B
+    C -->|yes| E["5. Present"]
+    E --> F["6. User feedback"]
+
+    A -.->|feeds| SE_IN
+    B -.->|feeds| SE_IN
+    C -.->|feeds| SE_IN
+    D -.->|feeds| SE_IN
+    F -.->|feeds| SE_IN
+    SE_OUT -.->|next time| B
 ```
 
 
