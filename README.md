@@ -145,25 +145,22 @@ Then: `/luke:ponder <your question>`
 
 ---
 
-## MCTS Tree Search (integrated into pipeline)
+## Memory System (all phases connected)
 
-MCTS is not a separate tool — it's built into the pipeline. The simulation phase uses MCTS tree search for multi-round reasoning:
+Every sub-agent connects to the same memory system via `knowledge.acquire()`:
 
 ```bash
-# Each simulation sub-agent runs internal MCTS:
-tree init --solutions '[...]'        # initialize scenarios
-tree select <node-id>                # UCB-based branch selection  
-tree simulate <leaf> --v <V>         # roll-out simulation
-tree backprop <leaf>                 # propagate results
+node scripts/mcts.js knowledge acquire '{"tags":["<keywords>"]}'  # unified entry
+node scripts/mcts.js knowledge refuted                              # past mistakes
+node scripts/mcts.js knowledge status                               # memory classification
 ```
 
-All sub-agents connect to the memory system via `knowledge.acquire()` — past experience, real data from web search, and REFUTED checks are standard across the pipeline.
+- **Divergence, Bagua, Simulation, Debate**: all call `acquire()` before analyzing
+- **Depth loop**: auto-detects vague conclusions, re-debates with memory recall
+- **Knowledge consolidation**: pipeline auto-stores insights, checks against REFUTED
+- **MCTS tree search**: integrated into simulation phase (tree init → select → simulate → backprop)
 
-Standalone CLI also available:
-```bash
-node scripts/mcts.js tree <command>  # independent MCTS operations
-node scripts/mcts.js compute <cmd>   # UCB/value calculations
-```
+Standalone CLI: `node scripts/mcts.js tree <command>` for direct MCTS operations.
 
 ---
 
