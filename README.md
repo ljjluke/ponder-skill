@@ -40,34 +40,22 @@ No configuration. No training data. No data leaves your machine.
 
 ## Architecture
 
-```
- ┌──────────────────────────────────────────────────┐
- │         Self-Evolution (improves every use)        │
- ├──────────────────────────────────────────────────┤
- │                                                    │
- │   Interview → Gather data → Analyze → Verify      │
- │   (you talk   (past       (9-step    (if unclear  │
- │    to user)    exp. +     pipeline)   → re-debate │
- │                web search)             max 3)      │
- │                                  │                  │
- │                            ┌─────▼─────┐           │
- │                            │  Present  │           │
- │                            │  Result   │           │
- │                            └─────┬─────┘           │
- │                                  │                  │
- │                            ┌─────▼─────┐           │
- │                            │  User     │           │
- │                            │  Feedback │           │
- │                            │ (correct, │           │
- │                            │  confirm) │           │
- │                            └───────────┘           │
- │                                                    │
- │  Every use makes it slightly better                │
- │  Mistakes remembered → avoided next time           │
- └──────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Evolution["Self-Evolution (improves every use)"]
+        direction TB
+        A["1. Interview you"] --> B["2. Gather data"]
+        B --> C["3. Analyze<br/>(9-step pipeline)"]
+        C --> D{"4. Verify"}
+        D -->|unclear| E["5. Re-debate<br/>(max 3 rounds)"]
+        E --> C
+        D -->|clear| F["6. Present result"]
+        F --> G["7. User feedback<br/>(correct / confirm)"]
+        G -.->|next use| A
+    end
+    style Evolution fill:#f0f4ff,stroke:#333,stroke-width:2px
 ```
 
-Self-evolution isn't a final step — it wraps everything. Every phase feeds into it, and the pipeline improves between uses, not during one.
 
 ---
 
