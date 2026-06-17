@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "ponder",
+      "name": "luke",
       "description": "Brain-inspired cognitive pipeline: MMA memory + predictive coding + multi-perspective divergence + self-correcting loop + sleep consolidation.",
       "source": "./",
       "version": "1.14.0",
