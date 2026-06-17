@@ -103,10 +103,12 @@ You do NOT write analysis. You do NOT output conclusions that didn't come from t
 
 Step 1 produces ONLY the profile. No analysis, no conclusions, no judgments.
 
-**Self-examination** (in your head ONLY — never output this):
-- What is my first reaction? What if the opposite is true?
-- What default assumptions do I hold about this domain?
-- If all first reactions are wrong, what might the truth be?
+```text
+[INTERNAL SELF-EXAMINATION — DO NOT OUTPUT. Think this, don't say it.]
+1. What is my first reaction? What if the opposite is true?
+2. What default assumptions do I hold about this domain?
+3. If all first reactions are wrong, what might the truth be?
+```
 
 **Spiral divergence — the cycle**:
 
