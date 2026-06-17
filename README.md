@@ -41,54 +41,43 @@ No configuration. No training data. No data leaves your machine.
 ## Architecture
 
 ```
- ╔═══ Self-Evolution ═══════════════════════════════════╗
- ║  free_energy > 0.4 → data-driven mutation → evolve  ║
- ║  (runs across all phases, not a final step)          ║
- ╚═══════════════════════════════════════════════════════╝
-        │                           ↑
-        ▼                           ║
- ┌──────────────────────┐           ║
- │ Interview (you)      │           ║
- │ 3 layers → profile   │           ║
- └──────┬───────────────┘           ║
-        │                           ║
- ┌──────▼───────────────┐           ║
- │ Memory ←→ WebSearch  │◄──────────║── knowledge acquired → tagged
- │ (bi-directional)     │  stores   ║   with step usage
- └──────┬───────────────┘           ║
-        │                           ║
- ┌──────▼───────────────┐           ║
- │ Pipeline (background)│           ║
- │ • Divergence         │  step     ║
- │ • Dimension check    │  perf.   ║
- │ • Free association   │  tracked ║
- │ • Scenario simulation│  →       ║
- │ • Multi-stance debate│  free    ║
- │ • Convergence        │  energy  ║
- │ • Prediction check   │  calc.   ║
- │ • Independent verify │           ║
- │ • Action proposal    │           ║
- └──────┬───────────────┘           ║
-        │                           ║
- ┌──────▼───────────────┐           ║
- │ Depth Loop           │           ║
- │ (re-debate if        │           ║
- │  uncertain, max 3)   │           ║
- └──────┬───────────────┘           ║
-        │                           ║
-        ▼                           ║
- ┌──────────────────────────┐       ║
- │ Present result to user   │──────►║── user feedback →
- └──────────────────────────┘  wait ║   tagVerdict()
-        │                    next   ║
-        ▼                    use    ║
- ┌──────────────────────────┐       ║
- │ Record outcome           │──────►║── recordOutcome()
- │ (user verdict →          │  refute/confirm → knowledge classified
- │  update knowledge)       │       ║
- └──────────────────────────┘       ║
-                                    ║
- ←══════════════════════════════════╝
+┌──────────────────────────────────────────────────────────┐
+│                    Self-Evolution                         │
+│  free_energy = verify_fail×0.4 + check_fail×0.3          │
+│              + prediction_error×0.3                       │
+│  > 0.4 → data-driven pipeline mutation (next session)     │
+├──────────────────────────────────────────────────────────┤
+│                                                           │
+│  ┌──────┐    ┌──────────┐    ┌──────────────┐            │
+│  │ Step1│───▶│ Knowledge │───▶│ Steps 2-5    │            │
+│  │Inter-│    │ Engine    │    │ Pipeline     │            │
+│  │view  │    │ acquire() │    │ 9 phases     │            │
+│  └──────┘    │ ┌──────┐  │    │ sub-agents   │            │
+│              │ │MMA   │  │    └──────┬───────┘            │
+│              │ │memory│  │           │                     │
+│              │ ├──────┤  │    ┌──────▼───────┐            │
+│              │ │Web   │  │    │ Depth Loop   │            │
+│              │ │Search│  │    │ (re-debate   │            │
+│              │ └──────┘  │    │  max 3)      │            │
+│              └──────────┘    └──────┬───────┘            │
+│                                     │                     │
+│                              ┌──────▼───────┐            │
+│                              │ Present to   │            │
+│                              │ User         │            │
+│                              │ + evaluate   │            │
+│                              │ free_energy  │            │
+│                              └──────┬───────┘            │
+│                                     │                     │
+│                              ┌──────▼───────┐            │
+│                              │ User Feedback │            │
+│                              │ tagVerdict() │            │
+│                              │ recordOutcome│            │
+│                              └──────────────┘            │
+│                                                           │
+│  All phases contribute: step performance → free_energy   │
+│  User feedback → knowledge classification (REFUTED/etc)  │
+│  Next /luke:ponder uses evolved pipeline-meta.json       │
+└──────────────────────────────────────────────────────────┘
 ```
 
 Self-evolution is not a step after the pipeline. **It's the container.**
