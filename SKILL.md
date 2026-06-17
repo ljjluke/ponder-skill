@@ -99,7 +99,9 @@ After this header, proceed to Step 1. Do not add any other text before or after 
 
 ```
 SEQUENCE:
-  [You]  Step 1: Interview → output profile ONLY
+  [You]  Step 1a: Decompose request → 5 dimensions (known/partial/unknown)
+  [You]  Step 1b: Interview — one dimension at a time, fill gaps
+  [You]  Step 1c: Output complete profile
   [You]  Display "📊 Analysis in progress..." → launch pipeline
   [Code] Pipeline: 9 phases, sub-agents, memory, knowledge consolidation
   [Code] Returns: structured results + step_log + mutation_result
@@ -108,77 +110,63 @@ SEQUENCE:
 
 You do NOT write analysis. You do NOT output conclusions that didn't come from the pipeline. If the pipeline doesn't run → no analysis output. Period.
 
-### Step 1: Requirements Divergence — Spiral Divergence
+### Step 1: Requirement Decomposition & Targeted Interview
 
 **Output rules for Step 1:**
-- You ONLY ask questions and output the profile. Do NOT output any analysis.
-- Self-examination: think it in your head, never write it as output.
-- Ask ONE question at a time. Wait for user answer. Then ask based on that answer.
-- Never ask multiple questions in one message. One question per message.
-
-Step 1 produces ONLY the profile. No analysis, no conclusions, no judgments.
+- You ONLY output: the decomposition, gap analysis and profile. No analysis, no conclusions.
+- Self-examination: think it in your head, never write it.
 
 ```text
-[INTERNAL SELF-EXAMINATION — DO NOT OUTPUT. Think this, don't say it.]
+[INTERNAL SELF-EXAMINATION]
 1. What is my first reaction? What if the opposite is true?
-2. What default assumptions do I hold about this domain?
+2. What default assumptions do I hold?
 3. If all first reactions are wrong, what might the truth be?
 ```
 
-**Spiral divergence — the cycle**:
+**Phase A: Decompose the raw request into 5 dimensions**
 
-This is NOT a linear "ask 3 questions → done" process. It's a cycle:
-
-```
-          ┌─────────────────────────────────────┐
-          │   Ask → Listen → Analyze → Find gap │
-          │         ↑                    ↓       │
-          │         └─── Deeper question ────────┘
-          │                                     │
-          │  Each cycle: one layer of blind spot │
-          │  removed. Stop when no more blind    │
-          │  spots can be identified.            │
-          └─────────────────────────────────────┘
-```
-
-**Execution — ONE question per message. Wait for answer. Then next.**
-
-**ALL questions must be multiple-choice with options.** Use AskUserQuestion with predefined options. Do NOT ask open-ended questions — users give vague answers to open questions. Force specificity through options.
+From the user's initial request, extract what you already know across the 5 dimensions. Mark each as KNOWN / PARTIAL / UNKNOWN.
 
 ```
-① Start: Ask ONE opening question with options:
-   "You said [paraphrase] — which of these best describes what you want?
-   A) [option 1]  B) [option 2]  C) [option 3]"
-   → WAIT for user answer. Read it. Find gaps.
-
-② Based on the answer, ask ONE follow-up about the dimmest dimension:
-   → "You mentioned [X] — what about [Timing/Resources/People/Rules/Essence]?"
-   → WAIT for user answer. Update your understanding. Find the next gap.
-
-③ Challenge one assumption per message (max 1 challenge per exchange):
-   → "[X] and [Y] seem contradictory — what do you think?"
-   → WAIT for user answer.
-
-④ Verify: "Did I understand correctly?"
-   → User corrects? → Go back to ②
-   → User confirms? → Check stopping condition
-
-⑤ Repeat ②→④. Stop only when ALL stopping conditions are met.
+Example — user says "help me analyze A-shares":
+  天(Timing) = PARTIAL — wants now, but unclear timeframe
+  地(Resources) = UNKNOWN — no info on available tools/data
+  人(People) = KNOWN — for personal investment
+  法(Rules) = KNOWN — A-share market rules
+  物(Essence) = PARTIAL — wants analysis, but unclear for what decision
 ```
 
-**Dimension probes — dig deeper, not wider:**
+**Output the decomposition to the user (one line per dimension):**
 
-For each of the 5 dimensions, probe until you can score it with confidence:
+```
+需求拆解:
+  ✓ 人: 个人投资
+  ? 天: 时间范围?
+  ? 物: 分析用来做什么?
+  ✗ 地: 有什么资源/条件?
+  ✓ 法: A股市场规则
+```
 
-| Dimension | What to ask | Keep probing if... |
-|-----------|-------------|-------------------|
-| 天 Timing | When does this need to be done? Is there a deadline? What's the window of opportunity? Is the timing flexible or fixed? | They say "as soon as possible" without specifying |
-| 地 Resources | What do you already have? What's missing? What's your budget/capacity? Who else is involved? | They only mention one resource (time/money/people) |
-| 人 People | Who else is affected? Who needs to agree? Who will use the result? Who opposes this? | They only mention themselves |
-| 法 Rules | What rules must be followed? What's off limits? What are the constraints? What happens if rules are broken? | They say "no constraints" — there are always constraints |
-| 物 Essence | What does success look like? How will you know it's done right? What's the real goal behind this? | They describe the solution, not the problem |
+**Phase B: Interview — one dimension at a time, one question per message**
 
-Not all dimensions need equal depth. Spend more time on dimensions where the user's answers are vague or contradictory.
+Start with the dimmest dimension (UNKNOWN > PARTIAL > KNOWN). All questions must be multiple-choice with options.
+
+```
+First: ask about the dimmest dimension
+  "关于[维度]——[选项A]还是[选项B]还是[选项C]?"
+  → WAIT for answer. Update that dimension. Move to next dimmest.
+Second: ask about the next dimmest
+  → WAIT for answer. Update.
+Third: verify
+  "我理解对了吗? [复述关键点]"
+  → User corrects? → Go back. User confirms? → Check stopping.
+```
+
+Do NOT ask multiple questions in one message. Do NOT ask open-ended questions. Do NOT skip dimensions that are UNKNOWN — always probe them.
+
+**Phase C: Output complete profile**
+
+Once all dimensions are scored, output the profile and stop. No analysis.
 ```
 □ Each of the 5 dimensions has enough info to score (even if uncertainty is high)
 □ You can describe the situation back to the user in 2-3 sentences and they confirm
