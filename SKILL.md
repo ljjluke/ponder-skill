@@ -162,7 +162,21 @@ Every decision during the pipeline and depth loop must fall into one of three ca
 
 If you're tempted to make a judgment call without data or user input → STOP. Either find data or ask the user.
 
-**Memory**: Already loaded by hooks. No commands needed.
+**Unified data acquisition**: Every data need goes through the same path:
+
+```
+acquire(tags) → ① Check MMA (deqi recall)
+             → ② Found? → Return (exclude REFUTED/DISPUTED)
+             → ③ Not found? → WebSearch → store as HYPOTHESIS → return
+```
+
+Knowledge is auto-classified:
+- ✅ CONFIRMED: user confirmed or cross-verified → used with high confidence
+- ❌ REFUTED: proven wrong → **excluded from future recall**
+- ❓ HYPOTHESIS/PROVISIONAL: unverified → used with caution
+- 💤 SLEEPING: unused for 30d → low priority
+
+When user corrects you → `recordOutcome(id, 'refuted')` → knowledge moves to REFUTED → never used again.
 
 **Pipeline execution — user sees only progress line:**
 ```
