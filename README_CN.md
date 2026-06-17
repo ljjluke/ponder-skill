@@ -153,7 +153,7 @@ LLM不决定进化方向——统计数据决定。全部本地运行。
 
 ```bash
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
-/plugin install luke
+/plugin install ponder
 ```
 
 然后输入：`/luke:ponder <你的问题>`

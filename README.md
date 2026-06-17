@@ -160,7 +160,7 @@ No vague conclusions. Every claim must have data support.
 
 ```bash
 /plugin marketplace add https://github.com/ljjluke/mcts-skill
-/plugin install luke
+/plugin install ponder
 ```
 
 Then: `/luke:ponder <your question>`
