@@ -15,14 +15,33 @@ export const meta = {
 }
 
 const req = args?.user_request || ''
-const profile = args?.step1 || ''
+const profile = args?.step1
+const lessonsRaw = args?.lessons || ""
+const lessonsProvided = (lessonsRaw && lessonsRaw.trim() !== "" && lessonsRaw !== "none")
+let divergenceLessons = "", scoringLessons = "", planningLessons = "", simulationLessons = ""
+let debateLessons = "", synthesisLessons = "", verifyLessons = "" || ''
+
+
+if (lessonsProvided) {
+  const cat = await agent(`Categorize these past lessons by decision type: ${lessonsRaw}`, {
+    label: "Lessons Categorizer",
+    schema: { type: "object", properties: {
+      divergence: { type: "string" }, scoring: { type: "string" }, planning: { type: "string" },
+      simulation: { type: "string" }, debate: { type: "string" }, synthesis: { type: "string" }, verify: { type: "string" },
+    }, required: [] },
+  })
+  divergenceLessons = cat.divergence || "none"; scoringLessons = cat.scoring || "none"
+  planningLessons = cat.planning || "none"; simulationLessons = cat.simulation || "none"
+  debateLessons = cat.debate || "none"; synthesisLessons = cat.synthesis || "none"
+  verifyLessons = cat.verify || "none"
+}
 
 // ─── Step 1: 6-perspective divergence ───
 phase('Divergence')
 const divergence = await agent(`Analyze from 6 perspectives: ${req}
 
 User profile: ${profile}
-Memory context: ${memoryCtx}
+Memory context: ${lessonsRaw}
 
 IMPORTANT: You MUST check the Past lessons section below. If it has data, reference relevant lessons. If it says NONE, do NOT pretend there are lessons.
 

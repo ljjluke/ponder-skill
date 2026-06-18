@@ -351,8 +351,9 @@ if (require.main === module) {
     const list = listRefuted();
     console.log(JSON.stringify(list, null, 2));
   } else if (cmd === 'acquire') {
-    const tags = JSON.parse(process.argv[3] || '[]');
-    const result = acquire({ tags });
+    const queryOpts = JSON.parse(process.argv[3] || '{}');
+    const tags = queryOpts.tags || queryOpts || [];
+    const result = acquire({ tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? [tags] : []) });
     console.log(JSON.stringify(result, null, 2));
   } else {
     console.log('Usage: node scripts/knowledge.js <status|acquire|refuted>');
