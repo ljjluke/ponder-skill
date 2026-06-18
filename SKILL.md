@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.45
+version: 1.14.46
 license: MIT
 ---
 
@@ -79,46 +79,44 @@ The user should click to choose, not type. Violations are invalid.
 
 ---
 
-## 💾 Memory System — Record Lessons, Avoid Repeated Mistakes
+## 💡 错误信息收敛 — 唯一决策依据
 
-Not a general knowledge base. It records: what was tried, what failed, what worked.
-When a new request comes in → check past failures → exclude known bad paths → reduce trial and error.
+不是记忆系统。不存知识、不存事实、不存数据。**只记录：什么场景下、做了什么决策、结果如何失败。**
 
-### What Gets Stored
+### 存什么
 
-| Type | Example | Purpose |
-|------|---------|---------|
-| **Failed approaches** | "Strategy X caused 15% loss in similar situation" | NEVER repeat this |
-| **Successful approaches** | "Strategy Y worked well when condition Z was met" | Pattern to follow |
-| **User preferences** | "User prefers conservative, avoids tech stocks" | Personalize recommendations |
-| **False assumptions** | "Previously assumed A but B was true" | Correct mental models |
-
-### Query Flow
-
+每条记录格式：
 ```
-New request →
-  1. Query memory for past failures on similar topics
-  2. Exclude known bad approaches from consideration
-  3. Focus only on approaches NOT yet tried or that worked before
-  4. Present to user: "We previously tried X and it failed because Y. Heres what we havent tried."
+场景: [什么情况]
+尝试: [做了什么]
+失败原因: [为什么不行]
+替代方案: [应该怎么做]
 ```
 
-### Store Flow
+### 怎么用
 
 ```
-After any outcome (success or failure) →
-  1. Tag: what was tried, what happened, why
-  2. Store to memory for future reference
-  3. If failure → mark as AVOID
-  4. If success → mark as PREFERRED
+遇到决策点 →
+  查错误信息收敛 → 当前场景是否匹配历史失败场景？
+    ├─ 匹配 → 此路不通！换方案。直接告诉用户"之前试过这个，不行"
+    └─ 不匹配 → 这是新路径，放心走。回头记结果
 ```
 
-### Classification
+### 记录时机
 
-- AVOID (q=0.0) — known failure path, exclude from future recommendations
-- PREFERRED (q=0.8) — worked before,优先考虑
-- UNTESTED — no memory, proceed with caution
-- USER_CORRECTION — user explicitly corrected something, overwrites everything else
+| 时机 | 记录内容 |
+|------|----------|
+| 方案推演发现致命缺陷 | 这条路径不通，原因是... |
+| 验证发现问题 | 这个结论有问题，错在... |
+| 用户明确纠正 | 用户说这个不对，正确是... |
+| 执行结果反馈 | 试了这个方案，结果是... |
+
+### 和不存什么
+
+✅ 存：尝试了什么 → 为什么失败 → 替代方案
+❌ 不存：市场价格、统计数据、新闻资讯（这些会过期）
+❌ 不存：用户偏好设置（这些应该直接问用户）
+❌ 不存：模型知识（LLM自带的知识不需要存）
 
 
 
@@ -163,7 +161,7 @@ Workflow({
     user_request: '<user request>',
     step1: '<profile>',
     plugin_path: '<plugin path from [PONDER] Plugin: log>',
-    memory_context: '<any memory or none>',
+    error_history: '<any memory or none>',
     meta_config: null
   }
 })
@@ -179,10 +177,10 @@ Workflow({
 
 **LLM ROLE IS LIMITED TO:**
 1. Interview the user → profile
-2. Query local memory → pass as memory_context
+2. Check error convergence → pass as memory_context
 3. Call Workflow once → wait for result
 4. Present the return value in user's language
-5. Store key results to memory
+5. Record failure/success to error convergence
 
 **DO NOT:** diverge, score dimensions, generate plans, simulate, debate, synthesize, or verify.
 **DO NOT:** search the web for analysis data. The pipeline agents do that.
@@ -302,7 +300,7 @@ XXX
 - "Thought for Xs", task IDs, execution time
 - English framework terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
 - Fabricated data (no results → don't invent)
-- Skipping memory query before WebSearch (must check memory first)
+- Skipping error convergence check before deciding (must check memory first)
 - Your own analysis (only pipeline produces analysis)
 
 ✅ Show the pipeline's real output transparently:

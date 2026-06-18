@@ -1,9 +1,9 @@
 /**
- * Ponder Memory Monitor — background daemon
+ * 错误信息收敛器 — Error Convergence Daemon
  * Internal language: English. User-facing output via l10n layer.
  *
- * Mode 1: Watch /tmp/ponder-knowledge/ for explicit knowledge writes
- * Mode 2: Scan transcript .jsonl increments for passive capture
+ * 模式1: 监控 /tmp/ponder-knowledge/ 下的失败记录写入
+ * 模式2: 扫描对话记录，自动提取失败案例
  *
  * Started by: SessionStart | Stopped by: SessionEnd
  */
