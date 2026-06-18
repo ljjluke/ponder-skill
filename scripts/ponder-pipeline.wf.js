@@ -4,13 +4,13 @@ export const meta = {
   name: 'ponder-pipeline',
   description: 'Memory→Diverge→Dimension→Plans→Simulate→Debate→Synthesize→Verify→Store',
   phases: [
-    { title: 'Divergence', detail: '6-perspective analysis' },
-    { title: 'Dimension', detail: '8-dimension scoring' },
-    { title: 'Plans', detail: 'Generate actionable plans' },
-    { title: 'Simulation', detail: 'Parallel plan simulation' },
-    { title: 'Debate', detail: 'Multi-stance cross-examination' },
-    { title: 'Synthesis', detail: 'Final conclusion' },
-    { title: 'Verify', detail: 'Independent verification' },
+    { title: '发散分析', detail: '多角度审视' },
+    { title: '维度评分', detail: '系统评估' },
+    { title: '方案生成', detail: '收敛可行方案' },
+    { title: '方案推演', detail: '并行模拟' },
+    { title: '方案辩论', detail: '交叉论证' },
+    { title: '综合判断', detail: '最终结论' },
+    { title: '独立验证', detail: '结论审查' },
   ],
 }
 
@@ -24,7 +24,7 @@ let debateLessons = "", synthesisLessons = "", verifyLessons = "" || ''
 
 if (lessonsProvided) {
   const cat = await agent(`Categorize these past lessons by decision type: ${lessonsRaw}`, {
-    label: "Lessons Categorizer",
+    label: "归类经验",
     schema: { type: "object", properties: {
       divergence: { type: "string" }, scoring: { type: "string" }, planning: { type: "string" },
       simulation: { type: "string" }, debate: { type: "string" }, synthesis: { type: "string" }, verify: { type: "string" },
@@ -37,7 +37,7 @@ if (lessonsProvided) {
 }
 
 // ─── Step 1: 6-perspective divergence ───
-phase('Divergence')
+phase('多角度审视')
 const divergence = await agent(`Analyze from 6 perspectives: ${req}
 
 User profile: ${profile}
@@ -51,7 +51,7 @@ For each perspective, provide: insight (20+ chars), detail (40+ chars), and reas
 If you need data, search for it. Base ALL claims on found data, not assumptions.
 
 Output 6 perspectives, 2+ contradictions between them, and a consensus conclusion.`, {
-  label: 'Divergence',
+  label: '多视角发散',
   schema: {
     type: 'object', properties: {
       perspectives: { type: 'array', items: { type: 'object', properties: {
@@ -65,7 +65,7 @@ Output 6 perspectives, 2+ contradictions between them, and a consensus conclusio
 })
 
 // ─── Step 2: 8-dimension scoring ───
-phase('Dimension')
+phase('综合评分')
 const dimensions = await agent(`Score 8 dimensions (0-10) based on the divergence analysis.
 
 Past lessons (scoring): ${scoringLessons}
@@ -75,7 +75,7 @@ User request: ${req}
 
 For each dimension: score, analysis, and SPECIFIC data source for the score.
 Search for data if needed. Every score MUST have a data basis.`, {
-  label: 'Dimension Check',
+  label: '维度评分',
   schema: {
     type: 'object', properties: {
       dimensions: { type: 'array', items: { type: 'object', properties: {
@@ -92,7 +92,7 @@ Search for data if needed. Every score MUST have a data basis.`, {
 })
 
 // ─── Step 3: Plan convergence ───
-phase('Plans')
+phase('生成方案')
 const plans = await agent(`Generate actionable plans based on analysis.
 
 Past lessons (planning): ${planningLessons}
@@ -103,7 +103,7 @@ User: ${req}
 
 Generate 5-8 concrete actionable plans. For each: name, rationale (which perspective/dimension it comes from), action, expected outcome, risks.
 Each plan must have a clear data foundation.`, {
-  label: 'Plan Convergence',
+  label: '方案收敛',
   schema: {
     type: 'object', properties: {
       plans: { type: 'array', items: { type: 'object', properties: {
@@ -119,11 +119,11 @@ Each plan must have a clear data foundation.`, {
 })
 
 // ─── Step 4: Simulate each plan (parallel) ───
-phase('Simulation')
+phase('模拟推演')
 const sims = await parallel(
   plans.plans.slice(0, 8).map(p => () => agent(
     `Simulate plan independently: ${p.name}\nAction: ${p.action}\nRequest: ${req}\nPast lessons (simulation): ${simulationLessons}\n\nProvide optimistic/neutral/pessimistic paths. Base each path on concrete data.`,
-    { label: 'Sim:' + p.name.substring(0, 10),
+    { label: '推演:' + p.name.substring(0, 10),
       schema: { type: 'object', properties: {
         plan_name: { type: 'string' },
         optimistic_path: { type: 'string', minLength: 50 },
@@ -136,7 +136,7 @@ const sims = await parallel(
 )
 
 // ─── Step 5: Cross-debate (parallel stances) ───
-phase('Debate')
+phase('方案辩论')
 const simText = sims.filter(Boolean).map(r =>
   `${r.plan_name}: Opt=${r.optimistic_path.substring(0,100)} Neu=${r.neutral_path.substring(0,100)} Pes=${r.pessimistic_path.substring(0,100)}`
 ).join('\n\n')
@@ -144,7 +144,7 @@ const simText = sims.filter(Boolean).map(r =>
 const stances = await parallel(
   plans.plans.slice(0, 5).map(p => () => agent(
     `Defend this plan: ${p.name}\nPast lessons (debate): ${debateLessons}\nRationale: ${p.rationale}\nSimulations:\n${sims.filter(Boolean).find(s=>s.plan_name===p.name)?Object.entries(sims.find(s=>s.plan_name===p.name)).map(([k,v])=>`${k}:${v}`).join('\n'):''}\n\nArgue for this plan. List 2-3 strengths with evidence, 2-3 risks.`,
-    { label: 'Stance:' + p.name.substring(0, 10),
+    { label: '辩护:' + p.name.substring(0, 10),
       schema: { type: 'object', properties: {
         plan_name: { type: 'string' },
         strengths: { type: 'array', items: { type: 'string' }, minItems: 2 },
@@ -164,7 +164,7 @@ Stances:\n${(stances.filter(Boolean).map(s=>`${s.plan_name}: strengths=${s.stren
 
 Rank all plans 1st to last. For each: strengths, weaknesses, best condition.
 Final synthesis: which plan is recommended and why. Base on data, not opinion.`, {
-  label: 'Debate Synthesis',
+  label: '辩论汇总',
   schema: { type: 'object', properties: {
     ranked: { type: 'array', items: { type: 'object', properties: {
       rank: { type: 'number' }, name: { type: 'string' },
@@ -177,7 +177,7 @@ Final synthesis: which plan is recommended and why. Base on data, not opinion.`,
 })
 
 // ─── Step 6: Synthesis ───
-phase('Synthesis')
+phase('综合判断')
 const conclusion = await agent(`Final synthesis.
 
 Past lessons (synthesis): ${synthesisLessons}
@@ -189,7 +189,7 @@ Debate: ${debate.synthesis}
 
 Produce: conclusion, reasoning chain, what-if-wrong, self-check (3+ items), follow-up signals.
 Every claim must cite data. NEVER say "generally" or "it is believed" without a source.`, {
-  label: 'Synthesis',
+  label: '综合判断',
   schema: { type: 'object', properties: {
     conclusion: { type: 'string', minLength: 60 },
     reasoning_chain: { type: 'string', minLength: 60 },
@@ -203,7 +203,7 @@ Every claim must cite data. NEVER say "generally" or "it is believed" without a 
 })
 
 // ─── Step 7: Verification ───
-phase('Verify')
+phase('独立验证')
 const verify = await agent(`Independent verification of the analysis.
 
 Past lessons (verify): ${verifyLessons}
@@ -213,7 +213,7 @@ Reasoning: ${conclusion.reasoning_chain}
 
 Find holes: logical gaps, missing perspectives, unsupported claims.
 Is each claim backed by data? Mark unsupported claims.`, {
-  label: 'Verification',
+  label: '独立验证',
   schema: { type: 'object', properties: {
     verdict: { type: 'string', enum: ['PASS', 'REVISE'] },
     data_issues: { type: 'array', items: { type: 'object', properties: {
