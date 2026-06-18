@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.75
+version: 1.14.76
 license: MIT
 ---
 
@@ -142,11 +142,10 @@ The user should click to choose, not type. Violations are invalid.
 技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
 ╔══════════════════════════════════════╗
-║   🧠 Ponder 认知框架已激活           ║
-║   发散 · 八卦镜 · 收敛 · 推演 · 辩论 ║
-║   综合判断 · 独立验证                ║
-║   每步循环 ≤3 轮 · 每步与你确认      ║
+║   🧠 Ponder v1.14.76 已激活         ║
 ╚══════════════════════════════════════╝
+
+然后用自然的语气开始采访。
 
 然后用自然的语气开始采访："你想分析什么？我会一步步跟你确认，每一步都打磨清楚了再下一步。"
 
