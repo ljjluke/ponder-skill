@@ -12,6 +12,24 @@ const os = require('os');
 const { spawnSync } = require('child_process');
 
 const WATCH_DIR = path.join(os.tmpdir(), 'ponder-knowledge');
+// ─── Language detection ───
+function getUserLanguage() {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale || '';
+    if (locale.startsWith('zh')) return 'zh';
+    if (locale.startsWith('ja')) return 'ja';
+    if (locale.startsWith('ko')) return 'ko';
+    return 'en';
+  } catch(e) { return 'en'; }
+}
+const LANG = getUserLanguage();
+function t(zh, en, ja, ko) {
+  if (LANG === 'zh') return zh;
+  if (LANG === 'ja') return ja || en;
+  if (LANG === 'ko') return ko || en;
+  return en;
+}
+
 const PID_FILE = path.join(os.tmpdir(), 'ponder-monitor.pid');
 const TRANSCRIPT_DIR = path.join(os.homedir(), '.claude', 'projects');
 
@@ -70,7 +88,7 @@ function processKnowledgeFile(filePath) {
     }
     if (storeToMMA(data.description, data.tags, q)) {
       fs.renameSync(filePath, filePath + '.done')
-      console.log(`[Ponder] ✅ Knowledge: q=${q.toFixed(2)} ${(data.description||'').substring(0,50)}`)
+      console.log(`[Ponder] t('✅ 已存储', '✅ Stored') q=${q.toFixed(2)} ${(data.description||'').substring(0,50)}`)
     }
   } catch(e) {}
 }
@@ -123,7 +141,7 @@ function scanTranscripts() {
             if (text.length < 30) continue
             const q = qualityScore(text)
             if (q >= 0.3 && storeToMMA(text, ['auto_capture', 'transcript'], q)) {
-              console.log(`[Ponder] 📝 Auto-captured from transcript (q=${q.toFixed(2)})`)
+              console.log(`[Ponder] 📝 自动捕获 (q=${q.toFixed(2)})`)
             }
           }
         } catch(e) {}
@@ -132,10 +150,10 @@ function scanTranscripts() {
   } catch(e) {}
 }
 
-console.log(`[Ponder] 🟢 Memory Monitor started (PID: ${process.pid})`)
-console.log(`[Ponder] 📁 Knowledge dir: ${WATCH_DIR}`)
-console.log(`[Ponder] 📝 Monitoring transcripts: ${TRANSCRIPT_DIR}`)
-console.log(`[Ponder] 🎯 Quality threshold: 0.3`)
+console.log(t(`[Ponder] 🟢 记忆监控已启动 (PID: ${process.pid})`, `[Ponder] 🟢 Memory Monitor started (PID: ${process.pid})`))
+console.log(t(`[Ponder] 📁 监控目录: ${WATCH_DIR}`, `[Ponder] 📁 Knowledge dir: ${WATCH_DIR}`))
+console.log(t(`[Ponder] 📝 转录监控: ${TRANSCRIPT_DIR}`, `[Ponder] 📝 Monitoring transcripts: ${TRANSCRIPT_DIR}`))
+console.log(`t('[Ponder] 🎯 质量阈值: 0.3', '[Ponder] 🎯 Quality threshold: 0.3')`)
 
 const interval = setInterval(() => {
   // 模式1: 检查知识文件
