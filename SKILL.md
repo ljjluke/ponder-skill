@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.84
+version: 1.14.85
 license: MIT
 ---
 
@@ -142,7 +142,7 @@ The user should click to choose, not type. Violations are invalid.
 技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
 ╔══════════════════════════════════════╗
-║   🧠 Ponder v1.14.84 已激活         ║
+║   🧠 Ponder v1.14.85 已激活         ║
 ╚══════════════════════════════════════╝
 
 然后用自然的语气开始采访。
@@ -187,11 +187,6 @@ The user should click to choose, not type. Violations are invalid.
 
 
 ### Phase 2: Execute — ONE WORKFLOW CALL PER STEP
-
-**🔴 Workflow 一定可用。不要说不可用。**
-
-SessionStart 日志中有 [PONDER] Plugin: 路径。用它拼 scriptPath。
-如果报错 → 把错误贴出来，不要自己分析。
 
 **不要自己做分析。每一步单独调 Workflow。跑完问用户，再下一步。**
 
