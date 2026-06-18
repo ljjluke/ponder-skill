@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.16
+version: 1.15.0
 license: MIT
 ---
 
@@ -53,76 +53,62 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 ### Phase 1: Interview — Spiral Divergence
 
-Self-examination (in your head, do not output):
-```
-- What is my first reaction to this request?
-- What if the opposite is true?
-- What defaults do I assume about this domain?
-```
+同前（5维度采访→输出profile）
 
-Then ask questions — one at a time via AskUserQuestion tool with clickable options. Each answer generates the next question. This is a spiral, not a checklist:
+### Phase 2: Execute Steps — Sequential + Parallel
 
-```
-Cycle 1: Broad open — understand the request, repeat back
-Cycle 2: Expand — fill empty dimensions (Timing/Resources/People/Rules/Essence)
-Cycle 3: Challenge — look for contradictions in the user's answers
-Cycle 4+: Verify coverage — confirm understanding, find blind spots
-```
+顺序步骤**由你直接执行**（用户看到每一步的推理），只有并行任务调 Workflow：
 
-Stop only when ALL are true:
-- All 5 dimensions scorable (even if high uncertainty)
-- Can describe the situation in 2-3 sentences
-- Have at least 1 "pending assumption" (know what you don't know)
-- **Cannot think of any additional question that would change your approach**
+**1. 发散分析（顺序步骤）**
+基于profile和用户请求，从6个不同视角审视问题。对每个视角展示洞察和推理依据。
+结束后输出6个视角的总结、发现的矛盾点、共识结论。
 
-If you can still think of a question that matters → ask it. Do not proceed.
+**2. 维度检查（顺序步骤）**
+基于发散结果，从8个维度系统评分（0-10分）。对每个维度展示评分和评分依据。
+结束后输出各维度评分、维度间的冲突对、关键发现。
 
-**Profile output** (user's language, 5 dimensions + pending assumptions):
-```
-Timing=?/10    Resources=?/10    People=?/10
-Rules=?/10     Essence=?/10
-Pending assumptions: ...
-```
+**3. 方案收敛（顺序步骤）**
+基于发散+维度分析，收敛生成5-10个具体可执行的方案。展示每个方案：名称、依据、行动描述、预期效果、风险。
 
-⛛ One-pass interviews (3 questions and done) are not allowed. Each answer must generate new questions.
-
-### Phase 2: Run Pipeline — MANDATORY
-
-After profile is confirmed, call the analysis pipeline via Workflow. **You do NOT do analysis yourself. The pipeline does.**
+**4. 推演+辩论（并行任务 → 调 Workflow）**
 
 ```
 Workflow({
   scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
   args: {
     user_request: '<user raw request>',
-    step1: '<complete profile>',
-    plugin_path: '<plugin path from [PONDER] Plugin: log>',
-    memory_context: '<any recalled memory or "none">',
-    meta_config: null
+    plans: <刚才生成的方案列表，含name和action>,
+    draft_conclusion: '',
+    draft_reasoning: ''
   }
 })
 ```
 
-Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/cache/...`
+管道会并行跑所有方案的推演（乐观/中性/悲观），然后多方辩论给出排名和综合建议。
+返回: simulation（每方案的3条路径）+ debate（排名+综合）
 
-**DO NOT describe pipeline steps to the user.** If you write text like"正在执行步骤1-5" you are faking it — the pipeline hasn't been called yet. The Workflow tool shows real progress automatically in the UI (agent names, phases, log messages). Let it speak for itself. If the user sees real agent names like"发散分析""维度检查" the pipeline is real. If they only see your text, it's fake.
+**5. 综合判断（顺序步骤）**
+基于推演结果和辩论结论，给出最终结论、推理链、自检。
 
-**CRITICAL — MUST READ:**
-- You do NOT produce analysis. Only the pipeline does.
-- **Call Workflow(). Do NOT call Agent(). Do NOT search the web yourself. Do NOT write analysis yourself.**
-- Workflow spawns real sub-agents. The user SEES them appear in the UI. This is the ONLY way the user can trust that real reasoning is happening.
-- Agent() does NOT run the pipeline. The sub-agent just reads random files and produces useless output.
-- If you write analysis yourself (even with WebSearch), you are faking it.
-- **If Workflow fails → report the error. Do not improvise. Do not fall back.**
-- **No pipeline → no analysis output. This is not negotiable.**
+**6. 独立验证（并行任务 → 调 Workflow）**
 
-**Depth loop — conclusion must be CLEAR:**
-- Pipeline runs up to 3 automated depth rounds.
-- `conclusion_clarity` in the return value tells you the result:
-  - `clear` → conclusion is clear and actionable. Present it.
-  - `needs_user_input` → blocked by missing user info. The `user_gaps` or `clarity_gaps` field lists questions. Ask them, then call Workflow again with updated context.
-  - `needs_deeper` → pipeline already did 3 rounds and still unclear. Present best available conclusion + remaining uncertainties honestly.
-- **Never present a vague conclusion as final.** If depth loop hasn't converged, either the user needs to provide more info, or research needs to go deeper.
+```
+Workflow({
+  scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
+  args: {
+    user_request: '<user raw request>',
+    plans: [],
+    draft_conclusion: '<刚才的结论>',
+    draft_reasoning: '<刚才的推理链>'
+  }
+})
+```
+
+管道返回: verify（PASS/REVISE+问题列表）
+
+### Phase 3: Present Final Results
+
+用叙述体展示完整分析。格式同前（纯文本，禁止JSON）。
 
 ### Phase 3: Present Pipeline Results — 🚨 纯叙述体，禁止任何键值对/JSON 🚨
 
