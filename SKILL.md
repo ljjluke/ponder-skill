@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.41
+version: 1.14.42
 license: MIT
 ---
 
@@ -66,7 +66,7 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
    - Framework English terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
    - Internal terms (translate to user language): divergence, simulation, self-check, convergence, verification, loop, dimension
    - Agent task IDs, Thought for Xs, tech stack names
-□ Did I call Workflow? If not → this whole analysis is fake. Delete it. Call Workflow now.
+□ Did I call Workflow? If not → delete ALL analysis text immediately. Call Workflow. **No Workflow → no output.**
 □ Did I write this analysis myself? If yes → I am the LLM, not the pipeline. The user wants pipeline analysis, not mine.
 □ Does every claim have data support? If not → the pipeline provides it. Do NOT fabricate.
 □ Does this output mean something to the user? Or is it just "what I am doing"? If the latter, don't output.
@@ -140,30 +140,40 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 
 ⛛ 不允许一次过采访（问3个问题就完事）。每个答案必须产生新问题。
 
-### Phase 2: Execute Steps — Sequential + Parallel
+### Phase 2: ONE Workflow Call — NO Self-Analysis
 
-Sequential steps are **executed by you directly** (user sees each step's reasoning). Only parallel tasks call Workflow:
+After profile is confirmed, the ONLY action is:
 
-**1. Divergence analysis (sequential)**
-Based on the profile and user request, examine the problem from 6 different perspectives. For each perspective, show the insight and reasoning basis.
-🐍 Each insight MUST cite its source: from user input / model knowledge / reasoning derivation. Insights without sources must NOT be output.
-After completion, output: 6 perspective summaries, contradictions found, consensus conclusion.
+Workflow({
+  scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
+  args: {
+    user_request: '<user request>',
+    step1: '<profile>',
+    plugin_path: '<plugin path from [PONDER] Plugin: log>',
+    memory_context: '<any memory or none>',
+    meta_config: null
+  }
+})
 
-🔔 **User check-in:** Ask the user if these perspectives and contradictions make sense. Use AskUserQuestion with options like "Does this analysis match your understanding?"
+**WHAT THE PIPELINE DOES (all automated, no LLM involvement):**
+1. Divergence (6 perspectives with data sources)
+2. Dimension check (8 dimensions scored with data)
+3. Plan convergence (5-8 actionable plans)
+4. Simulation (each plan independently simulated, parallel)
+5. Debate (multi-stance cross-examination, parallel)
+6. Synthesis (final conclusion with reasoning chain)
+7. Verification (independent check for data issues)
 
-**2. Dimension check (sequential)**
-Based on divergence results, systematically score 8 dimensions (0-10). For each dimension, show the score and its basis.
-🐍 Each score MUST explain: what data supports this score? Where is the data from?
-After completion, output: dimension scores, conflict pairs, key finding.
+**LLM ROLE IS LIMITED TO:**
+1. Interview the user → profile
+2. Query local memory → pass as memory_context
+3. Call Workflow once → wait for result
+4. Present the return value in user's language
+5. Store key results to memory
 
-🔔 **User check-in:** Ask the user if the scoring seems reasonable. "The biggest conflict is X vs Y — does that resonate with your view?"
-
-**3. Plan convergence (sequential)**
-Based on divergence + dimension analysis, converge to 5-10 concrete actionable plans. Show each: name, rationale, action, expected outcome, risks.
-
-🔔 **User check-in:** After showing plans, ask which direction the user prefers. "方案A偏向保守，方案B更进取——你的直觉倾向哪个？" Use AskUserQuestion.
-
-🚨 **Workflow IS available. Call it NOW.** After plan convergence, call Workflow for simulation IMMEDIATELY.
+**DO NOT:** diverge, score dimensions, generate plans, simulate, debate, synthesize, or verify.
+**DO NOT:** search the web for analysis data. The pipeline agents do that.
+**DO NOT:** say "Workflow unavailable". It is available. After plan convergence, call Workflow for simulation IMMEDIATELY.
 - Do NOT say "Workflow is unavailable" — it IS available.
 - Do NOT do simulation manually — the pipeline does it.
 - Do NOT insert analysis between plans and Workflow.
@@ -298,3 +308,6 @@ XXX
 ❌ FAKE → LLM writes "Running steps 1-5..." with no real agents
   If you see this text, the pipeline is NOT actually running
 ```
+
+---
+**IF YOU DID NOT CALL WORKFLOW → NOTHING YOU OUTPUT IS VALID. DELETE IT.**
