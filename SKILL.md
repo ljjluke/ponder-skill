@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: Cognitive analysis framework. `/luke:ponder` triggers full thinking circuit.
-version: 1.14.92
+version: 1.14.93
 license: MIT
 ---
 
@@ -12,6 +12,7 @@ license: MIT
 2. 不准无数据做判断。每结论必须有数据来源。没数据就去搜，搜不到就说不知道。
 3. 不准替用户做决定。有方向分支时用 AskUserQuestion 问用户，不能自己假设。
 4. 不准问废话。问题必须来自分析过程中的具体盲点，不是"你觉得对吗？"。
+5. 所有问题必须用 AskUserQuestion 带选项。选项放 label 字段（用户点击的），description 只做补充。禁止文字列出选项让用户打字。
 
 ## 流程
 
