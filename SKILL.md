@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.28
+version: 1.14.29
 license: MIT
 ---
 
@@ -101,10 +101,12 @@ Bash: node "<plugin_path>/scripts/mcts.js" knowledge acquire --tags "<关键词1
 
 **1. 发散分析（顺序步骤）**
 基于profile和用户请求，从6个不同视角审视问题。对每个视角展示洞察和推理依据。
+🐍 每个洞察必须标注依据来源：来自用户输入/模型知识/推理推导。无来源的洞察不可输出。
 结束后输出6个视角的总结、发现的矛盾点、共识结论。
 
 **2. 维度检查（顺序步骤）**
 基于发散结果，从8个维度系统评分（0-10分）。对每个维度展示评分和评分依据。
+🐍 每个评分必须说明：什么数据支撑这个分数？数据来源是哪里？
 结束后输出各维度评分、维度间的冲突对、关键发现。
 
 **3. 方案收敛（顺序步骤）**
