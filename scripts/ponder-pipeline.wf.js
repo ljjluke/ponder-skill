@@ -135,13 +135,13 @@ if (step === 'synthesis') {
 // ─── Verification Step ───
 if (step === 'verify') {
   phase('独立验证')
-  const r = await agent('独立验证\n\n结论:'+(prev||'')+'\n检查:清晰?缺数据?跳过?替决定?', {
+  const r = await agent('审查结论\n\n结论:'+(prev||'')+'\n\n逐条列出发现的具体问题。没有就issues:[]。不要只写通过。', {
     label: '独立验证',
     schema: { type:'object', properties: {
       verdict:{type:'string',enum:['PASS','REVISE']},
       fake_clarity:{type:'boolean'},
       issues:{type:'array',items:{type:'object',properties:{
-        severity:{type:'string',enum:['critical','major','minor']}, detail:{type:'string'},
+        severity:{type:'string',enum:['critical','major','minor']}, detail:{type:'string',minLength:20},
       },required:['severity','detail']}},
     }, required:['verdict','fake_clarity'] },
   })
