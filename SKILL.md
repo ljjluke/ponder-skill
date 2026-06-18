@@ -112,6 +112,7 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
 - If Workflow is unavailable → use Agent() with the script path, but this is a degraded mode.
 - If no pipeline execution happened → you have NO results. Say "分析未完成".
 - **No pipeline → no analysis output. This is not negotiable.**
+- **Depth loop**: Pipeline is single-pass. If verify.verdict == "REVISE" or verify.issues has critical items, call Workflow again with the previous results as context for a deeper pass.
 
 ### Phase 3: Present Pipeline Results
 
