@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.87
+version: 1.14.88
 license: MIT
 ---
 
@@ -89,9 +89,25 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 **🔴 GLOBAL RULE: All user-decision questions MUST use AskUserQuestion tool with options. Do NOT ask in plain text.**
 The user should click to choose, not type. Violations are invalid.
 
-正确格式示例：
-AskUserQuestion({questions:[{question:"你的问题？",header:"标签",options:[{label:"选项A",description:"说明"},{label:"选项B",description:"说明"}]}]})
-每个问题必须带2-4个选项。不要用文字提问让用户输入。
+严格格式（必须遵守）：
+```
+AskUserQuestion({
+  questions: [{
+    question: "一句话问题",
+    header: "不超过6个字",
+    options: [
+      { label: "选项1", description: "一句话说明" },
+      { label: "选项2", description: "一句话说明" }
+    ]
+  }]
+})
+```
+每条规则：
+- options 必须有，最少2个最多4个
+- header 不超过6个汉字
+- label 不超过10个字
+- question 不能为空
+- 想不出选项时用：是/否 作为两个选项
 
 ---
 
@@ -146,7 +162,7 @@ AskUserQuestion({questions:[{question:"你的问题？",header:"标签",options:
 技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
 ╔══════════════════════════════════════╗
-║   🧠 Ponder v1.14.87 已激活         ║
+║   🧠 Ponder v1.14.88 已激活         ║
 ╚══════════════════════════════════════╝
 
 然后用自然的语气开始采访。
