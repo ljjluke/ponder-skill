@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: Cognitive analysis framework. `/luke:ponder` triggers full thinking circuit.
-version: 1.14.96
+version: 1.14.97
 license: MIT
 ---
 

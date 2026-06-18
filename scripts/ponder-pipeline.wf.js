@@ -1,139 +1,153 @@
-// Ponder Step Engine — each step is an independent atomic unit
+// Ponder Complete Engine — one call, code-enforced depth loop
 export const meta = {
   name: 'ponder-pipeline',
-  description: '单步执行引擎',
-  phases: [{ title: '执行中', detail: '' }],
+  description: '全流程一步到位+代码级深度循环',
+  phases: [
+    { title: '发散', detail: '6视角' }, { title: '八卦镜', detail: '8维度' },
+    { title: '方案', detail: '收敛' }, { title: '推演', detail: '并行' },
+    { title: '辩论', detail: '排名' }, { title: '综合', detail: '结论' },
+    { title: '验证', detail: '审查' },
+  ],
 }
 
-const step = args?.step || ''
 const req = args?.user_request || ''
 const profile = args?.profile || ''
-const prev = args?.previous_results || ''
-const feedback = args?.feedback || ''
-const round = args?.round || 1
 
-// ─── Divergence ───
-if (step === 'divergence') {
-  phase('发散分析')
-  const r = await agent('6视角发散分析\n需求:'+req+'\n画像:'+profile+(feedback?'\n反馈:'+feedback:'')+'\n第'+round+'轮。每视角:洞察+数据来源+假设。缺知识先搜索，搜不到→user_questions。', {
-    label: '鲲鹏之视(6视角发散)',
+// Force depth: run round 1, if not clear run round 2, if not clear run round 3
+// No while/for. Unrolled as sequential if statements.
+async function runUntilClear(label, prompt, schema, rounds) {
+  // rounds=0 means unlimited (but we limit to 5 in practice)
+  var maxRounds = rounds > 0 ? rounds : 5
+  var result = null
+  var r1 = null
+  // Round 1
+  r1 = await agent(prompt + ' 第1轮。必须清晰。不清晰填user_questions。', { label: label, schema: schema })
+  result = r1
+  if (r1.is_clear) return result
+  if (maxRounds <= 1) return result
+  // Round 2
+  var r2 = await agent(prompt + ' 第2轮，之前不清晰，加深。', { label: label+'R2', schema: schema })
+  result = r2
+  if (r2.is_clear) return result
+  if (maxRounds <= 2) return result
+  // Round 3
+  var r3 = await agent(prompt + ' 第3轮，继续加深。', { label: label+'R3', schema: schema })
+  result = r3
+  if (r3.is_clear) return result
+  if (maxRounds <= 3) return result
+  // Round 4
+  var r4 = await agent(prompt + ' 第4轮。', { label: label+'R4', schema: schema })
+  result = r4
+  if (r4.is_clear) return result
+  if (maxRounds <= 4) return result
+  // Round 5
+  var r5 = await agent(prompt + ' 第5轮，最后一轮。', { label: label+'R5', schema: schema })
+  result = r5
+  return result
+}
+
+// Phase 1: Divergence
+phase('发散')
+var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    perspectives:{type:'array',items:{type:'object',properties:{
+      name:{type:'string'}, insight:{type:'string'}, data_source:{type:'string'},
+      assumption:{type:'string'},
+    },required:['name','insight','data_source','assumption']},minItems:6},
+    contradictions:{type:'array',items:{type:'string'}},
+    consensus:{type:'string'},
+  }, required:['is_clear','user_questions','perspectives','contradictions','consensus'],
+}, 0)
+
+// Phase 2: Dimension
+phase('八卦镜')
+var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    dimensions:{type:'array',items:{type:'object',properties:{
+      name:{type:'string'}, score:{type:'number'}, evidence:{type:'string'},
+      uncertainty:{type:'string'},
+    },required:['name','score','evidence','uncertainty']},minItems:8},
+    key_finding:{type:'string'},
+  }, required:['is_clear','user_questions','dimensions','key_finding'],
+}, 0)
+
+// Phase 3: Plans
+phase('方案')
+var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    plans:{type:'array',items:{type:'object',properties:{
+      name:{type:'string'}, rationale:{type:'string'},
+      condition:{type:'string'}, condition_verified:{type:'boolean'},
+    },required:['name','rationale','condition','condition_verified']},minItems:5},
+    logic:{type:'string'},
+  }, required:['is_clear','user_questions','plans','logic'],
+}, 0)
+
+// Phase 4: Simulation (parallel, no loop needed)
+phase('推演')
+var planList = plan.plans || []
+var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
+  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。', {
+    label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
-      is_clear:{type:'boolean'},
-      user_questions:{type:'array',items:{type:'string'}},
-      perspectives:{type:'array',items:{type:'object',properties:{
-        name:{type:'string'}, insight:{type:'string'}, data_source:{type:'string'},
-        assumption:{type:'string'},
-      },required:['name','insight','data_source','assumption']},minItems:6},
-      contradictions:{type:'array',items:{type:'string'}},
-      consensus:{type:'string'},
-    }, required:['is_clear','user_questions','perspectives','contradictions','consensus'] },
+      plan_name:{type:'string'}, optimistic:{type:'string',minLength:50},
+      neutral:{type:'string',minLength:50}, pessimistic:{type:'string',minLength:50},
+    }, required:['plan_name','optimistic','neutral','pessimistic'] },
   })
-  return { step:'divergence', is_clear:r.is_clear, user_questions:r.user_questions||[], round:round, result:r, max_rounds:3, next_step: r.is_clear ? 'bagua' : null }
-}
+}}))
+var simResults = sims.filter(Boolean).map(function(s) {
+  return { name:s.plan_name, optimistic:s.optimistic, neutral:s.neutral, pessimistic:s.pessimistic }
+})
 
-// ─── Dimension (Bagua) ───
-if (step === 'bagua') {
-  phase('八卦镜')
-  const r = await agent('8维度评分\n发散:'+prev+(feedback?'\n反馈:'+feedback:'')+'\n第'+round+'轮。每维度:评分+依据+不确定性。缺数据搜，搜不到→user_questions。', {
-    label: '八卦镜(8维评分)',
-    schema: { type:'object', properties: {
-      is_clear:{type:'boolean'},
-      user_questions:{type:'array',items:{type:'string'}},
-      dimensions:{type:'array',items:{type:'object',properties:{
-        name:{type:'string'}, score:{type:'number'},
-        evidence:{type:'string'}, uncertainty:{type:'string'},
-      },required:['name','score','evidence','uncertainty']},minItems:8},
-      key_finding:{type:'string'},
-    }, required:['is_clear','user_questions','dimensions','key_finding'] },
-  })
-  return { step:'bagua', is_clear:r.is_clear, user_questions:r.user_questions||[], round:round, result:r, max_rounds:3, next_step: r.is_clear ? 'plans' : null }
-}
+// Phase 5: Debate
+phase('辩论')
+var simTxt = simResults.map(function(r) {
+  return r.name+': 乐观='+r.optimistic.substring(0,100)
+}).join('\n\n')
+var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    ranked:{type:'array',items:{type:'object',properties:{
+      rank:{type:'number'}, name:{type:'string'},
+      pros:{type:'array',items:{type:'string'}}, cons:{type:'array',items:{type:'string'}},
+    },required:['rank','name','pros','cons']},minItems:2},
+    synthesis:{type:'string',minLength:50},
+  }, required:['is_clear','user_questions','ranked','synthesis'],
+}, 0)
 
-// ─── Plans ───
-if (step === 'plans') {
-  phase('方案收敛')
-  const r = await agent('方案收敛\n维度:'+prev+(feedback?'\n反馈:'+feedback:'')+'\n第'+round+'轮。5-8方案，每:名称+依据+条件。条件未验证→user_questions。', {
-    label: '方案收敛',
-    schema: { type:'object', properties: {
-      is_clear:{type:'boolean'},
-      user_questions:{type:'array',items:{type:'string'}},
-      plans:{type:'array',items:{type:'object',properties:{
-        name:{type:'string'}, rationale:{type:'string'},
-        condition:{type:'string'}, condition_verified:{type:'boolean'},
-      },required:['name','rationale','condition','condition_verified']},minItems:5},
-      logic:{type:'string'},
-    }, required:['is_clear','user_questions','plans','logic'] },
-  })
-  return { step:'plans', is_clear:r.is_clear, user_questions:r.user_questions||[], round:round, result:r, max_rounds:3, next_step: r.is_clear ? 'simulate' : null }
-}
+// Phase 6: Synthesis
+phase('综合')
+var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+'\n结论+推理+假设+用户确认。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
+    assumptions:{type:'array',items:{type:'string'}},
+    user_confirmed:{type:'boolean'},
+  }, required:['is_clear','user_questions','conclusion','reasoning','assumptions','user_confirmed'],
+}, 0)
 
-// ─── Simulation (parallel) ───
-if (step === 'simulate') {
-  phase('方案推演')
-  const planList = args?.plans || []
-  const sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-    return agent('模拟方案:'+(p.name||'')+' 需求:'+req+' 第'+round+'轮。乐观/中性/悲观路径。', {
-      label: '推演:'+(p.name||'').substring(0,10),
-      schema: { type:'object', properties: {
-        plan_name:{type:'string'}, optimistic:{type:'string',minLength:50},
-        neutral:{type:'string',minLength:50}, pessimistic:{type:'string',minLength:50},
-      }, required:['plan_name','optimistic','neutral','pessimistic'] },
-    })
-  }}))
-  const simResults = sims.filter(Boolean).map(function(s) { return { name:s.plan_name, optimistic:s.optimistic, neutral:s.neutral, pessimistic:s.pessimistic } })
-  return { step:'simulate', is_clear:true, round:round, result:simResults, max_rounds:1, next_step:'debate' }
-}
+// Phase 7: Verification
+phase('验证')
+var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。', {
+  label: '验证',
+  schema: { type:'object', properties: {
+    verdict:{type:'string',enum:['PASS','REVISE']},
+    fake_clarity:{type:'boolean'},
+    issues:{type:'array',items:{type:'object',properties:{
+      severity:{type:'string',enum:['critical','major','minor']}, detail:{type:'string'},
+    },required:['severity','detail']}},
+  }, required:['verdict','fake_clarity'] },
+})
 
-// ─── Debate ───
-if (step === 'debate') {
-  phase('方案辩论')
-  const simData = args?.simulations || []
-  const txt = simData.map(function(r) { return r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)+' 悲观='+(r.pessimistic||'').substring(0,100) }).join('\n\n')
-  const r = await agent('多方案辩论\n需求:'+req+'\n推演:\n'+txt+'\n排名+综合。有不确定→user_questions。', {
-    label: '多方辩论',
-    schema: { type:'object', properties: {
-      is_clear:{type:'boolean'},
-      user_questions:{type:'array',items:{type:'string'}},
-      ranked:{type:'array',items:{type:'object',properties:{
-        rank:{type:'number'}, name:{type:'string'},
-        pros:{type:'array',items:{type:'string'}}, cons:{type:'array',items:{type:'string'}},
-      },required:['rank','name','pros','cons']},minItems:2},
-      synthesis:{type:'string',minLength:50},
-    }, required:['is_clear','user_questions','ranked','synthesis'] },
-  })
-  return { step:'debate', is_clear:r.is_clear, user_questions:r.user_questions||[], round:round, result:r, max_rounds:3, next_step: r.is_clear ? 'synthesis' : null }
+return {
+  divergence: div,
+  dimension: dim,
+  plans: plan,
+  simulations: simResults,
+  debate: debate,
+  synthesis: syn,
+  verification: ver,
 }
-
-// ─── Synthesis ───
-if (step === 'synthesis') {
-  phase('综合判断')
-  const r = await agent('综合判断\n需求:'+req+'\n辩论:'+prev+(feedback?'\n反馈:'+feedback:'')+'\n第'+round+'轮。结论+推理链+假设。模糊→user_questions。', {
-    label: '综合判断',
-    schema: { type:'object', properties: {
-      is_clear:{type:'boolean'},
-      user_questions:{type:'array',items:{type:'string'}},
-      conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
-      assumptions:{type:'array',items:{type:'string'}},
-      user_confirmed:{type:'boolean'},
-    }, required:['is_clear','user_questions','conclusion','reasoning','assumptions','user_confirmed'] },
-  })
-  return { step:'synthesis', is_clear:r.is_clear, user_questions:r.user_questions||[], round:round, result:r, max_rounds:3, next_step: r.is_clear ? 'verify' : null }
-}
-
-// ─── Verification ───
-if (step === 'verify') {
-  phase('独立验证')
-  const r = await agent('审查\n结论:'+prev+'\n逐条列出发现的具体问题。不要只写通过。没有就issues:[ ]。', {
-    label: '独立验证',
-    schema: { type:'object', properties: {
-      verdict:{type:'string',enum:['PASS','REVISE']},
-      fake_clarity:{type:'boolean'},
-      issues:{type:'array',items:{type:'object',properties:{
-        severity:{type:'string',enum:['critical','major','minor']}, detail:{type:'string'},
-      },required:['severity','detail']}},
-    }, required:['verdict','fake_clarity'] },
-  })
-  return { step:'verify', is_clear:r.verdict==='PASS', round:round, result:r, max_rounds:1, next_step:null }
-}
-
-return { step:step, error:'unknown step' }
