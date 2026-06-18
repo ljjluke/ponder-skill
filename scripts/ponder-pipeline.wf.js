@@ -596,8 +596,8 @@ Step1假设清单: ${JSON.stringify(step1Result?.assumptions || '(未提供)')}
 ☶ F7 边界: 不可越过的线？
 ☱ F8 平衡: 利益均衡点？
 
-完成后: 至少3组维度冲突对 + 最异常发现`, {
-	如果遇到维度间权重取舍或优先级判断, 不要自己决定。在 user_questions 中输出, 让用户决策。
+完成后: 至少3组维度冲突对 + 最异常发现
+如果遇到维度间权重取舍或优先级判断, 不要自己决定。在 user_questions 中输出, 让用户决策。`, {
       label: '维度交叉检查',
       phase: '八卦镜8维 + DMN间歇',
       schema: STEP3_SCHEMA,
@@ -685,7 +685,7 @@ if (pluginPath && directionPlan.directions.length > 0) {
     name: d.name || 'Scenario',
     description: (d.focus_area || d.name || '').substring(0, 50),
   }))
-  const initResult = await agent(, {
+  const initResult = await agent(`初始化MCTS树...`, {
     label: 'MCTS初始化',
     phase: '多场景推演',
     schema: { type: 'object', properties: { session_id: { type: 'string' } }, required: ['session_id'] },
@@ -796,57 +796,61 @@ ${validResults.map((r, i) => `--- 方向${i+1}: ${r.name} ---
   // 用Step4的分析场景作为辩论立场
   const debateScenarios = directionPlan.directions.slice(0, 3)
 
-  debateArgs = await Promise.all(debateScenarios.map((scene, i) => {
-    const searchTags = (scene.focus_area || scene.name || '').split(/[\s,，、/]+/).filter(Boolean).slice(0, 3)
-    const roleDesc = i === 0 ? '这是主推方向, 论证它为何最优' : i === 1 ? '这是备选方向, 论证它为何值得关注' : '这是与前两者不同的方向, 论证它为何被低估'
+  // 生成各场景的辩论陈词
+  const stancePromises = debateScenarios.map((scene, i) => {
+    const searchTags = (scene.focus_area || scene.name || "").split(/[\s,、/]+/).filter(Boolean).slice(0, 3)
+    const roleDesc = i === 0 ? "这是主推方向, 论证它为何最优" : i === 1 ? "这是备选方向, 论证它为何值得关注" : "这是与前两者不同的方向, 论证它为何被低估"
     return agent(`你是一名称职的辩论分析师。在分析中已经提出了"${scene.name}"这个方向。
-
-在写陈词前, 先做信息收集:
-1. 从记忆引擎召回与"${scene.focus_area || scene.name}"相关的证据:
-   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js knowledge acquire \'{"tags":["' + searchTags.join('","') + '"],"limit":3}\'' : '(查询记忆)'}
-2. CONFIRMED 最强 → 优先使用。HYPOTHESIS 弱证据标注待验证。
-3. 没有则 WebSearch, 标记 DEFAULT。
-4. 找不到证据就诚实说找不到(evidence_gap), 不准编。
-
-${roleDesc}。
-冲突来源: ${scene.conflict_source || '多维度综合分析'}
-
-背景参考: Step2-4分析
-${JSON.stringify(step2, null, 2)}
-${JSON.stringify(step3, null, 2)}
-${JSON.stringify(step4, null, 2)}`, {
+  
+  在写陈词前, 先做信息收集:
+  1. 从记忆引擎召回与"${scene.focus_area || scene.name}"相关的证据:
+     ${pluginPath ? "node " + pluginPath + "/scripts/mcts.js knowledge acquire " + JSON.stringify({tags: searchTags, limit: 3}) : "(查询记忆)"}
+  2. CONFIRMED 最强 → 优先使用。HYPOTHESIS 弱证据标注待验证。
+  3. 没有则 WebSearch, 标记 DEFAULT。
+  4. 找不到证据就诚实说找不到(evidence_gap), 不准编。
+  
+  ${roleDesc}。
+  冲突来源: ${scene.conflict_source || "多维度综合分析"}
+  
+  背景参考: Step2-4分析
+  ${JSON.stringify(step2, null, 2)}
+  ${JSON.stringify(step3, null, 2)}
+  ${JSON.stringify(step4, null, 2)}`, {
       label: scene.name.length > 10 ? scene.name.substring(0, 10) : scene.name,
-      phase: '社会认知辩论',
-      schema: { type: 'object', properties: {
-        stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        evidence: { type: 'array', items: EVIDENCE_ITEM },
-        evidence_gap: { type: 'string' },
-      }, required: ['argument', 'evidence'] },
-    }),
-    agent(`你一名称职的辩论分析师。你的立场是: "第三方: 新思路"——找前两者都没看到的盲区。
+      phase: "社会认知辩论",
+      schema: { type: "object", properties: {
+        stance: { type: "string" }, argument: { type: "string", minLength: 50 },
+        evidence: { type: "array", items: EVIDENCE_ITEM },
+        evidence_gap: { type: "string" },
+      }, required: ["argument", "evidence"] },
+    })
+  })
 
-在写陈词前, 先做信息收集, 注意每条证据的可信度:
-1. 从记忆引擎召回前两者可能忽略的信息:
-   ${pluginPath ? 'node ' + pluginPath + '/scripts/mcts.js knowledge acquire \'{"tags":["alternative","unexpected","blindspot","创新","盲区"],"limit":3}\'' : '(查询记忆)'}
-2. CONFIRMED 优先用, HYPOTHESIS 标注待验证。
-3. 没有则 WebSearch, 标记 DEFAULT。
-4. 每条证据附带可信度状态。
+  // 第三方独立辩论（不依赖具体场景，找前两者盲区）
+  const thirdPartyPromise = agent(`你一名称职的辩论分析师。你的立场是: "第三方: 新思路"——找前两者都没看到的盲区。
 
-背景参考: Step2-4分析
-${JSON.stringify(step2, null, 2)}
-${JSON.stringify(step3, null, 2)}
-${JSON.stringify(step4, null, 2)}`, {
-      label: '第三方: 新思路',
-      phase: '社会认知辩论',
-      schema: { type: 'object', properties: {
-        stance: { type: 'string' }, argument: { type: 'string', minLength: 50 },
-        evidence: { type: 'array', items: EVIDENCE_ITEM },
-        evidence_gap: { type: 'string' },
-      }, required: ['argument', 'evidence'] },
-    }),
-  ])
+  在写陈词前, 先做信息收集, 注意每条证据的可信度:
+  1. 从记忆引擎召回前两者可能忽略的信息:
+     ${pluginPath ? "node " + pluginPath + "/scripts/mcts.js knowledge acquire " + JSON.stringify({tags: ["alternative","unexpected","blindspot","创新","盲区"], limit: 3}) : "(查询记忆)"}
+  2. CONFIRMED 优先用, HYPOTHESIS 标注待验证。
+  3. 没有则 WebSearch, 标记 DEFAULT。
+  4. 每条证据附带可信度状态。
 
-  log('社会认知辩论完成: 3方陈词')
+  背景参考: Step2-4分析
+  ${JSON.stringify(step2, null, 2)}
+  ${JSON.stringify(step3, null, 2)}
+  ${JSON.stringify(step4, null, 2)}`, {
+      label: "第三方: 新思路",
+      phase: "社会认知辩论",
+      schema: { type: "object", properties: {
+        stance: { type: "string" }, argument: { type: "string", minLength: 50 },
+        evidence: { type: "array", items: EVIDENCE_ITEM },
+        evidence_gap: { type: "string" },
+      }, required: ["argument", "evidence"] },
+    })
+
+  // 等待所有辩论完成
+  debateArgs = await Promise.all([...stancePromises, thirdPartyPromise])
   recordStep('debate', 'ok', { stances: 3 })
 
   // 辩论回应: 各场景互相阅读对方陈词后驳
@@ -911,11 +915,7 @@ ${sceneNames[2] || '场景C'}证据: ${JSON.stringify(debateArgs[2].evidence || 
   step5 = await agent(`你是Ponder框架的"收敛师"。你的任务是执行收敛判断和自检。
 
 ${memoryRecallNote}
-${fixContext ? '【本轮是修复重做】
-上一轮验证发现的问题:
-' + fixContext + '
-请务必解决这些问题。
-' : ''}
+${fixContext ? '【本轮是修复重做】上一轮验证发现的问题:' + fixContext + '请务必解决这些问题。' : ''}
 输入（来自Step4推演结果）:
 ${JSON.stringify(step4, null, 2)}
 
@@ -944,9 +944,9 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
 
 【综合判断】结论+推理链+如果错了+跟踪信号
 
-用户偏好→user_questions`, {
+用户偏好→user_questions
 涉及用户风险偏好的推荐→在 user_questions 中输出让用户选择, 不自己假设。
-如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。
+如果遇到涉及用户偏好/选择/价值判断的问题, 不要猜测。在 user_questions 字段中输出, 让用户决策。`, {
     label: '综合判断',
     phase: '收敛 self-check',
     schema: STEP5_SCHEMA,
@@ -989,9 +989,9 @@ DMN自由联想: ${JSON.stringify(dmnInsight, null, 2)}
       predicted_step3_peak: { type: 'array', items: { type: 'string' }, description: '结论预测Step3应突出的维度' },
       prediction_errors: { type: 'array', items: { type: 'string' }, minItems: 1, description: '预期vs实际的差异——预测误差' },
       error_severity: { type: 'string', enum: ['low', 'medium', 'high'], description: '预测误差的严重程度' },
-  }
-      layer_gap: { type: 'string', description: '哪个层级之间信息丢失最严重' },
-    }, required: ['prediction_errors', 'error_severity'] },
+    },
+    layer_gap: { type: 'string', description: '哪个层级之间信息丢失最严重' },
+    required: ['prediction_errors', 'error_severity'] },
   })
 
   log('层级预测完成: ' + topDown.prediction_errors.length + '个预测误差, 严重度=' + topDown.error_severity)
@@ -1354,6 +1354,6 @@ return {
     what_if_wrong: step5.what_if_wrong,
     all_clear: step5.all_clear,
     follow_up_signals: step5.follow_up_signals,
-    self_check_passed: step5.self_check.filter(s => s.passed).length + '/' + step5.self_check.length,
-  },
+    self_check_passed: step5.self_check.filter(s => s.passed).length + '/' + step5.self_check.length
+  }
 }
