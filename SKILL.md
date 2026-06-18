@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   认知分析框架 — 多视角发散×深度研究×辩论验证×知识积累
   `/luke:ponder` 触发完整思考回路。每阶段强制执行，不可跳过。
-version: 1.14.35
+version: 1.14.36
 license: MIT
 ---
 

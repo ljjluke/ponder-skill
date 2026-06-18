@@ -23,6 +23,10 @@ function getUserLanguage() {
   } catch(e) { return 'en'; }
 }
 const LANG = getUserLanguage();
+
+// ─── Language-aware branding ───
+const BRAND = t('[认知核心]', '[Cognitive Core]', '[認知コア]', '[인지코어]');
+
 function t(zh, en, ja, ko) {
   if (LANG === 'zh') return zh;
   if (LANG === 'ja') return ja || en;
@@ -88,7 +92,7 @@ function processKnowledgeFile(filePath) {
     }
     if (storeToMMA(data.description, data.tags, q)) {
       fs.renameSync(filePath, filePath + '.done')
-      console.log(`t('✅ 已存储', '✅ Stored') q=${q.toFixed(2)} ${(data.description||'').substring(0,50)}`)
+      console.log(`t(BRAND + ' ✅ 已记忆', BRAND + ' ✅ Memorized', BRAND + ' ✅ 記憶完了', BRAND + ' ✅ 기억됨') q=${q.toFixed(2)} ${(data.description||'').substring(0,50)}`)
     }
   } catch(e) {}
 }
@@ -153,7 +157,7 @@ function scanTranscripts() {
 console.log(t(`[认知核心] 🧠 记忆系统已就绪 `, `[Cognitive Core] 🧠 Memory system online `))
 console.log(t(`[认知核心] 📁 记忆存储: ${WATCH_DIR}`, `[Cognitive Core] 📁 Memory storage: ${WATCH_DIR}`))
 console.log(t(`[认知核心] 📝 信息采集: ${TRANSCRIPT_DIR}`, `[Cognitive Core] 📝 Information capture: ${TRANSCRIPT_DIR}`))
-console.log(`t('[认知核心] 🎯 知识质量: 已就绪', '[Cognitive Core] 🎯 Knowledge quality: ready')`)
+console.log(`t(t(BRAND + ' 🎯 知识质量: 已就绪', BRAND + ' 🎯 Knowledge quality: ready'))`)
 
 const interval = setInterval(() => {
   // 模式1: 检查知识文件
