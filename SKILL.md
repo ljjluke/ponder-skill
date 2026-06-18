@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.58
+version: 1.14.59
 license: MIT
 ---
 
@@ -208,6 +208,31 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 
 如果"依赖的用户假设"是待确认 → 问用户 → 重做评分
 
+
+**4. 推演+辩论（调 Workflow）**
+
+Workflow 并行推演和辩论。返回结果包含：
+
+```
+各方案推演:
+  方案名: [名称]
+  乐观路径: [路径描述] ← 数据来源必填
+  中性路径: [路径描述] ← 数据来源必填
+  悲观路径: [路径描述] ← 数据来源必填
+  关键假设: [这个推演依赖什么假设] ← 必填
+
+辩论排名:
+  排名: [1-N]
+  方案名: [名称]
+  优势: [优势 + 数据支撑] ← 必填
+  劣势: [劣势 + 数据支撑] ← 必填
+  适用条件: [什么情况下此方案最优]
+
+辩论综合: [最优方案推荐 + 理由]
+```
+
+推演的每个路径必须有数据支撑。辩论的优劣必须有依据。没有数据的推演无效。
+
 **4. 推演+辩论 → 调 Workflow**
 
 **5. 综合判断（输出结构强制）**
@@ -228,6 +253,24 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 
 **原则：不知道就查不准编。用户相关的问题才问用户。数据问题自己解决。**
 
+
+
+
+**7. 深度循环（结论不清晰时执行）**
+
+如果综合判断后结论不清晰或有重大不确定性：
+
+```
+模糊点: [什么不清晰]
+类型: [缺数据/缺方向]
+处理:
+  缺数据 → 专项研究 → 从对应步骤重走
+  缺方向 → 问用户 → 从对应步骤重走
+本次补充: [这次新增了什么]
+解决了: [哪些模糊点已消除]
+```
+
+可重复执行直到结论清晰。每次都要标注补充了什么。
 
 ### Phase 3: Present Results
 
