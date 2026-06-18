@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.10
+version: 1.14.11
 license: MIT
 ---
 
@@ -110,12 +110,19 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
 **CRITICAL — MUST READ:**
 - You do NOT produce analysis. Only the pipeline does.
 - **Call Workflow(). Do NOT call Agent(). Do NOT search the web yourself. Do NOT write analysis yourself.**
-- Workflow spawns real sub-agents (发散分析, 维度检查, 场景推演, 综合判断, 独立验证). The user SEES them appear in the UI. This is the ONLY way the user can trust that real reasoning is happening.
-- Agent() does NOT run the pipeline. The sub-agent just reads random files and produces useless output. The user has complained repeatedly about this.
-- If you write analysis yourself (even with WebSearch), you are faking it. The user will see text you wrote and have NO way to verify it's real reasoning.
+- Workflow spawns real sub-agents. The user SEES them appear in the UI. This is the ONLY way the user can trust that real reasoning is happening.
+- Agent() does NOT run the pipeline. The sub-agent just reads random files and produces useless output.
+- If you write analysis yourself (even with WebSearch), you are faking it.
 - **If Workflow fails → report the error. Do not improvise. Do not fall back.**
 - **No pipeline → no analysis output. This is not negotiable.**
-- **Depth loop**: Pipeline is single-pass. If verify.verdict == "REVISE" or verify.issues has critical items, call Workflow again with the previous results as context for a deeper pass.
+
+**Depth loop — conclusion must be CLEAR:**
+- Pipeline runs up to 3 automated depth rounds.
+- `conclusion_clarity` in the return value tells you the result:
+  - `clear` → conclusion is clear and actionable. Present it.
+  - `needs_user_input` → blocked by missing user info. The `user_gaps` or `clarity_gaps` field lists questions. Ask them, then call Workflow again with updated context.
+  - `needs_deeper` → pipeline already did 3 rounds and still unclear. Present best available conclusion + remaining uncertainties honestly.
+- **Never present a vague conclusion as final.** If depth loop hasn't converged, either the user needs to provide more info, or research needs to go deeper.
 
 ### Phase 3: Present Pipeline Results
 
