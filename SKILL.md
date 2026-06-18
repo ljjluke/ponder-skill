@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.26
+version: 1.14.27
 license: MIT
 ---
 
@@ -64,10 +64,12 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 具体操作（每个步骤开始前执行）：
 ```
-Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词>"],"limit":5}'
+Bash: node "<plugin_path>/scripts/mcts.js" knowledge acquire --tags "<关键词1>,<关键词2>" --limit 5
 ```
 
-**记忆查询结果的使用：**
+**注意：首次使用（冷启动）时记忆库为空，knowledge acquire 可能返回空或失败，这是正常的。直接进入 WebSearch 搜索即可。
+
+**记忆查询结果的使用：****
 - 本地命中 → "之前关于XXX的知识表明..."（标注来源：CONFIRMED/HYPOTHESIS）
 - 网络搜索 → "根据搜索到的资料..."（标注来源：web_search）
 - 找不到 → "关于XXX目前没有找到相关信息，如果你了解请告诉我"
@@ -108,6 +110,8 @@ Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词
 **3. 方案收敛（顺序步骤）**
 基于发散+维度分析，收敛生成5-10个具体可执行的方案。展示每个方案：名称、依据、行动描述、预期效果、风险。
 
+🚨 **方案收敛完成后必须立即调 Workflow 跑推演，不得停顿、不得插入分析、不得说"等等"。下一步必须是调 Workflow。**
+
 **4. 推演+辩论（并行任务 → 调 Workflow）**
 
 ```
@@ -127,6 +131,8 @@ Workflow({
 
 **5. 综合判断（顺序步骤）**
 基于推演结果和辩论结论，给出最终结论、推理链、自检。
+
+🚨 **综合判断完成后必须立即调 Workflow 跑验证，不得停顿。**
 
 **6. 独立验证（并行任务 → 调 Workflow）**
 
