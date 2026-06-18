@@ -19,10 +19,10 @@ const round = args?.round || 1
 if (step === 'divergence') {
   phase('发散分析')
   const r = await agent('6视角发散分析\n需求:'+req+'\n画像:'+profile+(feedback?'\n用户反馈:'+feedback:'')+
-    '\n每视角:洞察+数据来源+假设。必须检查:有任何不确定?→user_questions填写。没有不确定→user_questions:[]。第'+round+'轮。', {
+    '\n每视角:洞察+数据来源+假设。缺知识→先自己搜索查资料。查不到→user_questions填问题+选项(2-4个)。全确定→[]。第'+round+'轮。', {
     label: '发散分析',
     schema: { type:'object', properties: {
-      is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+      is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'object',properties:{q:{type:'string'},options:{type:'array',items:{type:'string'}}},required:['q']},
       perspectives:{type:'array',items:{type:'object',properties:{
         name:{type:'string'}, insight:{type:'string'}, data_source:{type:'string'},
         assumption:{type:'string'},
@@ -39,7 +39,7 @@ if (step === 'divergence') {
 if (step === 'dimension') {
   phase('维度评分')
   const r = await agent('8维度评分\n\n发散:'+(prev||'')+(feedback?'\n用户反馈:'+feedback:'')+
-    '\n每维度:评分+依据+不确定性。全部不确定汇总→user_questions。没有→[]。第'+round+'轮。', {
+    '\n每维度:评分+依据+不确定性。缺数据→先搜索。搜不到→user_questions问用户。全确定→[]。第'+round+'轮。', {
     label: '维度评分',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
@@ -58,7 +58,7 @@ if (step === 'dimension') {
 if (step === 'plans') {
   phase('方案收敛')
   const r = await agent('方案收敛\n\n维度:'+(prev||'')+(feedback?'\n用户反馈:'+feedback:'')+
-    '\n生成5-8个方案，每:名称+依据+前提条件+条件已验证。前提条件未验证?→user_questions。。第'+round+'轮。', {
+    '\n生成5-8个方案，每:名称+依据+前提条件+条件已验证。前提条件未验证?→先搜索验证。验证不了→user_questions填问题+选项。。第'+round+'轮。', {
     label: '方案收敛',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
@@ -100,7 +100,7 @@ if (step === 'debate') {
   phase('方案辩论')
   const simData = args?.simulations || []
   const txt = simData.map(r => r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)).join('\n\n')
-  const r = await agent('多方案辩论\n\n需求:'+req+'\n\n推演:\n'+txt+'\n排名+综合。如有不确定→user_questions。没有→[]。第'+round+'轮。', {
+  const r = await agent('多方案辩论\n\n需求:'+req+'\n\n推演:\n'+txt+'\n排名+综合。如有不确定→先搜索查证。查不到→user_questions问用户。全确定→[]。第'+round+'轮。', {
     label: '方案辩论',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
@@ -119,7 +119,7 @@ if (step === 'debate') {
 if (step === 'synthesis') {
   phase('综合判断')
   const r = await agent('综合判断\n\n需求:'+req+'\n辩论:'+(prev||'')+(feedback?'\n用户反馈:'+feedback:'')+
-    '\n结论+推理链+假设清单+用户已确认。任何模糊→user_questions。没有→[]。第'+round+'轮。', {
+    '\n结论+推理链+假设清单+用户已确认。任何模糊→先搜索查证。查不到→user_questions问用户。全确定→[]。第'+round+'轮。', {
     label: '综合判断',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
