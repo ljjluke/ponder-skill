@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.39
+version: 1.14.40
 license: MIT
 ---
 
@@ -55,9 +55,9 @@ The user should click to choose, not type. Violations are invalid.
 
 ## 💾 记忆代理 — 唯一的知识入口
 
-后台有记忆守护进程持续运行（SessionStart 时自动启动）。**所有步骤获取知识都走这个入口，不走其他路径。**
+Background memory daemon runs continuously (auto-started by SessionStart). **ALL steps query knowledge through this gateway only.**
 
-**查询知识（优先本地记忆）：**
+**Query knowledge (local first):**
 ```
 向记忆代理发起查询 → 代理按优先级处理:
   ① 本地 MMA 记忆 → 有命中? → 返回 已确认/临时 知识
@@ -67,7 +67,7 @@ The user should click to choose, not type. Violations are invalid.
 
 具体操作：在步骤开始前简单查询本地是否有相关记忆。有则引用，无则直接走 WebSearch。不用向用户展示查询过程。
 
-**注意：首次使用（冷启动）时记忆库为空，查询记忆可能返回空或失败，这是正常的。直接搜索网络即可。
+**Note: On first use (cold start) the memory store is empty. Queries may return nothing — this is normal. Just go to WebSearch.
 
 **记忆查询结果的使用：****
 - Local hit → "Previous knowledge about XXX suggests..." (source: CONFIRMED/PROVISIONAL)
@@ -123,17 +123,27 @@ Based on the profile and user request, examine the problem from 6 different pers
 🐍 Each insight MUST cite its source: from user input / model knowledge / reasoning derivation. Insights without sources must NOT be output.
 After completion, output: 6 perspective summaries, contradictions found, consensus conclusion.
 
+🔔 **User check-in:** Ask the user if these perspectives and contradictions make sense. Use AskUserQuestion with options like "Does this analysis match your understanding?"
+
 **2. Dimension check (sequential)**
 Based on divergence results, systematically score 8 dimensions (0-10). For each dimension, show the score and its basis.
 🐍 Each score MUST explain: what data supports this score? Where is the data from?
-After completion, output: dimension scores, conflict pairs between dimensions, key finding.
+After completion, output: dimension scores, conflict pairs, key finding.
 
-**3. 方案收敛（顺序步骤）**
-基于发散+维度分析，收敛生成5-10个具体可执行的方案。展示每个方案：名称、依据、行动描述、预期效果、风险。
+🔔 **User check-in:** Ask the user if the scoring seems reasonable. "The biggest conflict is X vs Y — does that resonate with your view?"
 
-🚨 **After plan convergence, call Workflow for simulation IMMEDIATELY. No pause, no inserted analysis, no saying "wait". Next step MUST be Workflow.**
+**3. Plan convergence (sequential)**
+Based on divergence + dimension analysis, converge to 5-10 concrete actionable plans. Show each: name, rationale, action, expected outcome, risks.
 
-**4. 推演+辩论（并行任务 → 调 Workflow）**
+🔔 **User check-in:** After showing plans, ask which direction the user prefers. "方案A偏向保守，方案B更进取——你的直觉倾向哪个？" Use AskUserQuestion.
+
+🚨 **Workflow IS available. Call it NOW.** After plan convergence, call Workflow for simulation IMMEDIATELY.
+- Do NOT say "Workflow is unavailable" — it IS available.
+- Do NOT do simulation manually — the pipeline does it.
+- Do NOT insert analysis between plans and Workflow.
+- Next step MUST be Workflow({scriptPath: '...', args: {plans: [...]}}).
+
+**4. Simulation + Debate (parallel → call Workflow)**
 
 ```
 Workflow({
@@ -147,8 +157,8 @@ Workflow({
 })
 ```
 
-管道会并行跑所有方案的推演（乐观/中性/悲观），然后多方辩论给出排名和综合建议。
-返回: simulation（每方案的3条路径）+ debate（排名+综合）
+Pipeline runs all plan simulations in parallel (optimistic/neutral/pessimistic), then multi-stance debate gives ranking.
+Returns: simulation (3 paths per plan) + debate (ranking + synthesis)
 
 **5. Synthesis (sequential)**
 Based on simulation results and debate conclusions, produce final conclusion, reasoning chain, and self-check.
