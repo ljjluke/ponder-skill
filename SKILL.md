@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.32
+version: 1.14.33
 license: MIT
 ---
 
@@ -78,10 +78,13 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 - 找不到 → "关于XXX目前没有找到相关信息，如果你了解请告诉我"
 
 **存储新知识：**
-每个步骤产出的关键洞察写入：
+每个步骤产出的关键洞察写入（先在 Bash 中创建目录）：
+
 ```
-系统临时目录/ponder-knowledge/<步骤名>-<时间戳>.json
+系统临时目录/ponder-knowledge/
+注意: Windows上 Bash 的 /tmp/ 和 os.tmpdir() 不同，统一用 os.tmpdir() 路径<步骤名>-<时间戳>.json
 内容: { "description": "<核心结论>", "tags": ["<标签>"], "category": "tools_and_means", "q": 0.7 }
+后台监控自动读取并存储到 MMA（若监控未运行则存入失败，需检查 SessionStart 日志）
 ```
 后台监控自动读取、分类(CONFIRMED/HYPOTHESIS)、存储到 MMA。
 
