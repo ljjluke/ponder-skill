@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.20
+version: 1.14.21
 license: MIT
 ---
 
@@ -49,6 +49,42 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 ---
 
+## 💾 知识记录（每个步骤必须执行）
+
+所有步骤（发散/维度/方案收敛/推演/辩论/综合/验证）产出关键洞察时必须记录到 MMA 记忆系统：
+
+**取记忆：** 查看 SessionStart 日志 `[PONDER] Memory loaded: N points`。有记忆时：
+```
+Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词>"],"limit":5}'
+```
+在推理中引用："之前关于XXX的记忆表明..."
+
+**存记忆：** 每个步骤的关键结论存入 MMA：
+```
+Bash: node <plugin_path>/scripts/mcts.js mma ashi '{"description":"<核心结论>","tags":["<标签1>","<标签2>"],"category":"tools_and_means","emotion":"an","q":0.7}'
+```
+
+**记忆分类：**
+- CONFIRMED（已验证的结论）→ q=0.8
+- HYPOTHESIS（新推导的假设）→ q=0.6
+- REFUTED（被推翻的观点）→ 不存，标注排除
+
+**Workflow 返回的结果也要存储**：推演路径、辩论综合、验证结论 — 这些是将来深度循环的素材。
+
+**最终知识固化（所有步骤完成后）：**
+所有步骤完成后，把本次分析产出的全部关键知识做一次统一固化：
+```
+Bash: node <plugin_path>/scripts/mcts.js knowledge consolidate '{
+  "entries": [
+    {"description":"<结论1>","tags":["<tag>"],"q":0.8},
+    {"description":"<结论2>","tags":["<tag>"],"q":0.6}
+  ]
+}'
+```
+这会自动完成：分类(CONFIRMED/HYPOTHESIS)、过滤(与REFUTED对比)、关联(链接相关记忆)。
+
+---
+
 ## The Only Three Things You Do
 
 ### Phase 1: Interview — Spiral Divergence
@@ -66,24 +102,6 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 **2. 维度检查（顺序步骤）**
 基于发散结果，从8个维度系统评分（0-10分）。对每个维度展示评分和评分依据。
 结束后输出各维度评分、维度间的冲突对、关键发现。
-
-**💾 记忆操作（每个步骤都执行）：**
-
-**取记忆：** 查看 SessionStart 日志中 `[PONDER] Memory loaded: N points`。有记忆时，用：
-```
-Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词>"],"limit":5}'
-```
-结果会显示相关历史记忆。在推理中引用："之前关于XXX的记忆表明..."
-
-**存记忆：** 每个步骤产出的关键洞察需要存储到 MMA：
-```
-Bash: node <plugin_path>/scripts/mcts.js mma ashi '{"description":"<核心结论>","tags":["<标签1>","<标签2>"],"category":"tools_and_means","emotion":"an","q":0.7}'
-```
-
-**记忆分类：**
-- CONFIRMED（已验证的结论）→ q=0.8
-- HYPOTHESIS（新推导的假设）→ q=0.6
-- REFUTED（被推翻的观点）→ 不存，标注为已排除
 
 **3. 方案收敛（顺序步骤）**
 基于发散+维度分析，收敛生成5-10个具体可执行的方案。展示每个方案：名称、依据、行动描述、预期效果、风险。
