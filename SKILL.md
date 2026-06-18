@@ -1,10 +1,11 @@
 ---
 name: ponder
 alwaysApply: true
+
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.25
+version: 1.14.26
 license: MIT
 ---
 
@@ -160,15 +161,15 @@ Workflow({
 ## 6视角发散
 | 视角 | 洞察 | 推理依据 |
 |------|------|----------|
-| 技术分析 | XXX | 依据XXX（来源：已有知识） |
-| 政策面 | XXX | 依据XXX（来源：推理推导） |
+| 视角一 | XXX | 依据XXX（来源：已有知识） |
+| 视角二 | XXX | 依据XXX（来源：推理推导） |
 
 **矛盾点:** XXX
 
 ## 8维度评分
 | 维度 | 评分 | 分析 | 评分依据 |
 |------|------|------|----------|
-| 政策面 | 8/10 | XXX | XXX |
+| 维度一 | 8/10 | XXX | XXX |
 
 ## 生成方案
 | 方案 | 依据 | 行动 | 预期效果 | 风险 |
