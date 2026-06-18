@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.59
+version: 1.14.60
 license: MIT
 ---
 
@@ -165,6 +165,16 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 ⛛ 不允许一次过采访（问3个问题就完事）。每个答案必须产生新问题。
 
 ### Phase 2: Two Types of Unknowns at Every Step
+**默认必须问用户，除非非常确定。**
+
+每个步骤做完后的通用规则：
+1. 默认需要问用户确认（用 AskUserQuestion）
+2. 只有以下情况可以跳过问用户：
+   - 所有数据来源清晰完整
+   - 没有方向分支需要选择
+   - 结论非常明确没有歧义
+3. 不确定时 → 问，不要跳过。
+
 
 每一步都会遇到两类未知，处理方法不同：
 
