@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.18
+version: 1.14.19
 license: MIT
 ---
 
@@ -66,6 +66,12 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 **2. 维度检查（顺序步骤）**
 基于发散结果，从8个维度系统评分（0-10分）。对每个维度展示评分和评分依据。
 结束后输出各维度评分、维度间的冲突对、关键发现。
+
+**💾 每个步骤执行时：**
+- 开始前查看 SessionStart 日志中的 `[PONDER] Memory loaded: N points` → 有记忆就参考
+- 步骤中产生的新洞察在输出时标注"← 新知识，将存入记忆"
+- 有相关历史记忆时引用："之前关于XXX的记忆表明..."
+- 全部完成后，关键结论存入记忆供后续会话使用
 
 **3. 方案收敛（顺序步骤）**
 基于发散+维度分析，收敛生成5-10个具体可执行的方案。展示每个方案：名称、依据、行动描述、预期效果、风险。
