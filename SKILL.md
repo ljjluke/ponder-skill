@@ -152,128 +152,76 @@ Assumptions: ...
 
 ### Circuits 2-7: Reasoning Circuit + Adaptive Depth Loop
 
-**⛔ RULE: The pipeline MUST execute for every analysis.**
-The pipeline (ponder-pipeline.wf.js) runs 9 automated phases with sub-agents, memory checks, structured self-check, and knowledge consolidation. If the pipeline does NOT run — do NOT produce analysis output. Free-text analysis without pipeline execution is INVALID.
+**⛔ The pipeline MUST execute for every analysis.**
+9 automated phases with memory checks, structured self-check, and knowledge consolidation. No pipeline → no output. Invalid.
 
-**Launch the pipeline using the Workflow tool:**
+**How to launch:**
 
 ```
-1. Get $P from SessionStart log: [PONDER] Plugin: <path>
-2. Read pipeline config:
-   $P/scripts/pipeline.js status   (if exists)
-3. Launch:
+1. Get plugin path from [PONDER] Plugin: log at session start
+2. Launch via Workflow tool:
    Workflow({
-     scriptPath: '$P/scripts/ponder-pipeline.wf.js',
+     scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
      args: {
-       user_request: '<raw user request>',
-       step1: '<Step 1 profile output>',
-       plugin_path: '<$P>',
-       memory_context: '<deqi recall summary>',
-       meta_config: <meta config object or null>
+       user_request: '<raw request>',
+       step1: '<profile>',
+       plugin_path: '<path>',
+       memory_context: '<memory recall results>',
+       meta_config: <config or null>
      }
    })
-4. Read the return value — it contains step_log, free_energy,
-   mutation_result, and all phase outputs.
+3. Read the return value — contains results, quality scores, evolution data.
 ```
 
-Note: Invoking `/luke:ponder` constitutes explicit opt-in for multi-agent orchestration. Workflow() is authorized for use.
+If Workflow unavailable → use Agent() fallback. But pipeline MUST run.
 
-If Workflow() is unavailable, use Agent() to execute the pipeline script instructions:
-```
-Agent({
-  subagent_type: "general-purpose",
-  prompt: "Read $P/scripts/ponder-pipeline.wf.js and execute phases sequentially using Agent() calls. Output structured JSON with all phase results."
-})
-```
-Either way — the pipeline must run. No pipeline, no output.
+**Decision authority — LLM never decides alone:**
 
-Data acquisition within the pipeline must use `knowledge acquire`, not `mma deqi` directly.
+| Type | What happens |
+|------|-------------|
+| 🖥️ Data exists | Code decides |
+| 🔍 Missing data | Search more |
+| 👤 User preference | Ask user |
+| ❌ LLM guessing | **NOT ALLOWED** |
 
-**New: Hypothesis-first phase** — Before analyzing, the pipeline generates predictions based on existing memory. Data collection then targets confirming or refuting these predictions. This mirrors the brain's predictive processing (Friston's Free Energy Principle).
-
-**Decision authority rule — LLM never decides on its own:**
-
-Every decision during the pipeline and depth loop must fall into one of three categories:
-
-| Authority | When | What to do |
-|-----------|------|------------|
-| 🖥️ Context-driven | Existing data supports the decision | Decide autonomously |
-| 🔍 Data-driven | Missing data causes uncertainty | Search more (WebSearch) |
-| 👤 User-driven | Decision depends on user preference/goal | **Ask the user** (AskUserQuestion) |
-| ❌ LLM guessing | LLM "feels" it's right without data | **NOT ALLOWED** |
-
-**Handling sub-agent user_questions**: When the pipeline returns results containing `user_questions` fields, do NOT answer them yourself. Each question is a user-preference decision that a sub-agent couldn't resolve. Present each one to the user with options.
-
-If you're tempted to make a judgment call without data or user input → STOP. Either find data or ask the user.
-
-**Unified data acquisition — MANDATORY**: Every data need goes through `scripts/knowledge.js acquire()`. **Do NOT use `mma deqi` directly.** The `acquire()` function handles memory check → web fallback → REFUTED filtering in one call.
+**Data acquisition — always goes through the unified entry (memory → web → classification).**
 
 ```
-acquire(tags) → ① Check MMA memory (excludes REFUTED/DISPUTED)
-             → ② Found? → Return (with classification)
-             → ③ Not found? → WebSearch → store as HYPOTHESIS → return
+Check local memory first (excludes refuted knowledge).
+Found? → Return with classification.
+Not found? → Web search → store as unverified → return.
 ```
 
-Knowledge is auto-classified:
-- ✅ CONFIRMED: user confirmed or cross-verified → used with high confidence
-- ❌ REFUTED: proven wrong → **excluded from future recall**
-- ❓ HYPOTHESIS/PROVISIONAL: unverified → used with caution
-- 💤 SLEEPING: unused for 30d → low priority
+Knowledge classification:
+- CONFIRMED → trusted, preferred in recall
+- REFUTED → proven wrong, excluded from future use
+- HYPOTHESIS → unverified, used with caution
+- SLEEPING → unused for 30d
 
-When user corrects you → `tagVerdict(id, 'refuted', detail)` → knowledge moves to REFUTED → never used again. Also propagate to all linked knowledge.
+When user corrects → mark as refuted → never used again. Propagates to linked knowledge.
 
-**Step-level performance data**: The pipeline returns `step_log` — an array recording each step's completion status and metrics. This data feeds into self-evolution: which steps consistently perform well, which need adjustment, and where the pipeline should change next session.
-
-**Before storing new knowledge, semantically check against REFUTED entries:**
+**Before storing, check against past refuted knowledge:**
 ```
-listRefuted() → get all past refuted knowledge
-Compare new info with each refuted entry semantically (not tag matching)
-If semantically same or highly similar → do NOT store. Log as potential repeat.
-If semantically different → safe to store.
-LLM understands semantics — use that, not string matching.
+Review all refuted knowledge.
+Compare new info semantically against each refuted entry.
+Same idea? → Don't store. It's a known wrong path.
+Different? → Safe to store.
 ```
 
-**Knowledge anchors (traceability)**:
-- `knowledge.link(conclusionId, dataId)` — record "this conclusion was based on that data"
-- `knowledge.usedInStep(pointId, stepName)` — tag knowledge with which step used it
-- `knowledge.trace(conclusionId)` — trace back: conclusion → what data → what step → user verdict
-- `knowledge.tagVerdict(pointId, 'confirmed'|'refuted', detail)` — user verdict propagates to linked data
+**Performance tracking**: The pipeline logs each step's completion and quality. Feeds into evolution: which steps need adjustment.
 
-**Pipeline execution — user sees only progress line:**
-```
-📊 Analysis in progress...
-```
+**Depth loop — code-enforced**: After verification, code checks conclusion quality. If weak → automatically re-debate with more data (up to 3 rounds). Code decides, not LLM.
 
-**Depth loop — code-enforced in pipeline**:
-
-The depth loop runs automatically after verification. The workflow code checks:
-
-- Is the conclusion vague (contains "maybe", "perhaps", "不确定")?
-- Are all scenarios converging to the same outcome?
-- Has max depth been reached (3 rounds)?
-
-If depth is needed → `fixContext` is set → the self-correction loop re-runs debate with memory recall. The LLM doesn't decide — the code does.
-
-Decisions made by the pipeline code, not by LLM judgment:
-
-**Auto-evolution — read mutation_result from pipeline return, then execute:**
+**Self-evolution — code-enforced**: Pipeline calculates quality scores. If score too low → evolution command is auto-generated. LLM only executes the command, doesn't decide.
 
 ```
-mutation_result = [
-  { execute: true, command: "node ... set-weight step weight", reason: "..." }
+Evolution result:
+  { needs_change: true, command: "adjust weight/reorder/disable step", reason }
   or
-  { execute: false, reason: "free_energy within normal range" }
-]
-
-If mutation_result[0].execute === true:
-  → Run the command(s) silently (do NOT show to user)
-  → The pipeline has evolved for next use
-If mutation_result[0].execute === false:
-  → No action needed
+  { needs_change: false }
 ```
 
-The LLM does NOT decide whether to mutate. The pipeline code determines mutation necessity.
-The LLM only executes the commands. No judgment calls.
+LLM does NOT decide. Code does. LLM only executes.
 
 **Presentation — pipeline results only, translated to user's language**:
 
