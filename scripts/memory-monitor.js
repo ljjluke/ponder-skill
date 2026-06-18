@@ -13,6 +13,57 @@ const os = require('os');
 const { spawnSync } = require('child_process');
 
 const WATCH_DIR = path.join(os.tmpdir(), 'ponder-knowledge');
+// ─── Merge/Update logic: check if a better lesson already exists ───
+function findMMAPath() {
+  const base = path.join(os.homedir(), '.claude', 'plugins', 'cache');
+  for (const name of ['luke', 'mcts']) {
+    const d = path.join(base, name, name);
+    if (!fs.existsSync(d)) continue;
+    const dirs = fs.readdirSync(d).filter(f => /^\d+\.\d+\.\d+$/.test(f)).sort().reverse();
+    if (dirs.length === 0) continue;
+    const mma = path.join(d, dirs[0], 'scripts', 'mcts.js');
+    if (fs.existsSync(mma)) return mma;
+  }
+  return null;
+}
+
+function findExistingLesson(description, tags) {
+  try {
+    const mmaPath = findMMAPath();
+    if (!mmaPath) return null;
+    const keywords = tags && tags.length > 0 ? tags.slice(0, 3) : description.substring(0, 20);
+    const result = spawnSync('node', [mmaPath, 'knowledge', 'acquire', JSON.stringify({
+      tags: keywords,
+      limit: 3
+    })], { timeout: 8000 });
+    if (result.status !== 0) return null;
+    const matches = JSON.parse(result.stdout.toString());
+    if (!matches || !Array.isArray(matches) || matches.length === 0) return null;
+    // Find the best match by comparing description similarity
+    for (const m of matches) {
+      if (m.description && m.q && m.q >= 0.6) {
+        const descOverlap = (m.description || '').substring(0, 30) === description.substring(0, 30);
+        if (descOverlap) return m; // Same topic found
+      }
+    }
+    return null;
+  } catch(e) { return null; }
+}
+
+function shouldReplace(existing, newQ, newDesc) {
+  if (!existing) return true; // No existing → store
+  const existingQ = existing.q || 0;
+  const existingLen = (existing.description || '').length;
+  const newLen = newDesc.length;
+  // New one is significantly better (higher quality + more detail)
+  if (newQ > existingQ + 0.1 && newLen >= existingLen * 0.8) return true;
+  // New one has much more detail and same quality
+  if (newQ >= existingQ - 0.1 && newLen > existingLen * 1.5) return true;
+  // New one has much higher quality
+  if (newQ > existingQ + 0.2) return true;
+  return false;
+}
+
 const PID_FILE = path.join(os.tmpdir(), 'ponder-monitor.pid');
 const TRANSCRIPT_DIR = path.join(os.homedir(), '.claude', 'projects');
 
@@ -60,7 +111,17 @@ function processFile(fp) {
     const d = JSON.parse(fs.readFileSync(fp, 'utf-8'));
     const q = d.q || qualityScore(d.description || '');
     if (q < 0.3) { fs.renameSync(fp, fp + '.lowq'); return; }
-    if (storeToMMA(d.description, d.tags, q)) {
+    const existing = findExistingLesson(d.description, d.tags);
+  if (existing && !shouldReplace(existing, q, d.description || '')) {
+    console.log('[Lessons] ⏭️ Existing lesson is better, skipped: ' + (d.description||'').substring(0,50));
+    fs.renameSync(fp, fp + '.superseded');
+  } else if (existing) {
+    console.log('[Lessons] 🔄 Replacing existing lesson with more complete version');
+    if (storeToMMA(d.description, d.tags, Math.min(1.0, q + 0.05))) {
+      fs.renameSync(fp, fp + '.done');
+      console.log('[Lessons] ✅ Updated: ' + (d.description||'').substring(0,50));
+    }
+  } else if (storeToMMA(d.description, d.tags, q)) {
       fs.renameSync(fp, fp + '.done');
       console.log(`[Cognitive Core] Memorized (q=${q.toFixed(2)}): ${(d.description||'').substring(0,50)}`);
     }
