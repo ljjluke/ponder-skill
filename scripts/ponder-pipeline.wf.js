@@ -20,7 +20,7 @@ if (step === 'divergence') {
   phase('发散分析')
   const r = await agent('6视角发散分析\n需求:'+req+'\n画像:'+profile+(feedback?'\n用户反馈:'+feedback:'')+
     '\n每视角:洞察+数据来源+假设。缺知识→先自己搜索查资料。查不到→user_questions填问题+选项(2-4个)。全确定→[]。第'+round+'轮。', {
-    label: '发散分析',
+    label: '鲲鹏之视(6视角发散)',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'object',properties:{q:{type:'string'},options:{type:'array',items:{type:'string'}}},required:['q']},
       perspectives:{type:'array',items:{type:'object',properties:{
@@ -32,15 +32,15 @@ if (step === 'divergence') {
     }, required:['is_clear','perspectives','contradictions','consensus'] },
   })
   return { step:'divergence', is_clear:r.is_clear, user_questions:r.user_questions||[], round,
-    result: r, max_rounds: 3, next_step: r.is_clear ? 'dimension' : null }
+    result: r, max_rounds: 3, next_step: r.is_clear ? "bagua" : null
 }
 
 // ─── Dimension Step ───
-if (step === 'dimension') {
+if (step === 'bagua') {
   phase('维度评分')
   const r = await agent('8维度评分\n\n发散:'+(prev||'')+(feedback?'\n用户反馈:'+feedback:'')+
     '\n每维度:评分+依据+不确定性。缺数据→先搜索。搜不到→user_questions问用户。全确定→[]。第'+round+'轮。', {
-    label: '维度评分',
+    label: '八卦镜(8维评分)',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
       dimensions:{type:'array',items:{type:'object',properties:{
@@ -101,7 +101,7 @@ if (step === 'debate') {
   const simData = args?.simulations || []
   const txt = simData.map(r => r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)).join('\n\n')
   const r = await agent('多方案辩论\n\n需求:'+req+'\n\n推演:\n'+txt+'\n排名+综合。如有不确定→先搜索查证。查不到→user_questions问用户。全确定→[]。第'+round+'轮。', {
-    label: '方案辩论',
+    label: '多方辩论',
     schema: { type:'object', properties: {
       is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
       ranked:{type:'array',items:{type:'object',properties:{

@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.65
+version: 1.14.67
 license: MIT
 ---
 
@@ -75,7 +75,7 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
    - shell commands (node scripts/...)
    - JSON output ({ "count": ... })
    - Framework English terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
-   - Internal terms (translate to user language): divergence, simulation, self-check, convergence, verification, loop, dimension
+   - Internal terms (translate to user language): 鲲鵍之视(overview), 蜜鸩之视(detail), 八卦镜(dimension check), convergence, verification, loop, dimension
    - Agent task IDs, Thought for Xs, tech stack names
 □ Did I call Workflow? If not → delete ALL analysis text immediately. Call Workflow. **No Workflow → no output.**
 □ Did I write this analysis myself? If yes → I am the LLM, not the pipeline. The user wants pipeline analysis, not mine.
