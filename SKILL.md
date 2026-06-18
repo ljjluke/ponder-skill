@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.38
+version: 1.14.39
 license: MIT
 ---
 
@@ -243,6 +243,7 @@ XXX
 - "Thought for Xs", task IDs, execution time
 - English framework terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
 - Fabricated data (no results → don't invent)
+- Skipping memory query before WebSearch (must check memory first)
 - Your own analysis (only pipeline produces analysis)
 
 ✅ Show the pipeline's real output transparently:
