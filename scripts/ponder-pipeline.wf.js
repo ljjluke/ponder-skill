@@ -14,6 +14,9 @@ export const meta = {
   ],
 }
 
+
+const stage = args?.stage || 1
+
 const req = args?.user_request || ''
 const profile = args?.step1 || ''
 const fb1 = args?.step1_feedback || '' // user feedback for divergence
@@ -132,6 +135,7 @@ plan = await agent('方案收敛\n\n发散:'+(divergence.consensus||'')+'\n维�
 // Plans rounds 2-3 (same pattern, omitted for brevity - only 1 round if clear)
 let planR = plan
 
+if (stage >= 2) {
 // ═══ STEP 4: Simulation (parallel) ═══
 phase('方案推演')
 const planList = planR.plans || []
@@ -190,6 +194,7 @@ if (!syn.is_clear && fb5) {
   })
 }
 
+}
 // ═══ STEP 7: Verification ═══
 phase('独立验证')
 const verify = await agent('独立验证\n\n结论:'+(synR.conclusion||'')+'\n推理:'+(synR.reasoning||'')+
@@ -204,6 +209,16 @@ const verify = await agent('独立验证\n\n结论:'+(synR.conclusion||'')+'\n�
     },required:['severity','detail']}},
   }, required:['verdict','fake_clarity'] },
 })
+
+if (stage === 1) {
+  return {
+    stage: 1,
+    divergence: divergence,
+    dimension: dimension,
+    plans: planR,
+    ready_for_next: divClear && dimClear,
+  }
+}
 
 return {
   divergence: {
