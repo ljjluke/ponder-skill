@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.88
+version: 1.14.89
 license: MIT
 ---
 
@@ -162,7 +162,7 @@ AskUserQuestion({
 技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
 ╔══════════════════════════════════════╗
-║   🧠 Ponder v1.14.88 已激活         ║
+║   🧠 Ponder v1.14.89 已激活         ║
 ╚══════════════════════════════════════╝
 
 然后用自然的语气开始采访。
@@ -219,20 +219,23 @@ Workflow({
   args: { step: 'divergence', user_request: '<请求>', profile: '<画像>' }
 })
 ```
-返回6个视角。展示给用户。如有 user_questions → 用 AskUserQuestion 问。
+返回6个视角。展示给用户。如有 user_questions（必须是分析中发现的具体盲点，如缺少某方面数据或用户未提及的重要因素），用 AskUserQuestion 问。
+禁止问"你觉得对吗？""有问题吗？继续？"这类废话。
 用户确认清晰后 → 下一步。
 
 **Step 2: 八卦镜**
 ```
 Workflow({ scriptPath: '...', args: { step: 'bagua', previous_results: '<上步结果>' } })
 ```
-返回8维评分。有不确定→问用户。清晰→下一步。
+返回8维评分。有不确定→问用户（必须是评分过程中的具体不确定性，如"这个维度缺少XX数据导致评分不精确"）。
+禁止问"评分合理吗？"这种空泛问题。
 
 **Step 3: 方案收敛**
 ```
 Workflow({ scriptPath: '...', args: { step: 'plans', previous_results: '<上步结果>' } })
 ```
-生成5-8个方案。前提条件未验证→问用户。清晰→下一步。
+生成5-8个方案。前提条件未验证→问用户（具体问条件是否成立，如"方案A假设了XX，这个假设成立吗？"）。
+禁止问"你倾向哪个？"不提供具体选项。
 
 **Step 4: 推演**
 ```
