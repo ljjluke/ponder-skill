@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.30
+version: 1.14.31
 license: MIT
 ---
 
@@ -65,9 +65,9 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
   ③ 搜不到? → 标记为"未知"，告知用户 → 用户可能自己补充
 ```
 
-具体操作（每个步骤开始前执行）：
-```
-Bash: node "<plugin_path>/scripts/mcts.js" knowledge acquire --tags "<关键词1>,<关键词2>" --limit 5
+具体操作（每个步骤开始前简单查询，失败则静默跳过）：
+查询本地记忆：node "<plugin_path>/scripts/mcts.js" knowledge acquire '{"tags":["<关键词>"],"limit":5}'
+(命令失败则静默跳过，直接走 WebSearch)
 ```
 
 **注意：首次使用（冷启动）时记忆库为空，knowledge acquire 可能返回空或失败，这是正常的。直接进入 WebSearch 搜索即可。
@@ -80,7 +80,7 @@ Bash: node "<plugin_path>/scripts/mcts.js" knowledge acquire --tags "<关键词1
 **存储新知识：**
 每个步骤产出的关键洞察写入：
 ```
-/tmp/ponder-knowledge/<步骤名>-<时间戳>.json
+系统临时目录/ponder-knowledge/<步骤名>-<时间戳>.json
 内容: { "description": "<核心结论>", "tags": ["<标签>"], "category": "tools_and_means", "q": 0.7 }
 ```
 后台监控自动读取、分类(CONFIRMED/HYPOTHESIS)、存储到 MMA。

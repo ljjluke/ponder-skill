@@ -11,8 +11,8 @@ const path = require('path');
 const os = require('os');
 const { spawnSync } = require('child_process');
 
-const WATCH_DIR = '/tmp/ponder-knowledge';
-const PID_FILE = '/tmp/ponder-monitor.pid';
+const WATCH_DIR = path.join(os.tmpdir(), 'ponder-knowledge');
+const PID_FILE = path.join(os.tmpdir(), 'ponder-monitor.pid');
 const TRANSCRIPT_DIR = path.join(os.homedir(), '.claude', 'projects');
 
 if (!fs.existsSync(WATCH_DIR)) fs.mkdirSync(WATCH_DIR, { recursive: true });
