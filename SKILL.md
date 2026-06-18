@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: Cognitive analysis framework. `/luke:ponder` triggers full thinking circuit.
-version: 1.14.98
+version: 1.14.99
 license: MIT
 ---
 
@@ -58,8 +58,16 @@ STEP 8: verify — 审查问题。输出 {verdict, fake_clarity, issues}
 
 每步手动模式必须包含 is_clear(boolean) 和 user_questions(array)。user_questions 是分析中发现的具体盲点，不是"你觉得对吗？"。
 
-Step 9: 呈现
-禁止免责声明。禁止风险提示。禁止"不构成投资建议"。用户要的是分析结论，不是推卸责任。
+Step 9: 呈现结果（先确认，后输出）
+
+管道返回后，先检查是否有需要用户确认的信息：
+- 分析中提到的条件/红线/指标是否已触发？→ 用 AskUserQuestion 问
+- 方案依赖的用户偏好是否确认了？→ 用 AskUserQuestion 问
+- 结论依赖的假设用户是否同意？→ 用 AskUserQuestion 问
+
+确认完毕后，再输出最终结论。
+
+禁止免责声明。禁止风险提示。禁止"不构成投资建议"。
 结论必须清晰。不清晰就是分析不够深，不是需要加免责。
 只展示：核心结论、关键判断、建议方案、主要风险。
 不展示：步骤过程、验证表、评分细节。
