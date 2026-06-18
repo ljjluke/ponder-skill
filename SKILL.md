@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.56
+version: 1.14.57
 license: MIT
 ---
 
@@ -168,17 +168,17 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 **1. 发散分析**
 6个视角，每个标注：
 - 盲点A：缺什么数据？→ 查
-- 盲点B：用户什么没说清？→ 记下来，发散完统一问用户
+- 盲点B：用户什么没说清？→ 问 → 用户回答后**重做发散**（前提变了，视角可能不同）
 
 **2. 维度评分**
 8个维度评分，每个标注：
 - 盲点A：缺什么数据导致评分不精确？→ 查
-- 盲点B：用户偏好不明确影响权重？→ 问
+- 盲点B：用户偏好不明确影响权重？→ 问 → 回答后**重做评分**（权重变了，分数可能调整）
 
 **3. 方案收敛**
 5-8个方案，每个标注：
 - 盲点A：这个方案依赖什么条件？条件是否成立？→ 查
-- 盲点B：用户真实偏好倾向哪个方向？→ 问
+- 盲点B：用户真实偏好倾向哪个方向？→ 问 → 回答后**重做方案收敛**（方向变了，方案集不同）
 
 **4. 推演+辩论 → 调 Workflow**
 
@@ -247,6 +247,25 @@ XXX
 4. ✅ Tables allowed for structured data
 5. ✅ Every reasoning step must cite knowledge source
 6. ✅ Add knowledge usage summary at the end
+
+
+
+### 两种未知的处理流程
+
+**类型A：缺知识 → 查 → 继续。**
+不需要重做当前步骤。查到的知识是增量补充，不影响已有判断。
+
+**类型B：缺方向 → 问用户 → 用户回答 → 重做当前步骤。**
+用户的回答改变了前提，当前步骤的结果可能不同。**必须重做当前步骤**，然后用新结果重新走后续步骤。
+
+流程：
+```
+步骤N发现盲点B → 问用户 → 用户回答
+  → 重做步骤N（用新信息）
+  → 重新走步骤N+1到结束（用新结果）
+```
+
+重做不是从第1步开始。只重做当前步骤及之后。
 
 ---
 
