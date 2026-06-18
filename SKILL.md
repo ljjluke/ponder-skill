@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.29
+version: 1.14.30
 license: MIT
 ---
 
@@ -47,6 +47,9 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 ```
 
 **原则：只输出用户需要看到的东西。技术操作、内部步骤、工具调用——都不需要用户看到。**
+
+**🔴 全局规则：所有需要用户决策的问题必须用 AskUserQuestion 工具给出选项。不得用文字提问。**
+用户应该点击选择，不是打字输入。违反这条的输出无效。
 
 ---
 
