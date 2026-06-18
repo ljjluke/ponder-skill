@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.68
+version: 1.14.69
 license: MIT
 ---
 
@@ -164,84 +164,66 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 
 ⛛ 不允许一次过采访（问3个问题就完事）。每个答案必须产生新问题。
 
-### Phase 2: Step-by-Step Loop (Each Step Converges Before Next)
+### Phase 2: Execute — ONE WORKFLOW CALL PER STEP
 
-每一步独立调 Workflow 执行，每步内部循环≤3轮。清晰了→下一步，不清晰→重做当前步。用户确认后才进入下一步。
-
-**循环规则：**
-1. 做完当前步骤 → 检查：结论清晰吗？
-   - 清晰 → 过，下一个步骤
-   - 不清晰 → 分析原因（缺数据/缺方向）
-   - 缺数据 → 查 → 重做当前步骤
-   - 缺方向 → 问用户 → 重做当前步骤
-2. 最多重复3轮。3轮后仍然不清晰 → 诚实记录模糊点，继续下一步。
-3. 已清晰的分支不重复。只有模糊的部分才循环。
+**不要自己做分析。每一步单独调 Workflow。跑完问用户，再下一步。**
 
 ---
 
-**1. 发散分析（循环≤3轮）**
-6个视角。做完检查：
-- 每个视角有数据来源吗？
-- 矛盾点有依据吗？
-- 有方向分支没问用户吗？
-
-有问题 → 自己搜/问用户 → 重做发散 → 再检查。最多3轮。
-
-调 Workflow({step:"divergence", feedback:"...", round:2})
-
-输出结构：
+**Step 1: 发散分析**
 ```
-视角: [名称] | 洞察 | 数据来源(必填) | 假设(必填) | 用户待确认
-矛盾点: [矛盾] | 双方依据
+Workflow({ scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
+  args: { step: 'divergence', user_request: '<请求>', profile: '<画像>' }
+})
 ```
+返回6个视角。展示给用户。如有 user_questions → 用 AskUserQuestion 问。
+用户确认清晰后 → 下一步。
 
-**2. 维度评分（循环≤3轮）**
-8个维度评分。做完检查：
-- 每个评分有数据支撑吗？
-- 有用户偏好相关的假设没确认吗？
-
-有问题 → 自搜/问用户 → 重做评分 → 再检查。最多3轮。
-调 Workflow({step:"dimension", feedback:"...", round:2})
-
-输出结构：
+**Step 2: 八卦镜**
 ```
-维度: [名称] | 评分 | 依据(必填) | 不确定性(必填) | 依赖的用户假设(必填)
+Workflow({ scriptPath: '...', args: { step: 'bagua', previous_results: '<上步结果>' } })
 ```
+返回8维评分。有不确定→问用户。清晰→下一步。
 
-**3. 方案收敛（循环≤3轮）**
-生成5-8个方案。做完检查：
-- 每个方案的前提条件已验证？
-- 用户倾向确认了？
-
-有问题 → 自搜/问用户 → 重做方案 → 再检查。最多3轮。
-调 Workflow({step:"plans", ...})
-
-输出结构：
+**Step 3: 方案收敛**
 ```
-方案: [名称] | 依据 | 前提条件 | 条件已验证(必填) | 数据支撑(必填)
+Workflow({ scriptPath: '...', args: { step: 'plans', previous_results: '<上步结果>' } })
 ```
+生成5-8个方案。前提条件未验证→问用户。清晰→下一步。
 
-**4. 推演+辩论 → Workflow（并行，不循环）**
-Workflow 并行推演所有方案+辩论。
-
-**5. 综合判断（循环≤3轮）**
-给出结论。做完检查：
-- 推理链完整吗？
-- 假设清单都验证了吗？
-- 用户确认了吗？
-
-有问题 → 查/问 → 重做综合 → 再检查。最多3轮。
-
-输出结构：
+**Step 4: 推演**
 ```
-结论 | 推理链 | 数据支撑(每环节必填) | 假设清单(必填) | 用户已确认(必填)
+Workflow({ scriptPath: '...', args: { step: 'simulate', plans: '<方案列表>' } })
 ```
+并行模拟每个方案。展示结果。
 
-**6. 独立验证 → Workflow**
+**Step 5: 辩论**
+```
+Workflow({ scriptPath: '...', args: { step: 'debate', simulations: '<推演结果>' } })
+```
+方案排名。有不确定→问用户。清晰→下一步。
+
+**Step 6: 综合判断**
+```
+Workflow({ scriptPath: '...', args: { step: 'synthesis', previous_results: '<辩论结果>' } })
+```
+输出结论。user_confirmed=false → 问用户确认。清晰→下一步。
+
+**Step 7: 独立验证**
+```
+Workflow({ scriptPath: '...', args: { step: 'verify', previous_results: '<结论>' } })
+```
+最终验证。fake_clarity=true → 告知用户。
 
 ---
 
-关键：每步自己收敛，不清不往下走。最多3轮，3轮后仍不清的诚实记录。
+**规则：**
+1. 每步调一次 Workflow。不要合并步骤。
+2. 每步返回后检查 is_clear 和 user_questions。
+3. 有 user_questions → 用 AskUserQuestion 问用户，带选项。
+4. 用户确认 clear → 调下一步 Workflow。
+5. 不清 → 调同一 step 带 feedback（round+1），最多3轮。
+6. **不要自己搜索出分析报告。Workflow 的 agent 会搜。**
 
 ### Phase 3: Present Results
 
