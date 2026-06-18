@@ -122,13 +122,13 @@ var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n
 
 // Phase 6: Synthesis
 phase('综合')
-var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+'\n结论+推理+假设+用户确认。', {
+var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
     assumptions:{type:'array',items:{type:'string'}},
-    user_confirmed:{type:'boolean'},
-  }, required:['is_clear','user_questions','conclusion','reasoning','assumptions','user_confirmed'],
+    user_confirmed:{type:'boolean'}, pending_user_questions:{type:'array',items:{type:'string'},description:'呈现前必须问用户的问题清单'},
+  }, required:['is_clear','user_questions','conclusion','reasoning','assumptions','user_confirmed','pending_user_questions'],
 }, 0)
 
 // Phase 7: Verification
