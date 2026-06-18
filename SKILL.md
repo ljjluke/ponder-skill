@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.21
+version: 1.14.22
 license: MIT
 ---
 
@@ -51,37 +51,27 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 ## 💾 知识记录（每个步骤必须执行）
 
-所有步骤（发散/维度/方案收敛/推演/辩论/综合/验证）产出关键洞察时必须记录到 MMA 记忆系统：
+后台有记忆守护进程持续运行（SessionStart 时自动启动），你只需把知识写入监控目录即可。
 
-**取记忆：** 查看 SessionStart 日志 `[PONDER] Memory loaded: N points`。有记忆时：
+**取记忆：** 查看 SessionStart 日志 `[PONDER] Memory loaded: N points`。有记忆时，用 `knowledge acquire` 召回：
 ```
 Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词>"],"limit":5}'
 ```
 在推理中引用："之前关于XXX的记忆表明..."
 
-**存记忆：** 每个步骤的关键结论存入 MMA：
+**存记忆：** 每个步骤的关键洞察写入共享文件，后台监控会自动分类存储：
 ```
-Bash: node <plugin_path>/scripts/mcts.js mma ashi '{"description":"<核心结论>","tags":["<标签1>","<标签2>"],"category":"tools_and_means","emotion":"an","q":0.7}'
+写入文件 /tmp/ponder-knowledge/<步骤名>-<时间戳>.json
+内容: { "description": "<核心结论>", "tags": ["<标签>"], "category": "tools_and_means", "q": 0.7 }
 ```
 
-**记忆分类：**
+**记忆分类（后台监控自动处理）：**
 - CONFIRMED（已验证的结论）→ q=0.8
 - HYPOTHESIS（新推导的假设）→ q=0.6
-- REFUTED（被推翻的观点）→ 不存，标注排除
+- REFUTED（被推翻的观点）→ q=0（排除）
 
-**Workflow 返回的结果也要存储**：推演路径、辩论综合、验证结论 — 这些是将来深度循环的素材。
-
-**最终知识固化（所有步骤完成后）：**
-所有步骤完成后，把本次分析产出的全部关键知识做一次统一固化：
-```
-Bash: node <plugin_path>/scripts/mcts.js knowledge consolidate '{
-  "entries": [
-    {"description":"<结论1>","tags":["<tag>"],"q":0.8},
-    {"description":"<结论2>","tags":["<tag>"],"q":0.6}
-  ]
-}'
-```
-这会自动完成：分类(CONFIRMED/HYPOTHESIS)、过滤(与REFUTED对比)、关联(链接相关记忆)。
+**最终知识固化（全部完成后）：**
+用 `knowledge consolidate` 统一固化本次分析的全部产出。
 
 ---
 

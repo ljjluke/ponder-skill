@@ -1,5 +1,5 @@
 {
-  "description": "Ponder Memory hooks — SessionStart load memory, SessionEnd decay check (direct-call mode, no daemon)",
+  "description": "Ponder Memory hooks — SessionStart load memory + start monitor, SessionEnd decay",
   "hooks": {
     "Setup": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"console.log('[PONDER] Ready (direct-call mode)')\"",
+            "command": "node -e \"console.log('[PONDER] Ready')\"",
             "timeout": 3
           }
         ]
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});const latest=dirs[0],pluginDir=path.join(cache,latest),cp=path.join(pluginDir,'scripts','mcts.js');if(!fs.existsSync(cp)){const oldScript=dirs.slice(1).find(d=>fs.existsSync(path.join(cache,d,'scripts','mcts.js')));if(oldScript){const src=path.join(cache,oldScript,'scripts'),dst=path.join(cache,latest,'scripts');require('child_process').spawnSync('cp',['-r',src,dst]);console.log('[PONDER] Restored scripts from v'+oldScript)}else{console.log('[PONDER] WARNING: scripts missing — run /plugin install ponder then /reload-plugins')}};for(const d of dirs.slice(1)){fs.rmSync(path.join(cache,d),{recursive:true,force:true})};console.log('[PONDER] Ready v'+latest);console.log('[PONDER] Plugin: '+pluginDir.replace(/\\\\/g,'/').replace(/^([A-Za-z]):\\//,'/$1/'));(function(){try{const io=require(path.join(pluginDir,'scripts/mma/io'));const kg=io.loadMMA();if(kg.meta.total_points>0){console.log('[PONDER] Memory loaded: '+kg.meta.total_points+' points across '+(Object.keys(kg.meridians).filter(k=>kg.meridians[k].points.length>0).length)+' meridians')}else{console.log('[PONDER] Cold start')}}catch(e){}})()\"",
+            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});const latest=dirs[0],pluginDir=path.join(cache,latest);console.log('[PONDER] Ready v'+latest);console.log('[PONDER] Plugin: '+pluginDir.replace(/\\\\/g,'/').replace(/^([A-Za-z]):\\//,'/$1/'));try{const io=require(path.join(pluginDir,'scripts/mma/io'));const kg=io.loadMMA();if(kg.meta.total_points>0){console.log('[PONDER] Memory loaded: '+kg.meta.total_points+' points')}else{console.log('[PONDER] Cold start')}}catch(e){};const mon=path.join(pluginDir,'scripts/memory-monitor.js');if(fs.existsSync(mon)){require('child_process').spawn('node',[mon],[],{stdio:'ignore'});console.log('[PONDER] Monitor started')}\"",
             "timeout": 15
           }
         ]
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});if(dirs.length===0)return;const mma=path.join(cache,dirs[0],'scripts/mcts.js');if(fs.existsSync(mma)){require('child_process').spawnSync('node',[mma,'mma','decay'],{timeout:8000});require('child_process').spawnSync('node',[mma,'mma','finalize',JSON.stringify({points:[],emotions:[]})],{timeout:8000})}\"",
+            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});if(dirs.length===0)return;const mma=path.join(cache,dirs[0],'scripts/mcts.js');if(fs.existsSync(mma)){require('child_process').spawnSync('node',[mma,'mma','decay'],{timeout:8000});require('child_process').spawnSync('node',[mma,'mma','finalize',JSON.stringify({points:[],emotions:[]})],{timeout:8000})};const pidf='/tmp/ponder-monitor.pid';if(fs.existsSync(pidf)){try{process.kill(Number(fs.readFileSync(pidf,'utf-8')))}catch(e){}}\"",
             "timeout": 10
           }
         ]
