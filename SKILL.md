@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.55
+version: 1.14.56
 license: MIT
 ---
 
@@ -153,82 +153,44 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 
 ⛛ 不允许一次过采访（问3个问题就完事）。每个答案必须产生新问题。
 
-### Phase 2: ONE Workflow Call — NO Self-Analysis
+### Phase 2: Two Types of Unknowns at Every Step
 
-After profile is confirmed, the ONLY action is:
+每一步都会遇到两类未知，处理方法不同：
 
-Workflow({
-  scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
-  args: {
-    user_request: '<user request>',
-    step1: '<profile>',
-    plugin_path: '<plugin path from [PONDER] Plugin: log>',
-    lessons: '<past failures or none>',
-    meta_config: null
-  }
-})
+**类型A：缺数据/缺知识 → 自己去查。**
+查资料、搜网络、分析数据。不准跳过，不准编。查不到就说查不到。
 
-**WHAT THE PIPELINE DOES (all automated, no LLM involvement):**
-1. Divergence (6 perspectives with data sources)
-2. Dimension check (8 dimensions scored with data)
-3. Plan convergence (5-8 actionable plans)
-4. Simulation (each plan independently simulated, parallel)
-5. Debate (multi-stance cross-examination, parallel)
-6. Synthesis (final conclusion with reasoning chain)
-7. Verification (independent check for data issues)
+**类型B：缺方向/需求不明 → 问用户。**
+用 AskUserQuestion 带选项提问，用户的答案用于下一步。
 
-**LLM ROLE IS LIMITED TO:**
-1. Interview the user → profile
-2. Check error convergence → pass as lessons
-3. Call Workflow once → wait for result
-4. Present the return value in user's language
-5. Record failure/success to error convergence
+---
 
-**DO NOT:** diverge, score dimensions, generate plans, simulate, debate, synthesize, or verify.
-**DO NOT:** search the web for analysis data. The pipeline agents do that.
-**DO NOT:** say "Workflow unavailable". It is available. After plan convergence, call Workflow for simulation IMMEDIATELY.
-- Do NOT say "Workflow is unavailable" — it IS available.
-- Do NOT do simulation manually — the pipeline does it.
-- Do NOT insert analysis between plans and Workflow.
-- Next step MUST be Workflow({scriptPath: '...', args: {plans: [...]}}).
+**1. 发散分析**
+6个视角，每个标注：
+- 盲点A：缺什么数据？→ 查
+- 盲点B：用户什么没说清？→ 记下来，发散完统一问用户
 
-**4. Simulation + Debate (parallel → call Workflow)**
+**2. 维度评分**
+8个维度评分，每个标注：
+- 盲点A：缺什么数据导致评分不精确？→ 查
+- 盲点B：用户偏好不明确影响权重？→ 问
 
-```
-Workflow({
-  scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
-  args: {
-    user_request: '<user raw request>',
-    plans: <刚才生成的方案列表，含name和action>,
-    draft_conclusion: '',
-    draft_reasoning: ''
-  }
-})
-```
+**3. 方案收敛**
+5-8个方案，每个标注：
+- 盲点A：这个方案依赖什么条件？条件是否成立？→ 查
+- 盲点B：用户真实偏好倾向哪个方向？→ 问
 
-Pipeline runs all plan simulations in parallel (optimistic/neutral/pessimistic), then multi-stance debate gives ranking.
-Returns: simulation (3 paths per plan) + debate (ranking + synthesis)
+**4. 推演+辩论 → 调 Workflow**
 
-**5. Synthesis (sequential)**
-Based on simulation results and debate conclusions, produce final conclusion, reasoning chain, and self-check.
+**5. 综合判断**
+结论标注：
+- 盲点A：结论依赖什么假设？假设可靠？→ 验证
+- 盲点B：用户能接受吗？还有什么没满足？→ 问
 
-🚨 **After synthesis, you MUST immediately call Workflow for verification. No pause.**
+**6. 独立验证 → 调 Workflow**
 
-**6. Independent verification (parallel → call Workflow)**
+**原则：不知道就查不准编。用户相关的问题才问用户。数据问题自己解决。**
 
-```
-Workflow({
-  scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
-  args: {
-    user_request: '<user raw request>',
-    plans: [],
-    draft_conclusion: '<刚才的结论>',
-    draft_reasoning: '<刚才的推理链>'
-  }
-})
-```
-
-管道返回: verify（PASS/REVISE+问题列表）
 
 ### Phase 3: Present Results
 
