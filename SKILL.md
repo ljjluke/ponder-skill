@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: Cognitive analysis framework. `/luke:ponder` triggers full thinking circuit.
-version: 1.14.95
+version: 1.14.96
 license: MIT
 ---
 
@@ -13,6 +13,22 @@ license: MIT
 3. 不准替用户做决定。有方向分支时用 AskUserQuestion 问用户，不能自己假设。
 4. 不准问废话。问题必须来自分析过程中的具体盲点，不是"你觉得对吗？"。
 5. 所有问题必须用 AskUserQuestion 带选项。选项放 label 字段（用户点击的），description 只做补充。禁止文字列出选项让用户打字。
+
+
+
+## 深度循环（解决不清晰的唯一方法）
+
+任何步骤做完后 is_clear=false → 不能跳过。必须深度循环。
+
+深度循环规则：
+1. 分析为什么不清晰（缺数据？缺方向？分析不够深？）
+2. 缺数据 → 专项搜索 → 重做当前步骤
+3. 缺方向 → 问用户 → 重做当前步骤
+4. 分析不够深 → 缩小范围深入挖 → 重做当前步骤
+5. 重做后还不清晰 → 继续循环，直到清晰为止
+6. 没有"最多3轮"的限制——不清就一直挖，挖到清晰为止
+
+最终结论必须清晰。如果不清晰，说明深度循环没做到位。
 
 ## 流程
 
