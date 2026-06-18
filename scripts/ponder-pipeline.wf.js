@@ -23,15 +23,17 @@ async function runUntilClear(label, prompt, schema, rounds) {
   // Round 1
   r1 = await agent(prompt + ' 第1轮。必须清晰。不清晰填user_questions。', { label: label, schema: schema })
   result = r1
+  var lastQ = r1.user_questions || []
   if (r1.is_clear) return result
   if (maxRounds <= 1) return result
-  // Round 2
-  var r2 = await agent(prompt + ' 第2轮，之前不清晰，加深。', { label: label+'R2', schema: schema })
+  // Round 2 (carrying forward previous blind spots)
+  var r2 = await agent(prompt + ' 第2轮。前轮盲点:'+JSON.stringify(lastQ)+'。针对性加深。', { label: label+'R2', schema: schema })
   result = r2
   if (r2.is_clear) return result
+  lastQ = r2.user_questions || []
   if (maxRounds <= 2) return result
   // Round 3
-  var r3 = await agent(prompt + ' 第3轮，继续加深。', { label: label+'R3', schema: schema })
+  var r3 = await agent(prompt + ' 第3轮。前轮盲点:'+JSON.stringify(lastQ)+'。继续加深。', { label: label+'R3', schema: schema })
   result = r3
   if (r3.is_clear) return result
   if (maxRounds <= 3) return result
@@ -88,7 +90,7 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
 
 // Phase 4: Simulation (parallel, no loop needed)
 phase('推演')
-var planList = plan.plans || []
+var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
   return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。', {
     label: '推演:'+p.name.substring(0,10),
@@ -98,14 +100,14 @@ var sims = await parallel(planList.slice(0,8).map(function(p) { return function(
     }, required:['plan_name','optimistic','neutral','pessimistic'] },
   })
 }}))
-var simResults = sims.filter(Boolean).map(function(s) {
-  return { name:s.plan_name, optimistic:s.optimistic, neutral:s.neutral, pessimistic:s.pessimistic }
+var simResults = (sims||[]).filter(Boolean).map(function(s) {
+  return { name:s&&s.plan_name||'', optimistic:s&&s.optimistic||'', neutral:s&&s.neutral||'', pessimistic:s&&s.pessimistic||'' }
 })
 
 // Phase 5: Debate
 phase('辩论')
 var simTxt = simResults.map(function(r) {
-  return r.name+': 乐观='+r.optimistic.substring(0,100)
+  return r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)+' 悲观='+(r.pessimistic||'').substring(0,100)
 }).join('\n\n')
 var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。', {
   type:'object', properties: {
