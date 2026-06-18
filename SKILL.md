@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.82
+version: 1.14.83
 license: MIT
 ---
 
@@ -141,25 +141,22 @@ The user should click to choose, not type. Violations are invalid.
 
 技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
-技能加载后输出一行开场白："🧠 开始分析。先拆解你的需求。"
-然后直接开始采访（需求拆解）。
-采访完成后输出需求画像：
-天时=?/10  地利=?/10  人和=?/10  法=?/10  本质=?/10
-待验证假设：...
+╔══════════════════════════════════════╗
+║   🧠 Ponder v1.14.76 已激活         ║
+╚══════════════════════════════════════╝
 
-然后用自然的语气开始采访（需求拆解）："你想分析什么？我会一步步跟你确认，每一步都打磨清楚了再下一步。"
+然后用自然的语气开始采访。
 
-### Phase 1: 需求拆解
+然后用自然的语气开始采访："你想分析什么？我会一步步跟你确认，每一步都打磨清楚了再下一步。"
 
-用户说了一个需求，这个需求往往模糊、不完整、有隐藏假设。你的任务是把需求**拆开、理清、结构化**。
+### Phase 1: Interview — Spiral Divergence (需求拆解)
 
-拆解方法（螺旋式，不是一次问完5个）：
-- 先听用户说什么 → 找出模糊点 → 问一个问题
-- 听回答 → 找出新的模糊点 → 再问
-- 每个回答暴露一层更深的需求
-- 直到挖不出新东西为止
+先在心里自问（不要输出）：
+- 我对这个请求的第一反应是什么？
+- 如果相反的情况才是对的呢？
+- 我对这个领域有什么默认假设？
 
-拆解过程中自然覆盖5个维度（不是逐个问，是自然浮现）：
+然后通过 AskUserQuestion 螺旋提问，一次一问，每个答案产生新问题。覆盖5个维度：
 
 **天时（Timing）** — 时间窗口、紧急程度、周期性
 **地利（Resources）** — 资源、数据、工具、人力
@@ -185,6 +182,8 @@ The user should click to choose, not type. Violations are invalid.
 ```
 
 ⛛ 不允许一次过采访。每个答案必须产生新问题。深度至少4轮对话。
+
+
 
 
 ### Phase 2: Execute — ONE WORKFLOW CALL PER STEP
