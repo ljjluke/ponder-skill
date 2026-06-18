@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.5
+version: 1.14.6
 license: MIT
 ---
 
@@ -103,13 +103,14 @@ Workflow({
 
 Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/cache/...`
 
-While pipeline runs, show only: `📊 Analysis in progress...`
+**DO NOT describe pipeline steps to the user.** If you write text like"正在执行步骤1-5" you are faking it — the pipeline hasn't been called yet. The Workflow tool shows real progress automatically in the UI (agent names, phases, log messages). Let it speak for itself. If the user sees real agent names like"发散分析""维度检查" the pipeline is real. If they only see your text, it's fake.
 
 **CRITICAL — MUST READ:**
 - You do NOT produce analysis. Only the pipeline does.
-- **DO NOT run the pipeline via Bash or node.** Use Workflow tool only. Bash execution will fail (it's a Workflow script, not a Node.js script).
-- If Workflow is unavailable → use Agent() as fallback with the same file.
-- If no pipeline execution happened → you have NO results to output. Say "分析未完成".
+- **DO NOT run the pipeline via Bash or node.** Use Workflow tool only.
+- **DO NOT describe pipeline internals or steps** in your output. If you list steps, you're lying.
+- If Workflow is unavailable → use Agent() with the script path, but this is a degraded mode.
+- If no pipeline execution happened → you have NO results. Say "分析未完成".
 - **No pipeline → no analysis output. This is not negotiable.**
 
 ### Phase 3: Present Pipeline Results
@@ -148,3 +149,13 @@ Format: natural conversational output in the user's language. No templates neede
 - Fabricated data (no results → don't invent)
 - Your own analysis (only pipeline produces analysis)
 - Pipeline internal descriptions or step names
+
+**How user verifies it's real reasoning (not fake):**
+```
+✅ REAL → User sees Workflow agents appearing in UI:
+  发散分析, 维度检查, 场景推演, 辩论, 综合判断, 核验
+  These appear automatically — LLM didn't write them.
+
+❌ FAKE → LLM writes text like "正在执行步骤1-5..." with no real agents.
+  If you see this as a user, the pipeline isn't running.
+```
