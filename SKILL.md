@@ -166,7 +166,7 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 
 ### Phase 2: Step-by-Step Loop (Each Step Converges Before Next)
 
-每一步独立循环，最多3轮。清晰了就过，不清晰就重来。已经清晰的并行分支不重来。
+每一步独立调 Workflow 执行，每步内部循环≤3轮。清晰了→下一步，不清晰→重做当前步。用户确认后才进入下一步。
 
 **循环规则：**
 1. 做完当前步骤 → 检查：结论清晰吗？
@@ -185,7 +185,9 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 - 矛盾点有依据吗？
 - 有方向分支没问用户吗？
 
-有问题 → 查/问 → 重做发散 → 再检查。最多3轮。
+有问题 → 自己搜/问用户 → 重做发散 → 再检查。最多3轮。
+
+调 Workflow({step:"divergence", feedback:"...", round:2})
 
 输出结构：
 ```
@@ -198,7 +200,8 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 - 每个评分有数据支撑吗？
 - 有用户偏好相关的假设没确认吗？
 
-有问题 → 查/问 → 重做评分 → 再检查。最多3轮。
+有问题 → 自搜/问用户 → 重做评分 → 再检查。最多3轮。
+调 Workflow({step:"dimension", feedback:"...", round:2})
 
 输出结构：
 ```
@@ -210,7 +213,8 @@ If you can still think of a meaningful question → ask it. Do NOT proceed.
 - 每个方案的前提条件已验证？
 - 用户倾向确认了？
 
-有问题 → 查/问 → 重做方案 → 再检查。最多3轮。
+有问题 → 自搜/问用户 → 重做方案 → 再检查。最多3轮。
+调 Workflow({step:"plans", ...})
 
 输出结构：
 ```
