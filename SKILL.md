@@ -3,9 +3,9 @@ name: ponder
 alwaysApply: true
 
 description: |
-  Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
-  `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.34
+  认知分析框架 — 多视角发散×深度研究×辩论验证×知识积累
+  `/luke:ponder` 触发完整思考回路。每阶段强制执行，不可跳过。
+version: 1.14.35
 license: MIT
 ---
 
@@ -38,7 +38,7 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
    - shell 命令（node scripts/...）
    - JSON 输出（{ "count": ... }）
    - 框架英文术语（MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA）
-   - 框架内部术语：发散、推演、自检、收敛、核验、回路、维度
+   - 内部术语（需翻译为用户语言）：发散、推演、自检、收敛、核验、回路、维度
    - Agent 任务 ID、Thought for Xs、技术栈名
 □ 我已经调用了 Workflow 吗？如果没有 → 这整段分析都是假的。删除。直接调 Workflow。
 □ 这段分析是我自己写的吗？如果是 → 我是LLM，不是管道。用户要的是管道的分析，不是我的。
@@ -60,38 +60,26 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 **查询知识（优先本地记忆）：**
 ```
 向记忆代理发起查询 → 代理按优先级处理:
-  ① 本地 MMA 记忆 → 有命中? → 返回 CONFIRMED/PROVISIONAL 知识
+  ① 本地 MMA 记忆 → 有命中? → 返回 已确认/临时 知识
   ② 没命中 → WebSearch 搜索 → 返回结果
   ③ 搜不到? → 标记为"未知"，告知用户 → 用户可能自己补充
 ```
 
-具体操作（每个步骤开始前简单查询，失败则静默跳过）：
-查询本地记忆：node "<plugin_path>/scripts/mcts.js" knowledge acquire '{"tags":["<关键词>"],"limit":5}'
-(命令失败则静默跳过，直接走 WebSearch)
-```
+具体操作：在步骤开始前简单查询本地是否有相关记忆。有则引用，无则直接走 WebSearch。不用向用户展示查询过程。
 
-**注意：首次使用（冷启动）时记忆库为空，knowledge acquire 可能返回空或失败，这是正常的。直接进入 WebSearch 搜索即可。
+**注意：首次使用（冷启动）时记忆库为空，查询记忆可能返回空或失败，这是正常的。直接搜索网络即可。
 
 **记忆查询结果的使用：****
-- 本地命中 → "之前关于XXX的知识表明..."（标注来源：CONFIRMED/HYPOTHESIS）
-- 网络搜索 → "根据搜索到的资料..."（标注来源：web_search）
+- 本地命中 → "之前关于XXX的知识表明..."（标注来源：已确认/待验证）
+- 网络搜索 → "根据搜索到的资料..."（标注来源：网络搜索）
 - 找不到 → "关于XXX目前没有找到相关信息，如果你了解请告诉我"
 
-**存储新知识：**
-每个步骤产出的关键洞察写入（先在 Bash 中创建目录）：
-
-```
-系统临时目录/ponder-knowledge/
-注意: Windows上 Bash 的 /tmp/ 和 os.tmpdir() 不同，统一用 os.tmpdir() 路径<步骤名>-<时间戳>.json
-内容: { "description": "<核心结论>", "tags": ["<标签>"], "category": "tools_and_means", "q": 0.7 }
-后台监控自动读取并存储到 MMA（若监控未运行则存入失败，需检查 SessionStart 日志）
-```
-后台监控自动读取、分类(CONFIRMED/HYPOTHESIS)、存储到 MMA。
+**存储新知识：** 每个步骤的关键洞察由后台监控自动处理。不需要展示存储过程。
 
 **知识分类：**
-- CONFIRMED（已验证结论）→ q=0.8
-- HYPOTHESIS（新推导假设）→ q=0.6
-- REFUTED（已排除观点）→ q=0
+- 已验证（已确认结论）→ q=0.8
+- 待验证（新推导假设）→ q=0.6
+- 已排除（被推翻观点）→ q=0
 
 ---
 
@@ -106,7 +94,12 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 然后通过 AskUserQuestion 工具提问——一次一个问题，带选项。每个答案生成下一个问题。这是螺旋式采访，不是清单：
 
-
+```
+循环1：开放式——理解需求，复述确认
+循环2：扩展——填补空白维度（时机/资源/人群/规则/本质）
+循环3：挑战——找矛盾点
+循环4+：全覆盖——确认理解，找盲区
+```
 
 只在全部满足时停止：
 - 5个维度都可评分（即使不确定性高）
@@ -255,18 +248,18 @@ XXX
 - Your own analysis (only pipeline produces analysis)
 
 ✅ Show the pipeline's real output transparently:
-- 8 dimension names and scores → user sees the depth of analysis
-- Scenario paths with evidence → user sees how conclusions are derived
-- Contradictions and conflicts → user sees the reasoning tension
-- Self-check results → user sees the quality control
-- Verification findings → user sees what was challenged
+- 8 dimension names and scores → 用户看到分析深度
+- Scenario paths with evidence → 用户看到结论推导过程
+- Contradictions and conflicts → 用户看到推理张力
+- Self-check results → 用户看到质量控制
+- Verification findings → 用户看到验证了什么
 
 **How user verifies it's real reasoning (not fake):**
 ```
-✅ REAL → User sees Workflow agents appearing in UI:
+✅ 真的 → 用户在UI中看到Workflow子Agent出现：
   发散分析, 维度检查, 场景推演, 辩论, 综合判断, 核验
-  These appear automatically — LLM didn't write them.
+  这是系统自动显示的，不是LLM写的文字
 
-❌ FAKE → LLM writes text like "正在执行步骤1-5..." with no real agents.
-  If you see this as a user, the pipeline isn't running.
+❌ 假的 → LLM写"正在执行步骤1-5..."但没有真实Agent在跑
+  如果看到这种文字，说明管道没有真正运行
 ```

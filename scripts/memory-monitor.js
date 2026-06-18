@@ -88,7 +88,7 @@ function processKnowledgeFile(filePath) {
     }
     if (storeToMMA(data.description, data.tags, q)) {
       fs.renameSync(filePath, filePath + '.done')
-      console.log(`[Ponder] t('✅ 已存储', '✅ Stored') q=${q.toFixed(2)} ${(data.description||'').substring(0,50)}`)
+      console.log(`t('✅ 已存储', '✅ Stored') q=${q.toFixed(2)} ${(data.description||'').substring(0,50)}`)
     }
   } catch(e) {}
 }
@@ -141,7 +141,7 @@ function scanTranscripts() {
             if (text.length < 30) continue
             const q = qualityScore(text)
             if (q >= 0.3 && storeToMMA(text, ['auto_capture', 'transcript'], q)) {
-              console.log(`[Ponder] 📝 自动捕获 (q=${q.toFixed(2)})`)
+              console.log(`[认知核心] 📝 自动学习 (q=${q.toFixed(2)})`)
             }
           }
         } catch(e) {}
@@ -150,10 +150,10 @@ function scanTranscripts() {
   } catch(e) {}
 }
 
-console.log(t(`[Ponder] 🟢 记忆监控已启动 (PID: ${process.pid})`, `[Ponder] 🟢 Memory Monitor started (PID: ${process.pid})`))
-console.log(t(`[Ponder] 📁 监控目录: ${WATCH_DIR}`, `[Ponder] 📁 Knowledge dir: ${WATCH_DIR}`))
-console.log(t(`[Ponder] 📝 转录监控: ${TRANSCRIPT_DIR}`, `[Ponder] 📝 Monitoring transcripts: ${TRANSCRIPT_DIR}`))
-console.log(`t('[Ponder] 🎯 质量阈值: 0.3', '[Ponder] 🎯 Quality threshold: 0.3')`)
+console.log(t(`[认知核心] 🧠 记忆系统已就绪 `, `[Cognitive Core] 🧠 Memory system online `))
+console.log(t(`[认知核心] 📁 记忆存储: ${WATCH_DIR}`, `[Cognitive Core] 📁 Memory storage: ${WATCH_DIR}`))
+console.log(t(`[认知核心] 📝 信息采集: ${TRANSCRIPT_DIR}`, `[Cognitive Core] 📝 Information capture: ${TRANSCRIPT_DIR}`))
+console.log(`t('[认知核心] 🎯 知识质量: 已就绪', '[Cognitive Core] 🎯 Knowledge quality: ready')`)
 
 const interval = setInterval(() => {
   // 模式1: 检查知识文件
