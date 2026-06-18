@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.43
+version: 1.14.44
 license: MIT
 ---
 
@@ -79,35 +79,48 @@ The user should click to choose, not type. Violations are invalid.
 
 ---
 
-## 💾 记忆代理 — 唯一的知识入口
+## 💾 Memory System — Record Lessons, Avoid Repeated Mistakes
 
-Background memory daemon runs continuously (auto-started by SessionStart). **ALL steps query knowledge through this gateway only.**
+Not a general knowledge base. It records: what was tried, what failed, what worked.
+When a new request comes in → check past failures → exclude known bad paths → reduce trial and error.
 
-**Query knowledge (local first):**
+### What Gets Stored
+
+| Type | Example | Purpose |
+|------|---------|---------|
+| **Failed approaches** | "Strategy X caused 15% loss in similar situation" | NEVER repeat this |
+| **Successful approaches** | "Strategy Y worked well when condition Z was met" | Pattern to follow |
+| **User preferences** | "User prefers conservative, avoids tech stocks" | Personalize recommendations |
+| **False assumptions** | "Previously assumed A but B was true" | Correct mental models |
+
+### Query Flow
+
 ```
-向记忆代理发起查询 → 代理按优先级处理:
-  ① 本地 MMA 记忆 → 有命中? → 返回 已确认/临时 知识
-  ② 没命中 → WebSearch 搜索 → 返回结果
-  ③ 搜不到? → 标记为"未知"，告知用户 → 用户可能自己补充
+New request →
+  1. Query memory for past failures on similar topics
+  2. Exclude known bad approaches from consideration
+  3. Focus only on approaches NOT yet tried or that worked before
+  4. Present to user: "We previously tried X and it failed because Y. Heres what we havent tried."
 ```
 
-具体操作：在步骤开始前简单查询本地是否有相关记忆。有则引用，无则直接走 WebSearch。不用向用户展示查询过程。
+### Store Flow
 
-**Note: On first use (cold start) the memory store is empty. Queries may return nothing — this is normal. Just go to WebSearch.
+```
+After any outcome (success or failure) →
+  1. Tag: what was tried, what happened, why
+  2. Store to memory for future reference
+  3. If failure → mark as AVOID
+  4. If success → mark as PREFERRED
+```
 
-**记忆查询结果的使用：****
-- Local hit → "Previous knowledge about XXX suggests..." (source: CONFIRMED/PROVISIONAL)
-- Web search → "According to search results..." (source: web_search)
-- Not found → "No information found about XXX. If you know, please share."
+### Classification
 
-**Store new knowledge:** Key insights from each step are auto-processed by the background daemon. No need to show the storage process.
+- AVOID (q=0.0) — known failure path, exclude from future recommendations
+- PREFERRED (q=0.8) — worked before,优先考虑
+- UNTESTED — no memory, proceed with caution
+- USER_CORRECTION — user explicitly corrected something, overwrites everything else
 
-**Knowledge classification:**
-- CONFIRMED (verified conclusion) → q=0.8
-- HYPOTHESIS (newly derived) → q=0.6
-- REFUTED (disproven) → q=0
 
----
 
 ## The Only Three Things You Do
 
