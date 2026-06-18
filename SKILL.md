@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.7
+version: 1.14.8
 license: MIT
 ---
 
@@ -39,6 +39,8 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
    - 框架英文术语（MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA）
    - 框架内部术语：发散、推演、自检、收敛、核验、回路、维度
    - Agent 任务 ID、Thought for Xs、技术栈名
+□ 我已经调用了 Workflow 吗？如果没有 → 这整段分析都是假的。删除。直接调 Workflow。
+□ 这段分析是我自己写的吗？如果是 → 我是LLM，不是管道。用户要的是管道的分析，不是我的。
 □ 每个结论有没有数据支撑？没有 → 管道会提供，不要自己编。
 □ 这个输出对用户来说有意义吗？还是只是展示"我正在做什么"？如果是后者，不要输出。
 ```
@@ -107,11 +109,11 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
 
 **CRITICAL — MUST READ:**
 - You do NOT produce analysis. Only the pipeline does.
-- **Use Workflow tool ONLY. Do NOT use Agent() as fallback.** Agent() shows internal tool calls to the user and the sub-agent doesn't know what to do.
-- **DO NOT run the pipeline via Bash or node.**
-- **DO NOT describe pipeline internals or steps** in your output. If you list steps, you're lying.
-- If Workflow fails → report the error. Do not improvise.
-- If no pipeline execution happened → you have NO results. Say "分析管道执行失败，请重试".
+- **Call Workflow(). Do NOT call Agent(). Do NOT search the web yourself. Do NOT write analysis yourself.**
+- Workflow spawns real sub-agents (发散分析, 维度检查, 场景推演, 综合判断, 独立验证). The user SEES them appear in the UI. This is the ONLY way the user can trust that real reasoning is happening.
+- Agent() does NOT run the pipeline. The sub-agent just reads random files and produces useless output. The user has complained repeatedly about this.
+- If you write analysis yourself (even with WebSearch), you are faking it. The user will see text you wrote and have NO way to verify it's real reasoning.
+- **If Workflow fails → report the error. Do not improvise. Do not fall back.**
 - **No pipeline → no analysis output. This is not negotiable.**
 - **Depth loop**: Pipeline is single-pass. If verify.verdict == "REVISE" or verify.issues has critical items, call Workflow again with the previous results as context for a deeper pass.
 
