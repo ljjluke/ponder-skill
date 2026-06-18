@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.73
+version: 1.14.74
 license: MIT
 ---
 
@@ -246,7 +246,42 @@ Workflow({ scriptPath: '...', args: { step: 'verify', previous_results: '<结论
 5. 不清 → 调同一 step 带 feedback（round+1），最多3轮。
 6. **不要自己搜索出分析报告。Workflow 的 agent 会搜。**
 
-### Phase 3: Present Results
+### Phase 3: Present Results — 展示价值，不展示过程
+
+用户不关心你怎么分析的，用户要的是：**结论、方案、风险、行动建议。**
+
+输出结构：
+
+```
+## 核心结论（2-3段话）
+用户最需要知道的东西。不要写"经过6视角发散和八卦镜评分"这种过程描述。
+
+## 关键判断（用自然语言，不用表格）
+- 当前状态是什么
+- 主要矛盾在哪里
+- 最可能的方向
+
+## 建议方案（如果适用）
+- 方案一: XXX。适用条件: XXX。
+- 方案二: XXX。适用条件: XXX。
+
+## 主要风险
+- 什么情况下判断会错
+- 需要警惕什么信号
+
+## 跟踪信号（如果有）
+- 什么信号出现时需要重新评估
+- 什么时间节点关键
+```
+
+**铁律：**
+- ❌ 不要展示步骤名称（发散、八卦镜、推演、辩论等）
+- ❌ 不要展示验证检查表或✅❌标记
+- ❌ 不要展示数据来源URL列表
+- ❌ 不要展示评分细节（分数/维度/分析过程）
+- ✅ 展示：结论、判断、方案、风险
+- ✅ 如果用户追问细节，再展开
+
 
 ### Phase 4: 结束
 
