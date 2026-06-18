@@ -129,7 +129,7 @@ function load(detectResult) {
 module.exports = { init, load, detectLanguage, detectDomain, DESCRIPTIONS };
 
 if (require.main === module) {
-  const test = process.argv[2] || '帮我分析一下A股';
+  const test = process.argv[2] || '帮我分析一下当前情况';
   const info = init(test);
   console.log('Request:', test);
   console.log('Detected:', JSON.stringify({ lang: info.lang, domain: info.domain }));
