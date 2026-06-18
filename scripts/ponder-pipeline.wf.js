@@ -72,7 +72,7 @@ if (step === 'simulate') {
   phase('方案推演')
   const planList = args?.plans || []
   const sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-    return agent('模拟:'+(p.name||'')+' 乐观/中性/悲观路径。', {
+    return agent('模拟方案:'+(p.name||'')+' 需求:'+req+' 第'+round+'轮。乐观/中性/悲观路径。', {
       label: '推演:'+(p.name||'').substring(0,10),
       schema: { type:'object', properties: {
         plan_name:{type:'string'}, optimistic:{type:'string',minLength:50},
@@ -80,14 +80,15 @@ if (step === 'simulate') {
       }, required:['plan_name','optimistic','neutral','pessimistic'] },
     })
   }}))
-  return { step:'simulate', is_clear:true, round:round, result:sims, max_rounds:1, next_step:'debate' }
+  const simResults = sims.filter(Boolean).map(function(s) { return { name:s.plan_name, optimistic:s.optimistic, neutral:s.neutral, pessimistic:s.pessimistic } })
+  return { step:'simulate', is_clear:true, round:round, result:simResults, max_rounds:1, next_step:'debate' }
 }
 
 // ─── Debate ───
 if (step === 'debate') {
   phase('方案辩论')
   const simData = args?.simulations || []
-  const txt = simData.map(function(r) { return r.name+': 乐观='+(r.optimistic||'').substring(0,100) }).join('\n\n')
+  const txt = simData.map(function(r) { return r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)+' 悲观='+(r.pessimistic||'').substring(0,100) }).join('\n\n')
   const r = await agent('多方案辩论\n需求:'+req+'\n推演:\n'+txt+'\n排名+综合。有不确定→user_questions。', {
     label: '多方辩论',
     schema: { type:'object', properties: {
@@ -97,7 +98,7 @@ if (step === 'debate') {
         rank:{type:'number'}, name:{type:'string'},
         pros:{type:'array',items:{type:'string'}}, cons:{type:'array',items:{type:'string'}},
       },required:['rank','name','pros','cons']},minItems:2},
-      synthesis:{type:'string'},
+      synthesis:{type:'string',minLength:50},
     }, required:['is_clear','user_questions','ranked','synthesis'] },
   })
   return { step:'debate', is_clear:r.is_clear, user_questions:r.user_questions||[], round:round, result:r, max_rounds:3, next_step: r.is_clear ? 'synthesis' : null }
@@ -122,7 +123,7 @@ if (step === 'synthesis') {
 // ─── Verification ───
 if (step === 'verify') {
   phase('独立验证')
-  const r = await agent('审查\n结论:'+prev+'\n逐条列出发现的问题。没有就issues:[ ]。', {
+  const r = await agent('审查\n结论:'+prev+'\n逐条列出发现的具体问题。不要只写通过。没有就issues:[ ]。', {
     label: '独立验证',
     schema: { type:'object', properties: {
       verdict:{type:'string',enum:['PASS','REVISE']},
