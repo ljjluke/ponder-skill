@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.22
+version: 1.14.23
 license: MIT
 ---
 
@@ -49,29 +49,40 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 ---
 
-## 💾 知识记录（每个步骤必须执行）
+## 💾 记忆代理 — 唯一的知识入口
 
-后台有记忆守护进程持续运行（SessionStart 时自动启动），你只需把知识写入监控目录即可。
+后台有记忆守护进程持续运行（SessionStart 时自动启动）。**所有步骤获取知识都走这个入口，不走其他路径。**
 
-**取记忆：** 查看 SessionStart 日志 `[PONDER] Memory loaded: N points`。有记忆时，用 `knowledge acquire` 召回：
+**查询知识（优先本地记忆）：**
+```
+向记忆代理发起查询 → 代理按优先级处理:
+  ① 本地 MMA 记忆 → 有命中? → 返回 CONFIRMED/PROVISIONAL 知识
+  ② 没命中 → WebSearch 搜索 → 返回结果
+  ③ 搜不到? → 标记为"未知"，告知用户 → 用户可能自己补充
+```
+
+具体操作（每个步骤开始前执行）：
 ```
 Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词>"],"limit":5}'
 ```
-在推理中引用："之前关于XXX的记忆表明..."
 
-**存记忆：** 每个步骤的关键洞察写入共享文件，后台监控会自动分类存储：
+**记忆查询结果的使用：**
+- 本地命中 → "之前关于XXX的知识表明..."（标注来源：CONFIRMED/HYPOTHESIS）
+- 网络搜索 → "根据搜索到的资料..."（标注来源：web_search）
+- 找不到 → "关于XXX目前没有找到相关信息，如果你了解请告诉我"
+
+**存储新知识：**
+每个步骤产出的关键洞察写入：
 ```
-写入文件 /tmp/ponder-knowledge/<步骤名>-<时间戳>.json
+/tmp/ponder-knowledge/<步骤名>-<时间戳>.json
 内容: { "description": "<核心结论>", "tags": ["<标签>"], "category": "tools_and_means", "q": 0.7 }
 ```
+后台监控自动读取、分类(CONFIRMED/HYPOTHESIS)、存储到 MMA。
 
-**记忆分类（后台监控自动处理）：**
-- CONFIRMED（已验证的结论）→ q=0.8
-- HYPOTHESIS（新推导的假设）→ q=0.6
-- REFUTED（被推翻的观点）→ q=0（排除）
-
-**最终知识固化（全部完成后）：**
-用 `knowledge consolidate` 统一固化本次分析的全部产出。
+**知识分类：**
+- CONFIRMED（已验证结论）→ q=0.8
+- HYPOTHESIS（新推导假设）→ q=0.6
+- REFUTED（已排除观点）→ q=0
 
 ---
 
