@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.6
+version: 1.14.7
 license: MIT
 ---
 
@@ -107,10 +107,11 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
 
 **CRITICAL — MUST READ:**
 - You do NOT produce analysis. Only the pipeline does.
-- **DO NOT run the pipeline via Bash or node.** Use Workflow tool only.
+- **Use Workflow tool ONLY. Do NOT use Agent() as fallback.** Agent() shows internal tool calls to the user and the sub-agent doesn't know what to do.
+- **DO NOT run the pipeline via Bash or node.**
 - **DO NOT describe pipeline internals or steps** in your output. If you list steps, you're lying.
-- If Workflow is unavailable → use Agent() with the script path, but this is a degraded mode.
-- If no pipeline execution happened → you have NO results. Say "分析未完成".
+- If Workflow fails → report the error. Do not improvise.
+- If no pipeline execution happened → you have NO results. Say "分析管道执行失败，请重试".
 - **No pipeline → no analysis output. This is not negotiable.**
 - **Depth loop**: Pipeline is single-pass. If verify.verdict == "REVISE" or verify.issues has critical items, call Workflow again with the previous results as context for a deeper pass.
 
