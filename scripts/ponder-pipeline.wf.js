@@ -16,7 +16,6 @@ export const meta = {
 
 const req = args?.user_request || ''
 const profile = args?.step1 || ''
-const memoryCtx = args?.lessons || ''
 
 // ─── Step 1: 6-perspective divergence ───
 phase('Divergence')
@@ -50,7 +49,7 @@ Output 6 perspectives, 2+ contradictions between them, and a consensus conclusio
 phase('Dimension')
 const dimensions = await agent(`Score 8 dimensions (0-10) based on the divergence analysis.
 
-Past lessons: ${memoryCtx}
+Past lessons (scoring): ${scoringLessons}
 
 Divergence: ${JSON.stringify(divergence)}
 User request: ${req}
@@ -77,7 +76,7 @@ Search for data if needed. Every score MUST have a data basis.`, {
 phase('Plans')
 const plans = await agent(`Generate actionable plans based on analysis.
 
-Past lessons (check before generating): ${memoryCtx}
+Past lessons (planning): ${planningLessons}
 
 Divergence: ${JSON.stringify(divergence)}
 Dimensions: ${JSON.stringify(dimensions)}
@@ -104,7 +103,7 @@ Each plan must have a clear data foundation.`, {
 phase('Simulation')
 const sims = await parallel(
   plans.plans.slice(0, 8).map(p => () => agent(
-    `Simulate plan independently: ${p.name}\nAction: ${p.action}\nRequest: ${req}\nPast lessons: ${memoryCtx}\n\nProvide optimistic/neutral/pessimistic paths. Base each path on concrete data.`,
+    `Simulate plan independently: ${p.name}\nAction: ${p.action}\nRequest: ${req}\nPast lessons (simulation): ${simulationLessons}\n\nProvide optimistic/neutral/pessimistic paths. Base each path on concrete data.`,
     { label: 'Sim:' + p.name.substring(0, 10),
       schema: { type: 'object', properties: {
         plan_name: { type: 'string' },
@@ -125,7 +124,7 @@ const simText = sims.filter(Boolean).map(r =>
 
 const stances = await parallel(
   plans.plans.slice(0, 5).map(p => () => agent(
-    `Defend this plan: ${p.name}\nPast lessons: ${memoryCtx}\nRationale: ${p.rationale}\nSimulations:\n${sims.filter(Boolean).find(s=>s.plan_name===p.name)?Object.entries(sims.find(s=>s.plan_name===p.name)).map(([k,v])=>`${k}:${v}`).join('\n'):''}\n\nArgue for this plan. List 2-3 strengths with evidence, 2-3 risks.`,
+    `Defend this plan: ${p.name}\nPast lessons (debate): ${debateLessons}\nRationale: ${p.rationale}\nSimulations:\n${sims.filter(Boolean).find(s=>s.plan_name===p.name)?Object.entries(sims.find(s=>s.plan_name===p.name)).map(([k,v])=>`${k}:${v}`).join('\n'):''}\n\nArgue for this plan. List 2-3 strengths with evidence, 2-3 risks.`,
     { label: 'Stance:' + p.name.substring(0, 10),
       schema: { type: 'object', properties: {
         plan_name: { type: 'string' },
@@ -138,7 +137,7 @@ const stances = await parallel(
 
 const debate = await agent(`Rank and synthesize all plans.
 
-Past lessons: ${memoryCtx}
+Past lessons (debate): ${debateLessons}
 
 Request: ${req}
 Simulations:\n${simText}
@@ -162,7 +161,7 @@ Final synthesis: which plan is recommended and why. Base on data, not opinion.`,
 phase('Synthesis')
 const conclusion = await agent(`Final synthesis.
 
-Past lessons: ${memoryCtx}
+Past lessons (synthesis): ${synthesisLessons}
 
 User: ${req}
 Divergence: ${divergence.consensus}
@@ -188,7 +187,7 @@ Every claim must cite data. NEVER say "generally" or "it is believed" without a 
 phase('Verify')
 const verify = await agent(`Independent verification of the analysis.
 
-Past lessons: ${memoryCtx}
+Past lessons (verify): ${verifyLessons}
 
 Conclusion: ${conclusion.conclusion}
 Reasoning: ${conclusion.reasoning_chain}
@@ -211,8 +210,8 @@ Is each claim backed by data? Mark unsupported claims.`, {
 return {
   user_request: req,
   profile: profile,
-  lessons_provided: (memoryCtx && memoryCtx.trim() !== "" && memoryCtx !== "none") ? true : false,
-  lessons_raw: memoryCtx ? memoryCtx.substring(0, 200) : "none",
+  lessons_provided: lessonsProvided,
+  lessons_count: lessonsProvided ? 1 : 0,
   divergence: {
     perspectives: divergence.perspectives,
     contradictions: divergence.contradictions,
