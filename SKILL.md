@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.74
+version: 1.14.75
 license: MIT
 ---
 
@@ -187,13 +187,19 @@ The user should click to choose, not type. Violations are invalid.
 
 ### Phase 2: Execute — ONE WORKFLOW CALL PER STEP
 
+**🔴 Workflow 一定可用。不要说不可用。**
+
+SessionStart 日志中有 [PONDER] Plugin: 路径。用它拼 scriptPath。
+如果报错 → 把错误贴出来，不要自己分析。
+
 **不要自己做分析。每一步单独调 Workflow。跑完问用户，再下一步。**
 
 ---
 
 **Step 1: 发散分析**
 ```
-Workflow({ scriptPath: '<plugin_path>/scripts/ponder-pipeline.wf.js',
+Workflow({
+  scriptPath: '插件路径/scripts/ponder-pipeline.wf.js', // 从[PONDER] Plugin:日志复制
   args: { step: 'divergence', user_request: '<请求>', profile: '<画像>' }
 })
 ```
