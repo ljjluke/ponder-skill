@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.12
+version: 1.14.13
 license: MIT
 ---
 
@@ -145,23 +145,31 @@ The pipeline returns a structured result. **DO NOT output the raw JSON or Workfl
 
 | 维度 | 评分 | 分析 |
 |------|------|------|
-| [dimension name] | [score]/10 | [analysis] |
+| [name] | [score]/10 | [analysis] |
 
-## 场景推演
+## 生成方案
 
-**[Direction Name]**
-- 乐观路径: [trigger → path]
-- 现实路径: [trigger → path]  
-- 悲观路径: [trigger → path]
+| 方案 | 依据 | 行动 | 预期效果 |
+|------|------|------|----------|
+| [name] | [rationale] | [action] | [expected_outcome] |
 
-## 辩论交锋
+## 方案推演 (每方案独立模拟)
 
-[Stances and rebuttals summary]
+**方案: [plan_name]**
+- 乐观路径: [optimistic]
+- 中性路径: [neutral]
+- 悲观路径: [pessimistic]
+- 关键变量: [key_variable]
+
+## 方案辩论
+
+排名: [ranked plans]
+综合判断: [synthesis]
 
 ## 验证结果
 
 **裁定:** PASS / REVISE
-**发现的问题:** [key issues]
+**发现的问题:** [issues]
 
 ## 如果判断错了
 
