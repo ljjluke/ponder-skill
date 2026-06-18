@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.80
+version: 1.14.81
 license: MIT
 ---
 
@@ -141,7 +141,8 @@ The user should click to choose, not type. Violations are invalid.
 
 技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
-不要展示任何开场内容。直接开始采访（需求拆解）。
+技能加载后输出一行开场白："🧠 开始分析。先拆解你的需求。"
+然后直接开始采访（需求拆解）。
 采访完成后输出需求画像：
 天时=?/10  地利=?/10  人和=?/10  法=?/10  本质=?/10
 待验证假设：...
