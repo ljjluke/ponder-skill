@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.8
+version: 1.14.9
 license: MIT
 ---
 
@@ -119,21 +119,21 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
 
 ### Phase 3: Present Pipeline Results
 
-The pipeline returns a structured result object. Read it and present its contents to the user in their language. Translate everything, no English jargon.
+The pipeline returns a structured result object. Show its contents to the user. The user needs to see the actual analysis to trust it.
 
-What to present:
-- Core conclusion and reasoning chain
-- Scenarios/simulations that the pipeline produced
-- Final recommendation and follow-up signals
-- Action plan if present
+**SHOW everything the pipeline produced:**
+- Step2 (发散): 6 perspectives and their insights, contradictions found, consensus reached
+- Step3 (维度检查): 8 dimension scores, conflict pairs between dimensions, key finding
+- Step4 (场景推演): Each direction with optimistic/realistic/pessimistic paths, recommendation
+- Step5 (综合判断): Conclusion, reasoning chain, what-if-wrong analysis, self-check results, follow-up signals
+- Verify (独立验证): Verdict (PASS/REVISE), issues found, what was missed
 
-What NOT to present:
+**Translate to user's language.** Make it conversational. No English jargon, no JSON, no tool names.
+
+**DON'T show:**
 - Technical metrics (free_energy, mutation_result, step_fitness)
-- Step logs, internal scores, feature flags
-- JSON, tool calls, task IDs
-- Pipeline internal terms
-
-Format: natural conversational output in the user's language. No templates needed — the data tells you what to say. Make sure every claim has data support from the pipeline results.
+- Raw JSON, tool calls, task IDs
+- Your own analysis (only pipeline produces analysis)
 
 ---
 
@@ -152,7 +152,13 @@ Format: natural conversational output in the user's language. No templates neede
 - English framework terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
 - Fabricated data (no results → don't invent)
 - Your own analysis (only pipeline produces analysis)
-- Pipeline internal descriptions or step names
+
+✅ Show the pipeline's real output transparently:
+- 8 dimension names and scores → user sees the depth of analysis
+- Scenario paths with evidence → user sees how conclusions are derived
+- Contradictions and conflicts → user sees the reasoning tension
+- Self-check results → user sees the quality control
+- Verification findings → user sees what was challenged
 
 **How user verifies it's real reasoning (not fake):**
 ```
