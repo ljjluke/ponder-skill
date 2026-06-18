@@ -16,7 +16,7 @@ export const meta = {
 
 const req = args?.user_request || ''
 const profile = args?.step1 || ''
-const memoryCtx = args?.memory_context || ''
+const memoryCtx = args?.lessons || ''
 
 // ─── Step 1: 6-perspective divergence ───
 phase('Divergence')
@@ -24,6 +24,10 @@ const divergence = await agent(`Analyze from 6 perspectives: ${req}
 
 User profile: ${profile}
 Memory context: ${memoryCtx}
+
+IMPORTANT: You MUST check the Past lessons section below. If it has data, reference relevant lessons. If it says NONE, do NOT pretend there are lessons.
+
+First line of your response MUST be: LESSONS_CHECK: [found N relevant lessons / no relevant lessons found]
 
 For each perspective, provide: insight (20+ chars), detail (40+ chars), and reasoning with data sources.
 If you need data, search for it. Base ALL claims on found data, not assumptions.
@@ -207,6 +211,8 @@ Is each claim backed by data? Mark unsupported claims.`, {
 return {
   user_request: req,
   profile: profile,
+  lessons_provided: (memoryCtx && memoryCtx.trim() !== "" && memoryCtx !== "none") ? true : false,
+  lessons_raw: memoryCtx ? memoryCtx.substring(0, 200) : "none",
   divergence: {
     perspectives: divergence.perspectives,
     contradictions: divergence.contradictions,

@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.46
+version: 1.14.47
 license: MIT
 ---
 
@@ -161,7 +161,7 @@ Workflow({
     user_request: '<user request>',
     step1: '<profile>',
     plugin_path: '<plugin path from [PONDER] Plugin: log>',
-    error_history: '<any memory or none>',
+    lessons: '<past failures or none>',
     meta_config: null
   }
 })
@@ -177,7 +177,7 @@ Workflow({
 
 **LLM ROLE IS LIMITED TO:**
 1. Interview the user → profile
-2. Check error convergence → pass as memory_context
+2. Check error convergence → pass as lessons
 3. Call Workflow once → wait for result
 4. Present the return value in user's language
 5. Record failure/success to error convergence
@@ -212,7 +212,7 @@ Based on simulation results and debate conclusions, produce final conclusion, re
 
 🚨 **After synthesis, you MUST immediately call Workflow for verification. No pause.**
 
-**6. 独立验证（并行任务 → 调 Workflow）**
+**6. Independent verification (parallel → call Workflow)**
 
 ```
 Workflow({
@@ -300,7 +300,7 @@ XXX
 - "Thought for Xs", task IDs, execution time
 - English framework terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
 - Fabricated data (no results → don't invent)
-- Skipping error convergence check before deciding (must check memory first)
+- Skipping error convergence check before deciding (must check lessons first)
 - Your own analysis (only pipeline produces analysis)
 
 ✅ Show the pipeline's real output transparently:
