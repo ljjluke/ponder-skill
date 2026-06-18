@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.69
+version: 1.14.70
 license: MIT
 ---
 
@@ -135,34 +135,54 @@ The user should click to choose, not type. Violations are invalid.
 
 ## The Only Three Things You Do
 
-### Phase 1: Interview — Spiral Divergence
 
-Self-examination (in your head, do NOT output):
-- What is my first reaction to this request?
-- What if the opposite is true?
-- What defaults do I assume about this domain?
+## 🧠 开场白（技能激活时输出）
 
-Then ask questions via AskUserQuestion — one at a time with clickable options. Each answer generates the next question. This is a spiral, not a checklist:
+技能加载后，输出这段开场白（用用户的语言，翻译以下内容）：
 
+╔══════════════════════════════════════╗
+║   🧠 Ponder 认知框架已激活           ║
+║   发散 · 八卦镜 · 收敛 · 推演 · 辩论 ║
+║   综合判断 · 独立验证                ║
+║   每步循环 ≤3 轮 · 每步与你确认      ║
+╚══════════════════════════════════════╝
+
+然后用自然的语气开始采访："你想分析什么？我会一步步跟你确认，每一步都打磨清楚了再下一步。"
+
+### Phase 1: Interview — Spiral Divergence (需求拆解)
+
+先在心里自问（不要输出）：
+- 我对这个请求的第一反应是什么？
+- 如果相反的情况才是对的呢？
+- 我对这个领域有什么默认假设？
+
+然后通过 AskUserQuestion 螺旋提问，一次一问，每个答案产生新问题。覆盖5个维度：
+
+**天时（Timing）** — 时间窗口、紧急程度、周期性
+**地利（Resources）** — 资源、数据、工具、人力
+**人和（People）** — 利益相关方、用户、对手
+**法（Rules）** — 规则、约束、偏好、风险承受
+**本质（Essence）** — 真正目的是什么？解决了什么问题？
+
+采访顺序不固定，根据回答自然深入。每个回答可能产生多个新问题。
+
+只在全部满足时停止：
+- 5个维度都可评分（即使不确定性高）
+- 能用2-3句话描述情况并获用户确认
+- 至少有1个"待验证假设"
+- **想不出还有任何问题会改变分析方向**
+
+如果还能想到一个问题 → 问。不要继续。
+
+**Profile 输出**（用户语言，5维度+待验证假设）：
 ```
-Cycle 1: Open — understand request, repeat back
-Cycle 2: Expand — fill empty dimensions (Timing/Resources/People/Rules/Essence)
-Cycle 3: Challenge — find contradictions
-Cycle 4+: Full coverage — confirm understanding, find blind spots
+天时=?/10    地利=?/10    人和=?/10
+法=?/10      本质=?/10
+待验证假设：...
 ```
 
-Stop only when ALL are true:
-- All 5 dimensions scorable (even if high uncertainty)
-- Can describe the situation in 2-3 sentences and user confirms
-- Have at least 1 "pending assumption" (know what you don't know)
-- **Cannot think of any question that would change the analysis direction**
+⛛ 不允许一次过采访。每个答案必须产生新问题。深度至少4轮对话。
 
-If you can still think of a meaningful question → ask it. Do NOT proceed.
-
-**Profile output** (user language, 5 dimensions + pending assumptions):
-
-
-⛛ 不允许一次过采访（问3个问题就完事）。每个答案必须产生新问题。
 
 ### Phase 2: Execute — ONE WORKFLOW CALL PER STEP
 
@@ -226,6 +246,17 @@ Workflow({ scriptPath: '...', args: { step: 'verify', previous_results: '<结论
 6. **不要自己搜索出分析报告。Workflow 的 agent 会搜。**
 
 ### Phase 3: Present Results
+
+### Phase 4: 结束
+
+最后一次验证通过后，输出：
+```
+╔══════════════════════════════════════╗
+║   ✅ 分析完成 · 所有步骤已收敛       ║
+║   如有后续问题或需求变化，随时找我   ║
+╚══════════════════════════════════════╝
+```
+
 
 Present the complete analysis in narrative form. Same format as below (plain text, no JSON).
 
