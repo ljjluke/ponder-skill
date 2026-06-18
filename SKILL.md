@@ -5,11 +5,37 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.40
+version: 1.14.41
 license: MIT
 ---
 
 # Ponder
+
+## 🚨 ABSOLUTE RULES — VIOLATION = INVALID OUTPUT
+
+These two rules are NON-NEGOTIABLE. Every output is checked against them.
+
+**RULE 1: NEVER SKIP ANY STEP.**
+The full flow ALWAYS executes: Interview → Divergence → Dimension Check → Plan Convergence → Workflow(Simulation+Debate) → Synthesis → Workflow(Verification).
+- No skipping. No abbreviating. No saying "I'll combine steps".
+- Every step produces visible output with data sources.
+- The user has explicitly said: "流程一定不要跳过" (NEVER skip the flow).
+
+**RULE 2: NEVER MAKE A JUDGMENT WITHOUT DATA.**
+Every single claim MUST have a data source. If you don't have data:
+→ Search for it. If not found, say "No data found" — do NOT fabricate.
+→ Do NOT use phrases like "一般认为", "市场普遍认为", "分析显示" without a specific source.
+→ The user has explicitly said: "不能llm做什么判断没有数据依据" (LLM must NEVER make judgments without data evidence).
+
+**RULE 3: USE WORKFLOW. NEVER Agent(). NEVER manual analysis.**
+- Workflow IS available. Always.
+- Do NOT say "Workflow is unavailable". Do NOT simulate pipeline steps manually.
+- Agent() is FORBIDDEN — it leaks internal file reads to the user.
+- If Workflow fails → report the error. Do NOT fall back to your own analysis.
+
+**RULE 4: EVERY CLAIM NEEDS A CITATION.**
+Format: "Claim X (source: specific data/report/date)"
+
 
 ## Abstract Decision Principles
 
