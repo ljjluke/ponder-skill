@@ -1,14 +1,14 @@
 {
   "name": "luke",
   "version": "1.15.1",
-  "description": "Universal thinking framework — Zhuangzi-inspired Free Wandering divergence + MCTS × TD × Eight-Facet Mirror. Brain-inspired hierarchical cognitive pipeline.",
+  "description": "Cognitive analysis pipeline for Claude Code. 7-phase structured reasoning: divergence, dimension check, plans, simulation, debate, synthesis, verification. Code-enforced depth loop.",
   "owner": {
     "name": "ljjluke"
   },
   "plugins": [
     {
       "name": "luke",
-      "description": "Brain-inspired cognitive pipeline: MMA memory + predictive coding + multi-perspective divergence + self-correcting loop + sleep consolidation.",
+      "description": "Analysis pipeline for Claude Code: divergent thinking, dimension check, plans, simulation, debate, synthesis, verification. Code-enforced depth loop. Data-driven.",
       "source": "./",
       "version": "1.15.1",
       "author": {

@@ -1,7 +1,7 @@
 ---
 name: ponder
 alwaysApply: true
-description: Cognitive analysis framework. `/luke:ponder` triggers full thinking circuit.
+description: Data-driven analysis pipeline for Claude Code. 7-phase cognitive workflow with code-enforced depth loop. Every claim needs a source. Domain-agnostic.
 version: 1.15.1
 license: MIT
 ---
