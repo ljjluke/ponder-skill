@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.11
+version: 1.14.12
 license: MIT
 ---
 
@@ -124,23 +124,63 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
   - `needs_deeper` → pipeline already did 3 rounds and still unclear. Present best available conclusion + remaining uncertainties honestly.
 - **Never present a vague conclusion as final.** If depth loop hasn't converged, either the user needs to provide more info, or research needs to go deeper.
 
-### Phase 3: Present Pipeline Results
+### Phase 3: Present Pipeline Results — 🚨 MUST FOLLOW THIS FORMAT 🚨
 
-The pipeline returns a structured result object. Show its contents to the user. The user needs to see the actual analysis to trust it.
+The pipeline returns a structured result. **DO NOT output the raw JSON or Workflow result.** Read the data and present it exactly like this:
 
-**SHOW everything the pipeline produced:**
-- Step2 (发散): 6 perspectives and their insights, contradictions found, consensus reached
-- Step3 (维度检查): 8 dimension scores, conflict pairs between dimensions, key finding
-- Step4 (场景推演): Each direction with optimistic/realistic/pessimistic paths, recommendation
-- Step5 (综合判断): Conclusion, reasoning chain, what-if-wrong analysis, self-check results, follow-up signals
-- Verify (独立验证): Verdict (PASS/REVISE), issues found, what was missed
+```
+## 核心结论
 
-**Translate to user's language.** Make it conversational. No English jargon, no JSON, no tool names.
+[pipeline's step5.conclusion]
 
-**DON'T show:**
-- Technical metrics (free_energy, mutation_result, step_fitness)
-- Raw JSON, tool calls, task IDs
-- Your own analysis (only pipeline produces analysis)
+## 6视角发散
+
+| 视角 | 洞察 |
+|------|------|
+| [name] | [insight] |
+
+**矛盾点:** [contradictions]
+
+## 8维度评分
+
+| 维度 | 评分 | 分析 |
+|------|------|------|
+| [dimension name] | [score]/10 | [analysis] |
+
+## 场景推演
+
+**[Direction Name]**
+- 乐观路径: [trigger → path]
+- 现实路径: [trigger → path]  
+- 悲观路径: [trigger → path]
+
+## 辩论交锋
+
+[Stances and rebuttals summary]
+
+## 验证结果
+
+**裁定:** PASS / REVISE
+**发现的问题:** [key issues]
+
+## 如果判断错了
+
+[pipeline's what_if_wrong]
+
+## 跟踪信号
+
+- [signal 1]
+- [signal 2]
+```
+
+**Rules — VIOLATIONS WILL MAKE THE OUTPUT USELESS:**
+1. Do NOT output `● Task Output`, JSON, or any tool result directly
+2. Do NOT include "agentCount", "summary", "logs", or any Workflow metadata
+3. Do NOT include English jargon or technical terms
+4. ALL content must be in the user's language
+5. If the user is Chinese → ALL output in Chinese, including section headers
+6. Every claim must come from the pipeline data — do not add your own analysis
+7. If `conclusion_clarity` is `needs_user_input`, show the user gaps and ask questions
 
 ---
 
