@@ -107,8 +107,9 @@ While pipeline runs, show only: `📊 Analysis in progress...`
 
 **CRITICAL — MUST READ:**
 - You do NOT produce analysis. Only the pipeline does.
-- If Workflow is unavailable → use Agent() as fallback with the same script content.
-- If no pipeline execution happened → you have NO results. Say so.
+- **DO NOT run the pipeline via Bash or node.** Use Workflow tool only. Bash execution will fail (it's a Workflow script, not a Node.js script).
+- If Workflow is unavailable → use Agent() as fallback with the same file.
+- If no pipeline execution happened → you have NO results to output. Say "分析未完成".
 - **No pipeline → no analysis output. This is not negotiable.**
 
 ### Phase 3: Present Pipeline Results
