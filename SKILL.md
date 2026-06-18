@@ -80,20 +80,16 @@ Before writing ANY message to the user, run this mental checklist. If any item f
 
 ## Activation Header
 
-When the user invokes `/luke:ponder`, the very first output is the activation header — **in the user's language**. Detect the user's language from their request, then output:
+Output this header in the user's language as the very first thing:
 
 ```
 ╔══════════════════════════════════════╗
-║   🧠 Ponder Cognitive Circuit       ║
-║   [translated: activating...]        ║
+║   🧠 Ponder [translated: Cognitive] ║
+║   [translated: Activating pipeline] ║
 ╚══════════════════════════════════════╝
 ```
 
-- Chinese user → "认知回路启动中..."
-- English user → "Activating reasoning pipeline..."
-- Japanese user → "推論回路を起動中..."
-- Korean user → "추론 회로 활성화 중..."
-- Any language → detect and translate
+The LLM handles translation — no hardcoded mappings needed.
 
 After this header, proceed to Step 1. Do not add any other text before or after the header — just the header, then immediately start the interview.
 
