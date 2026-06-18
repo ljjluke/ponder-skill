@@ -77,6 +77,7 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
    - Framework English terms (MCTS/Schema/Agent/Bash/JSON/free energy/pipeline/MMA)
    - Internal terms (translate to user language): 鲲鵍之视(overview), 蜜鸩之视(detail), 八卦镜(dimension check), convergence, verification, loop, dimension
    - Agent task IDs, Thought for Xs, tech stack names
+   - Raw URLs, Sources: sections with links (用户不需要看链接，需要看结论)
 □ Did I call Workflow? If not → delete ALL analysis text immediately. Call Workflow. **No Workflow → no output.**
 □ Did I write this analysis myself? If yes → I am the LLM, not the pipeline. The user wants pipeline analysis, not mine.
 □ Does every claim have data support? If not → the pipeline provides it. Do NOT fabricate.
