@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.15
+version: 1.14.16
 license: MIT
 ---
 
@@ -124,71 +124,68 @@ Plugin path is logged at session start: `[PONDER] Plugin: /root/.claude/plugins/
   - `needs_deeper` → pipeline already did 3 rounds and still unclear. Present best available conclusion + remaining uncertainties honestly.
 - **Never present a vague conclusion as final.** If depth loop hasn't converged, either the user needs to provide more info, or research needs to go deeper.
 
-### Phase 3: Present Pipeline Results — 🚨 MUST FOLLOW THIS FORMAT 🚨
+### Phase 3: Present Pipeline Results — 🚨 纯叙述体，禁止任何键值对/JSON 🚨
 
-The pipeline returns a structured result. **DO NOT output the raw JSON or Workflow result.** Read the data and present it exactly like this:
+管道返回结构化数据。**你读数据，然后用用户的语言写成流畅的叙述文章。禁止出现任何 `{}` `[]` `"key":` `score: 7` 这类格式。**
+
+参照这个结构，但**全部用自然语言**：
 
 ```
 ## 核心结论
 
-[pipeline's step5.conclusion]
+用2-3段话写出管道的结论。这是用户最需要的东西。
 
-## 6视角发散
+## 发散分析：6个视角
 
-| 视角 | 洞察 | 推理依据 |
-|------|------|----------|
-| [name] | [insight] | [reasoning steps] |
+对每个视角描述其洞察和推理过程。
+例如："从技术分析视角来看，XXX。得出这个判断的依据是XXX（知识来自模型已有知识）。"
+例如："从政策视角来看，XXX。这个判断是因为XXX（来源：推理推导）。"
 
-**矛盾点:** [contradictions]
+## 维度评分
 
-## 8维度评分
-
-| 维度 | 评分 | 分析 | 评分依据 |
-|------|------|------|----------|
-| [name] | [score]/10 | [analysis] | [reasoning] |
+用叙述语言描述关键维度得分和依据。例如：
+"政策面评分最高(8分)，因为XXX。"
+"技术面评分较低(4分)，因为XXX。"
 
 ## 生成方案
 
-| 方案 | 依据 | 行动 | 预期效果 |
-|------|------|------|----------|
-| [name] | [rationale] | [action] | [expected_outcome] |
+用自然列表：
+- 方案一：XXX。依据是XXX。预期效果是XXX。
+- 方案二：XXX。依据是XXX。预期效果是XXX。
 
-## 方案推演 (每方案独立模拟)
+## 方案推演
 
-**方案: [plan_name]**
-- 乐观路径: [optimistic] (推理: [reasoning])
-- 中性路径: [neutral] (推理: [reasoning])
-- 悲观路径: [pessimistic] (推理: [reasoning])
-- 关键变量: [key_variable]
+**方案一：XXX**
+乐观情境下：XXX。这么判断是因为XXX。
+中性情境下：XXX。这么判断是因为XXX。
+悲观情境下：XXX。这么判断是因为XXX。
 
 ## 方案辩论
 
-排名: [ranked plans]
-综合判断: [synthesis]
+各方案排名：第一名XXX，第二名XXX。
+综合判断：XXX。
 
 ## 验证结果
 
-**裁定:** PASS / REVISE
-**发现的问题:** [issues]
+裁定：通过/需修订。
+发现的问题：XXX。
 
 ## 如果判断错了
 
-[pipeline's what_if_wrong]
+XXX。
 
 ## 跟踪信号
 
-- [signal 1]
-- [signal 2]
+XXX。
 ```
 
-**Rules — VIOLATIONS WILL MAKE THE OUTPUT USELESS:**
-1. Do NOT output `● Task Output`, JSON, or any tool result directly
-2. Do NOT include "agentCount", "summary", "logs", or any Workflow metadata
-3. Do NOT include English jargon or technical terms
-4. ALL content must be in the user's language
-5. If the user is Chinese → ALL output in Chinese, including section headers
-6. Every claim must come from the pipeline data — do not add your own analysis
-7. If `conclusion_clarity` is `needs_user_input`, show the user gaps and ask questions
+**铁律：**
+1. ❌ 禁止 `{` `}` `[` `]` `"key":` 任何类似 JSON 的格式
+2. ❌ 禁止 `● Task Output`、`agentCount`、`summary`、`result:`
+3. ❌ 禁止英文框架术语
+4. ✅ 全程用用户语言写叙述体
+5. ✅ 每段推理标注知识来源：来自用户已提供 / 来自模型已有知识 / 来自这次分析推理
+6. ✅ 结尾加一段"知识统计"：用了你的N条信息、调用了M条已有知识、新推导出K条结论
 
 ---
 
