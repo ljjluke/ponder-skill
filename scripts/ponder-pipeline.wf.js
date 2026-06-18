@@ -174,6 +174,33 @@ const verifyResult = await agent(`独立验证\n\n结论: ${step5.conclusion}\n�
   },
 })
 
+// ─── Build knowledge summary ───
+function collectReasoning(item, category) {
+  if (!item) return []
+  if (Array.isArray(item)) return item.flatMap(i => collectReasoning(i, category))
+  if (item.reasoning) return item.reasoning.map(r => ({ ...r, category }))
+  if (item.optimistic_reasoning) return [
+    ...(item.optimistic_reasoning || []).map(r => ({ ...r, category: category + '_optimistic' })),
+    ...(item.neutral_reasoning || []).map(r => ({ ...r, category: category + '_neutral' })),
+    ...(item.pessimistic_reasoning || []).map(r => ({ ...r, category: category + '_pessimistic' })),
+  ]
+  return []
+}
+const allReasoning = [
+  ...(step2?.perspectives || []).flatMap(p => collectReasoning(p, '发散分析')),
+  ...(step3?.dimensions || []).flatMap(d => collectReasoning(d, '维度检查')),
+  ...(step4?.plans || []).flatMap(p => collectReasoning(p, '方案生成')),
+  ...(simulationResults || []).flatMap(r => collectReasoning(r, '独立推演')),
+  ...(debateResult?.plans_ranked || []).flatMap(p => collectReasoning(p, '多方辩论')),
+  ...(step5?.reasoning_steps || []).map(r => ({ ...r, category: '综合判断' })),
+]
+const knowledgeBySource = {}
+for (const r of allReasoning) {
+  const src = r.knowledge_source || 'unknown'
+  if (!knowledgeBySource[src]) knowledgeBySource[src] = []
+  knowledgeBySource[src].push(r)
+}
+
 // ─── Return ───
 return {
   user_request: userRequest,
@@ -232,5 +259,20 @@ return {
     issues: verifyResult.issues,
     all_clear: verifyResult.all_clear,
     conclusion_clarity: verifyResult.conclusion_clarity,
+  },
+  knowledge_summary: {
+    total_reasoning_steps: allReasoning.length,
+    by_source: {
+      user_input: knowledgeBySource['user_input'] || [],
+      model_knowledge: knowledgeBySource['model_knowledge'] || [],
+      web_search: knowledgeBySource['web_search'] || [],
+      reasoning: knowledgeBySource['reasoning'] || [],
+    },
+    counts: {
+      user_input: (knowledgeBySource['user_input'] || []).length,
+      model_knowledge: (knowledgeBySource['model_knowledge'] || []).length,
+      web_search: (knowledgeBySource['web_search'] || []).length,
+      reasoning: (knowledgeBySource['reasoning'] || []).length,
+    },
   },
 }
