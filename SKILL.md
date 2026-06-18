@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: Cognitive analysis framework. `/luke:ponder` triggers full thinking circuit.
-version: 1.14.93
+version: 1.14.94
 license: MIT
 ---
 
@@ -16,22 +16,31 @@ license: MIT
 
 ## 流程
 
-Step 1: 需求拆解
-用 AskUserQuestion 一次一问，覆盖天时/地利/人和/法/本质。
-问完输出：
-天时=?/10 地利=?/10 人和=?/10 法=?/10 本质=?/10 待验证假设:...
+Step 1: 需求拆解（单独完成）
+用 AskUserQuestion 一次一问，覆盖天时/地利/人和/法/本质。问完输出画像。
 
-Steps 2-8: 每步独立执行
+**Steps 2-8: 每步独立执行，一步完了才下一步，不准合并。**
 
-先调 Workflow，不可用时手动。
-Workflow({scriptPath:"插件路径/scripts/ponder-pipeline.wf.js",args:{step:"...",user_request:"...",profile:"..."}})
-返回 {is_clear, user_questions, result}
-is_clear=true→下一步。false→问user_questions→同一步带feedback重调(最多3轮)
+每步只有一种方式完成：
+A) 调 Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{step:"...", user_request:"...", profile:"..."}})
+B) 手动按同一步的逻辑执行
 
-步骤顺序：
-divergence → bagua → plans → simulate(并行) → debate → synthesis → verify
+每步完成后检查 is_clear：
+- true → 进入下一步（步骤序号+1）
+- false → 问 user_questions 中的问题 → 同一步重做（最多3轮）
 
-每步手动模式输出结构必须包含 is_clear(boolean) 和 user_questions(array)。
+**不准把多步合并到同一个Agent或同一个阶段。每步是一个独立的单元。**
+
+步骤列表（每步独立）：
+STEP 2: divergence — 6视角。每视角必须有数据来源。输出 {is_clear, user_questions, perspectives}
+STEP 3: bagua — 8维度评分。输出 {is_clear, user_questions, dimensions}
+STEP 4: plans — 5-8方案。输出 {is_clear, user_questions, plans}
+STEP 5: simulate — 所有方案并行推演。输出 [{plan_name, optimistic, neutral, pessimistic}]
+STEP 6: debate — 方案排名+综合推荐。输出 {is_clear, user_questions, ranked, synthesis}
+STEP 7: synthesis — 结论+推理链+假设。输出 {is_clear, user_questions, conclusion, reasoning, assumptions}
+STEP 8: verify — 审查问题。输出 {verdict, fake_clarity, issues}
+
+每步手动模式必须包含 is_clear(boolean) 和 user_questions(array)。user_questions 是分析中发现的具体盲点，不是"你觉得对吗？"。
 
 Step 9: 呈现
 只展示：核心结论、关键判断、建议方案、主要风险。
