@@ -207,8 +207,8 @@ The background daemon (`memory-monitor.js`) runs from session start to end, auto
 # Use — any domain
 /luke:ponder Analyze the current market situation
 /luke:ponder Help me plan my Python learning path
-/luke:ponder Evaluate this startup idea
-/luke:ponder My wife has severe morning sickness, what can we do?
+/luke:ponder Analyze this startup competitive landscape
+/luke:ponder Compare remote work vs office work productivity
 ```
 
 <br>

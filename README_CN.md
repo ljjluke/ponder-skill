@@ -207,8 +207,8 @@ LLM 无法跳过、无法减少轮数、无法忽略 `user_questions`。
 # 使用——任何领域
 /luke:ponder 帮我分析一下A股
 /luke:ponder 规划一下Python学习路线
-/luke:ponder 评估这个创业项目
-/luke:ponder 老婆孕反严重，有什么办法
+/luke:ponder 分析这个创业项目的竞争格局
+/luke:ponder 比较远程办公和办公室办公的 productivity 差异
 ```
 
 <br>
