@@ -226,10 +226,25 @@ Is each claim backed by data? Mark unsupported claims.`, {
 })
 
 // ─── Return ALL data for the LLM to present ───
+
+// ═══ Step 8: Clarity assessment ═══
+phase("结论评估")
+const clarity = await agent("Assess conclusion clarity.\n\nConclusion: " + JSON.stringify(conclusion.conclusion) + "\nSelf-check: " + JSON.stringify(conclusion.self_check) + "\nVerification: " + verify.verdict + "\n\nAnswer: is the conclusion clear? If not, is it missing user info or lacking research depth?", {
+  label: "结论评估",
+  schema: { type: "object", properties: {
+    verdict: { type: "string", enum: ["clear", "needs_user_input", "needs_deeper"] },
+    user_gaps: { type: "array", items: { type: "string" } },
+    research_gaps: { type: "array", items: { type: "string" } },
+  }, required: ["verdict"] },
+})
+
 return {
   user_request: req,
   profile: profile,
   lessons_provided: lessonsProvided,
+  clarity_verdict: clarity.verdict,
+  clarity_user_gaps: clarity.user_gaps || [],
+  clarity_research_gaps: clarity.research_gaps || [],
   lessons_count: lessonsProvided ? 1 : 0,
   divergence: {
     perspectives: divergence.perspectives,
