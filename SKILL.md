@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.31
+version: 1.14.32
 license: MIT
 ---
 
@@ -96,7 +96,27 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 
 ### Phase 1: Interview — Spiral Divergence
 
-同前（5维度采访→输出profile）
+先在心里自问（不要输出）：
+- 我对这个请求的第一反应是什么？
+- 如果相反的情况才是对的呢？
+- 我对这个领域有什么默认假设？
+
+然后通过 AskUserQuestion 工具提问——一次一个问题，带选项。每个答案生成下一个问题。这是螺旋式采访，不是清单：
+
+
+
+只在全部满足时停止：
+- 5个维度都可评分（即使不确定性高）
+- 能用2-3句话描述情况并获用户确认
+- 至少有1个待验证假设（知道自己不知道什么）
+- **想不出还有任何问题会改变分析方向**
+
+如果还能想到一个有意义的问题 → 问。不要继续。
+
+**Profile 输出**（用户语言，5维度+待验证假设）：
+
+
+⛛ 不允许一次过采访（问3个问题就完事）。每个答案必须产生新问题。
 
 ### Phase 2: Execute Steps — Sequential + Parallel
 
