@@ -5,7 +5,7 @@ alwaysApply: true
 description: |
   Cognitive analysis framework — multi-perspective divergence × deep research × debate verification × knowledge accumulation
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory, no skipping.
-version: 1.14.49
+version: 1.14.50
 license: MIT
 ---
 
@@ -89,7 +89,9 @@ The user should click to choose, not type. Violations are invalid.
 ```
 场景: [什么情况]
 尝试: [做了什么]
+当时条件: [导致失败的关键条件]
 失败原因: [为什么不行]
+是否组合尝试: [单独/曾与X组合]
 替代方案: [应该怎么做]
 ```
 
@@ -98,7 +100,7 @@ The user should click to choose, not type. Violations are invalid.
 ```
 遇到决策点 →
   查错误信息收敛 → 当前场景是否匹配历史失败场景？
-    ├─ 匹配 → 此路不通！换方案。直接告诉用户"之前试过这个，不行"
+    ├─ 匹配 → 作为参考，综合判断。不要直接排除"之前试过这个，不行"
     └─ 不匹配 → 这是新路径，放心走。回头记结果
 ```
 
