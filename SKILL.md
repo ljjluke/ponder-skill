@@ -4,7 +4,7 @@ alwaysApply: true
 description: |
   Universal thinking framework — MCTS tree search + TD learning + Zhuangzi-inspired divergence.
   `/luke:ponder` triggers full thinking circuit. Every phase mandatory. No skipping.
-version: 1.14.19
+version: 1.14.20
 license: MIT
 ---
 
@@ -67,11 +67,23 @@ Before writing ANY message to the user, run this mental checklist. If any fails 
 基于发散结果，从8个维度系统评分（0-10分）。对每个维度展示评分和评分依据。
 结束后输出各维度评分、维度间的冲突对、关键发现。
 
-**💾 每个步骤执行时：**
-- 开始前查看 SessionStart 日志中的 `[PONDER] Memory loaded: N points` → 有记忆就参考
-- 步骤中产生的新洞察在输出时标注"← 新知识，将存入记忆"
-- 有相关历史记忆时引用："之前关于XXX的记忆表明..."
-- 全部完成后，关键结论存入记忆供后续会话使用
+**💾 记忆操作（每个步骤都执行）：**
+
+**取记忆：** 查看 SessionStart 日志中 `[PONDER] Memory loaded: N points`。有记忆时，用：
+```
+Bash: node <plugin_path>/scripts/mcts.js knowledge acquire '{"tags":["<关键词>"],"limit":5}'
+```
+结果会显示相关历史记忆。在推理中引用："之前关于XXX的记忆表明..."
+
+**存记忆：** 每个步骤产出的关键洞察需要存储到 MMA：
+```
+Bash: node <plugin_path>/scripts/mcts.js mma ashi '{"description":"<核心结论>","tags":["<标签1>","<标签2>"],"category":"tools_and_means","emotion":"an","q":0.7}'
+```
+
+**记忆分类：**
+- CONFIRMED（已验证的结论）→ q=0.8
+- HYPOTHESIS（新推导的假设）→ q=0.6
+- REFUTED（被推翻的观点）→ 不存，标注为已排除
 
 **3. 方案收敛（顺序步骤）**
 基于发散+维度分析，收敛生成5-10个具体可执行的方案。展示每个方案：名称、依据、行动描述、预期效果、风险。
