@@ -35,11 +35,19 @@ function deqi(kg, query, context = {}) {
             }
         }
         if (results.length > 0) {
-            results.sort((a, b) => b.deqi_score - a.deqi_score);
-            const top = results.slice(0, query.limit || 10);
-            updateWorkingMemory(wm, top, query);
-            saveWorkingMemory(wm);
-            return top;
+            // 过滤失效点
+            const validIndex = results.filter(r => {
+                if (!r.point || r.point.hidden) return false;
+                if (r.point.status === 'REFUTED' || r.point.status === 'DISPUTED') return false;
+                return true;
+            });
+            if (validIndex.length > 0) {
+                validIndex.sort((a, b) => b.deqi_score - a.deqi_score);
+                const top = validIndex.slice(0, query.limit || 10);
+                updateWorkingMemory(wm, top, query);
+                saveWorkingMemory(wm);
+                return top;
+            }
         }
     }
 
@@ -79,6 +87,14 @@ function deqi(kg, query, context = {}) {
 
     // ── 第3层: 循经感传扩散 ──
     propagateSensation(results, kg, 0.3);
+
+    // 过滤所有来源中的失效点 (REFUTED/DISPUTED/hidden)
+    // 上焦工作记忆中的点可能是reinforce之前的旧快照，需要重新验证
+    results = results.filter(r => {
+        if (!r.point || r.point.hidden) return false;
+        if (r.point.status === 'REFUTED' || r.point.status === 'DISPUTED') return false;
+        return true;
+    });
 
     // ── 排序 ──
     results.sort((a, b) => b.deqi_score - a.deqi_score);

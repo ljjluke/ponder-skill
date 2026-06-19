@@ -83,7 +83,12 @@ function reinforceReduce(kg, pointId, tdError, experience = {}) {
         }
     }
     
-    // 衰退检测
+    // 用户修正: 强制驳斥 (绕过三卦检查, 用于用户说"这个方案不对")
+    if (technique === 'drain' && experience.force_refuted) {
+        point.status = 'REFUTED'; hidePoint(kg, meridianKey, pointId);
+    }
+
+    // 衰退检测 (当三卦同时指向凶时自动衰减退隐)
     if (trigram.ben === 'xiong' && trigram.zhi === 'xiong') {
         point.status = 'REFUTED'; hidePoint(kg, meridianKey, pointId);
     }

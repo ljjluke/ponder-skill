@@ -69,6 +69,7 @@ function acquire(query, options = {}, stepName = '') {
               id: r.point.id,
               content: r.point.description,
               tags: r.point.tags,
+              q: r.point.q,
               confidence: r.deqi_score,
               status: r.point.status,
               source: 'mma',
@@ -182,8 +183,9 @@ function recordOutcome(pointId, outcome, detail = '') {
     };
     const storeResult = store(correctionEntry);
     if (storeResult) {
-      // Schedule original point for review: reinforce with strong negative
-      spawnSync('node', [MMA_SCRIPT, 'mma', 'reinforce', pointId, '-0.5'], { timeout: 5000 });
+      // Schedule original point for review: reinforce with strong negative + force_refuted
+      spawnSync('node', [MMA_SCRIPT, 'mma', 'reinforce', pointId, '-0.5',
+        JSON.stringify({ force_refuted: true, source: 'user_correction', reason: detail.substring(0, 200) })], { timeout: 5000 });
     }
   }
 }
@@ -353,8 +355,9 @@ if (require.main === module) {
   } else if (cmd === 'acquire') {
     const queryOpts = JSON.parse(process.argv[3] || '{}');
     const tags = queryOpts.tags || queryOpts || [];
-    const result = acquire({ tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? [tags] : []) });
-    console.log(JSON.stringify(result, null, 2));
+    const result = acquire({ tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? [tags] : []), limit: queryOpts.limit || 5 });
+    // 输出 entries 数组 (兼容 findExistingLesson 的 Array.isArray 检查)
+    console.log(JSON.stringify(result.entries || [], null, 2));
   } else {
     console.log('Usage: node scripts/knowledge.js <status|acquire|refuted>');
   }
