@@ -1,29 +1,27 @@
 {
   "name": "luke",
-  "version": "1.15.2",
-  "description": "Cognitive analysis pipeline for Claude Code. 7-phase structured reasoning: divergence, dimension check, plans, simulation, debate, synthesis, verification. Code-enforced depth loop.",
+  "version": "1.17.1",
+  "description": "Self-evolving cognitive framework. 7-phase reasoning + MMA memory + auto-evolution. Code-enforced depth loop. Data-driven.",
   "owner": {
     "name": "ljjluke"
   },
   "plugins": [
     {
       "name": "luke",
-      "description": "Analysis pipeline for Claude Code: divergent thinking, dimension check, plans, simulation, debate, synthesis, verification. Code-enforced depth loop. Data-driven.",
+      "description": "Self-evolving cognitive framework. 7-phase reasoning + MMA memory + automatic evolution. Code-enforced depth loop. Data-driven optimization.",
       "source": "./",
-      "version": "1.15.2",
+      "version": "1.17.1",
       "author": {
         "name": "ljjluke"
       },
       "keywords": [
-        "decision-making",
-        "mcts",
-        "td-learning",
-        "planning",
+        "cognitive-architecture",
+        "self-evolving",
         "reasoning",
-        "monte-carlo-tree-search",
-        "bagua",
-        "simulation",
-        "multi-language"
+        "memory",
+        "knowledge-management",
+        "structured-thinking",
+        "meta-cognition"
       ],
       "category": "productivity"
     }
