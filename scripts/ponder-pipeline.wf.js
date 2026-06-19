@@ -18,7 +18,15 @@ const appliedRules = args?.applied_rules || []
 const stepHistory = args?.step_history || {}  // { divergence: [...], dimension: [...], ... }
 // 错误前置警告: 每步独享，只拿自己相关的错误
 const errorWarnings = args?.error_warnings || {}  // { divergence: [...], dimension: [...], ... }
-var _err = function(step) { var list = errorWarnings[step] || []; return list.length > 0 ? '\n\n⚠️ 已知错误规避:\n' + list.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n') : '' }
+// 预计算每步错误警告文本（避免行内函数表达式）
+var errDiv = '', errDim = '', errPlan = '', errDebate = '', errSyn = '', errVer = ''
+// 直接使用 errorWarnings
+if (errorWarnings.divergence && errorWarnings.divergence.length > 0) errDiv = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.divergence.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
+if (errorWarnings.dimension && errorWarnings.dimension.length > 0) errDim = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.dimension.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
+if (errorWarnings.plans && errorWarnings.plans.length > 0) errPlan = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.plans.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
+if (errorWarnings.debate && errorWarnings.debate.length > 0) errDebate = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.debate.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
+if (errorWarnings.synthesis && errorWarnings.synthesis.length > 0) errSyn = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.synthesis.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
+if (errorWarnings.verify && errorWarnings.verify.length > 0) errVer = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.verify.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
 
 // Phase 0: Pre-step from evolution rules (e.g. market research before divergence)
 var researchContext = ''
@@ -86,7 +94,7 @@ if (divCandidates.length > 0) {
   })
   divHistory = '\n\n同类问题历史视角参考:\n' + (divFiltered.selected_indices||[]).map(function(i){return '- '+(divCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+_err('divergence')+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':'')
+var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+errDiv+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':''), {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     perspectives:{type:'array',items:{type:'object',properties:{
@@ -113,7 +121,7 @@ if (dimCandidates.length > 0) {
   })
   dimHistory = '\n\n同类历史维度参考:\n' + (dimFiltered.selected_indices||[]).map(function(i){return '- '+(dimCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:'+lessons+dimHistory+_err('dimension'), {
+var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:'+lessons+dimHistory+errDim, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     dimensions:{type:'array',items:{type:'object',properties:{
@@ -136,7 +144,7 @@ if (planCandidates.length > 0) {
   })
   planHistory = '\n\n同类历史方案参考:\n' + (planFiltered.selected_indices||[]).map(function(i){return '- '+(planCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。\n历史经验:'+lessons+planHistory+_err('plans'), {
+var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。\n历史经验:'+lessons+planHistory+errPlan, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     plans:{type:'array',items:{type:'object',properties:{
@@ -151,7 +159,7 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
 phase('推演')
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。\n历史经验:+lessons', {
+  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。\n历史经验:'+lessons, {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'}, optimistic:{type:'string',minLength:50},
@@ -178,7 +186,7 @@ if (debateCandidates.length > 0) {
   })
   debateHistory = '\n\n同类历史辩论参考:\n' + (debateFiltered.selected_indices||[]).map(function(i){return '- '+(debateCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:'+lessons+debateHistory+_err('debate'), {
+var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:'+lessons+debateHistory+errDebate, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     ranked:{type:'array',items:{type:'object',properties:{
@@ -201,7 +209,7 @@ if (synCandidates.length > 0) {
   })
   synHistory = '\n\n同类历史综合参考:\n' + (synFiltered.selected_indices||[]).map(function(i){return '- '+(synCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+synHistory+_err('synthesis')+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)+待存经验(pending_lessons)。分析后认为值得记录的教训→填入pending_lessons。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
+var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+synHistory+errSyn+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)+待存经验(pending_lessons)。分析后认为值得记录的教训→填入pending_lessons。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
@@ -222,7 +230,7 @@ if (verCandidates.length > 0) {
   })
   verHistory = '\n\n同类历史验证参考:\n' + (verFiltered.selected_indices||[]).map(function(i){return '- '+(verCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。'+verHistory+_err('verify'), {
+var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。'+verHistory+errVer, {
   label: '验证',
   schema: { type:'object', properties: {
     verdict:{type:'string',enum:['PASS','REVISE']},
