@@ -122,12 +122,35 @@ function analyze(runs) {
       }
     }
 
+    // 自动质量评分（无需用户打分）
+    const verRunsForQuality = typeRuns.filter(r => r.steps.verification?.verdict);
+    let qualityScore = null;
+    if (verRunsForQuality.length >= 2) {
+      const passRate = verRunsForQuality.filter(r => r.steps.verification.verdict === 'PASS').length / verRunsForQuality.length;
+      const fakeClarityRate = verRunsForQuality.filter(r => r.steps.verification.fake_clarity).length / verRunsForQuality.length;
+      const criticalIssues = verRunsForQuality.reduce((s, r) => s + (r.steps.verification.issues_severity || []).filter(i => i === 'critical').length, 0);
+      // 质量分 = 通过率×0.5 - fakeClarity率×0.3 - critical问题率×0.2
+      qualityScore = Math.max(0, Math.min(1,
+        passRate * 0.5 - fakeClarityRate * 0.3 - Math.min(criticalIssues / verRunsForQuality.length, 1) * 0.2
+      ));
+      if (qualityScore < 0.3) {
+        recommendations.push({
+          step: 'verification',
+          issue: 'quality',
+          score: qualityScore,
+          detail: `${type} 自动质量分 ${(qualityScore*100).toFixed(0)}% < 30%，验证通过率 ${(passRate*100).toFixed(0)}%`,
+          action: 'review_pipeline',
+        });
+      }
+    }
+
     results.push({
       type,
       count: typeRuns.length,
       steps: stepStats,
       recommendations,
-      had_verification: verRuns.length >= 2,
+      quality_score: qualityScore,
+      had_verification: verRunsForQuality.length >= 2,
     });
   }
 
@@ -181,6 +204,11 @@ function report(result) {
       console.log(`   ${step.padEnd(12)} 清晰 ${(st.clarityRate*100).toFixed(0)}%  均问题 ${st.avgQuestions.toFixed(1)}${qNote}`);
     }
 
+    if (tr.quality_score !== null) {
+      const qs = tr.quality_score;
+      const icon = qs >= 0.7 ? '✅' : qs >= 0.4 ? '⚠️' : '❌';
+      console.log(`   质量分: ${icon} ${(qs*100).toFixed(0)}%`);
+    }
     if (tr.recommendations.length === 0) {
       console.log('   ✅ 无需调整');
     } else {
