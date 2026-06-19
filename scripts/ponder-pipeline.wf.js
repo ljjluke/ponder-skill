@@ -13,6 +13,23 @@ export const meta = {
 const req = args?.user_request || ''
 const profile = args?.profile || ''
 const lessons = args?.lessons || ''
+const appliedRules = args?.applied_rules || []
+
+// Phase 0: Pre-step from evolution rules (e.g. market research before divergence)
+var researchContext = ''
+var researchRule = appliedRules.find(function(r) { return r.action?.type === 'prepend_step' && r.action?.step_name === 'market_research' })
+if (researchRule) {
+  phase('数据采集')
+  var rData = await agent('收集市场数据\n需求:' + req + '\n输出: 市场概况,关键数据,趋势', {
+    label: '前置研究',
+    schema: { type:'object', properties: {
+      market_overview:{type:'string',minLength:100},
+      key_stats:{type:'array',items:{type:'object',properties:{stat:{type:'string'},source:{type:'string'}}}},
+      trends:{type:'array',items:{type:'string'}},
+    }, required:['market_overview','key_stats','trends'] },
+  })
+  researchContext = '参考数据: ' + (rData.market_overview||'') + '\n关键数据: ' + JSON.stringify((rData.key_stats||[]).slice(0,5)) + '\n趋势: ' + ((rData.trends||[]).join(', '))
+}
 
 // Force depth: run round 1, if not clear run round 2, if not clear run round 3
 // No while/for. Unrolled as sequential if statements.
@@ -51,7 +68,7 @@ async function runUntilClear(label, prompt, schema, rounds) {
 
 // Phase 1: Divergence
 phase('发散')
-var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:+lessons', {
+var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:+lessons'\n+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':'')
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     perspectives:{type:'array',items:{type:'object',properties:{

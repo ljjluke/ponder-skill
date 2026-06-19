@@ -42,8 +42,14 @@ A) 调 Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{step:"...", user_
 B) 手动按同一步的逻辑执行
 
 **进化规则（自动检测并应用已验证的改进）：**
-在开始某步之前，检查 `scripts/evolve-rules.json` 中是否有匹配当前步骤和问题类型的活跃规则。
-如有匹配规则，按规则的 action 描述执行（如加数据采集步骤、修改 prompt 模板等）。
+调用管道前，先检测当前步骤和问题类型是否有已上线规则：
+
+```bash
+node scripts/evolve.js get-rules "<问题类型>" "<步骤名>"
+```
+
+如有匹配规则（type=prepend_step），先执行规则定义的预步骤（如数据采集），将结果注入管道 args 的 `applied_rules` 和 `research_context` 字段。
+
 规则由沙箱验证通过后手动上线，不自动产生新规则。
 
 每步完成后检查 is_clear：

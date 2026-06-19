@@ -23,6 +23,25 @@ const os = require('os');
 const METRICS_FILE = path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder', 'metrics', 'pipeline-runs.ndjson');
 const RULES_FILE = path.join(__dirname, 'evolve-rules.json');
 
+// ── 获取匹配问题的规则（供 orchestration 层调用）──
+function getMatchingRules(questionType, stepName) {
+  if (!fs.existsSync(RULES_FILE)) return [];
+  try {
+    const rules = JSON.parse(fs.readFileSync(RULES_FILE, 'utf-8'));
+    return rules.rules.filter(r =>
+      r.status === 'active' &&
+      r.condition.question_type.some(t => questionType.includes(t)) &&
+      r.condition.step === stepName
+    );
+  } catch (e) { return []; }
+}
+
+// ── CLI 模式: 输出匹配规则 ──
+function cliGetRules(questionType, stepName) {
+  const rules = getMatchingRules(questionType, stepName);
+  console.log(JSON.stringify(rules));
+}
+
 // ── 默认阈值 ──
 // 一切源于实际数据统计，不是LLM编的
 const THRESHOLDS = {
@@ -207,6 +226,14 @@ function cli() {
 
   if (cmd === 'apply') {
     applyRule(args[1]);
+    return;
+  }
+
+  if (cmd === 'get-rules') {
+    const qType = args[1] || '';
+    const step = args[2] || '';
+    const rules = getMatchingRules(qType, step);
+    console.log(JSON.stringify(rules));
     return;
   }
 
