@@ -74,9 +74,26 @@ STEP 8: verify — 审查问题。输出 {verdict, fake_clarity, issues}
 
 每步手动模式必须包含 is_clear(boolean) 和 user_questions(array)。user_questions 是分析中发现的具体盲点，不是"你觉得对吗？"。
 
-Step 9: 收集运行数据（自动执行）
+Step 9: 存储步骤输出（自动执行）
 
-管道 Workflow 返回后，把返回的完整 JSON 写入临时文件并收集指标：
+管道返回后，取出 `_step_outputs` 字段，对每一步执行存储：
+
+```bash
+# 每个步骤的输出存进MMA，供未来同类问题参考
+node -e "
+const { storeStepOutput, recallStepHistory } = require('./scripts/knowledge');
+const outputs = <管道返回的_step_outputs>;  // 从管道返回值中取
+const qType = '<当前问题类型>';
+const req = '<当前问题描述>';
+for (const [step, data] of Object.entries(outputs)) {
+  if (data) storeStepOutput(step, qType, JSON.stringify(data), {tags:[qType], user_request: req});
+}
+"
+```
+
+这样每次管道运行后，所有7步的输出都存进 MMA。下次同类问题时通过 `recallStepHistory` 加载，LLM筛选 top 8 注入对应步骤的 prompt。
+
+Step 10: 收集运行指标
 
 ```bash
 cat > /tmp/_last_pipeline_output.json << 'EOF'
@@ -85,7 +102,7 @@ EOF
 node scripts/pipeline-metrics.js collect /tmp/_last_pipeline_output.json
 ```
 
-这步不改变管道结果，只记录指标到日志。如果工作目录没有该脚本，说明环境未安装 metrics 模块，跳过即可。
+不改变管道结果，只记录指标到日志。
 
 Step 10: 呈现结果（先确认，后输出）
 

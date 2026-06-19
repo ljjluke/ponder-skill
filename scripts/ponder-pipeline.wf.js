@@ -123,7 +123,17 @@ var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||''
 
 // Phase 3: Plans
 phase('方案')
-var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。\n历史经验:+lessons', {
+var planHistory = ''
+var planCandidates = stepHistory.plans || []
+if (planCandidates.length > 0) {
+  phase('历史方案筛选')
+  var planFiltered = await agent('需求: '+req+'\n从以下历史方案中选出最相关的8条:\n'+planCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '方案筛选',
+    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
+  })
+  planHistory = '\n\n同类历史方案参考:\n' + (planFiltered.selected_indices||[]).map(function(i){return '- '+(planCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
+var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。\n历史经验:'+lessons+planHistory, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     plans:{type:'array',items:{type:'object',properties:{
@@ -155,7 +165,17 @@ phase('辩论')
 var simTxt = simResults.map(function(r) {
   return r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)+' 悲观='+(r.pessimistic||'').substring(0,100)
 }).join('\n\n')
-var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:+lessons', {
+var debateHistory = ''
+var debateCandidates = stepHistory.debate || []
+if (debateCandidates.length > 0) {
+  phase('历史辩论筛选')
+  var debateFiltered = await agent('需求: '+req+'\n从以下历史辩论结论中选出最相关的8条:\n'+debateCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '辩论筛选',
+    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
+  })
+  debateHistory = '\n\n同类历史辩论参考:\n' + (debateFiltered.selected_indices||[]).map(function(i){return '- '+(debateCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
+var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:'+lessons+debateHistory, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     ranked:{type:'array',items:{type:'object',properties:{
@@ -168,7 +188,17 @@ var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n
 
 // Phase 6: Synthesis
 phase('综合')
-var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)+待存经验(pending_lessons)。分析后认为值得记录的教训→填入pending_lessons。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
+var synHistory = ''
+var synCandidates = stepHistory.synthesis || []
+if (synCandidates.length > 0) {
+  phase('历史综合筛选')
+  var synFiltered = await agent('需求: '+req+'\n从以下历史综合结论中选出最相关的8条:\n'+synCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '综合筛选',
+    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
+  })
+  synHistory = '\n\n同类历史综合参考:\n' + (synFiltered.selected_indices||[]).map(function(i){return '- '+(synCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
+var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+synHistory+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)+待存经验(pending_lessons)。分析后认为值得记录的教训→填入pending_lessons。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
@@ -179,7 +209,17 @@ var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debat
 
 // Phase 7: Verification
 phase('验证')
-var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。', {
+var verHistory = ''
+var verCandidates = stepHistory.verify || []
+if (verCandidates.length > 0) {
+  phase('历史验证参考')
+  var verFiltered = await agent('需求: '+req+'\n从以下历史验证发现中选出最相关的8条:\n'+verCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '验证筛选',
+    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
+  })
+  verHistory = '\n\n同类历史验证参考:\n' + (verFiltered.selected_indices||[]).map(function(i){return '- '+(verCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
+var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。'+verHistory, {
   label: '验证',
   schema: { type:'object', properties: {
     verdict:{type:'string',enum:['PASS','REVISE']},
@@ -199,4 +239,12 @@ return {
   synthesis: syn,
   lessons_to_store: syn.pending_lessons || [],
   verification: ver,
+  _step_outputs: {
+    divergence: div ? { is_clear: div.is_clear, consensus: (div.consensus||'').substring(0,200), perspective_count: (div.perspectives||[]).length } : null,
+    dimension: dim ? { is_clear: dim.is_clear, key_finding: (dim.key_finding||'').substring(0,200), dimension_count: (dim.dimensions||[]).length } : null,
+    plans: plan ? { is_clear: plan.is_clear, plan_count: (plan.plans||[]).length } : null,
+    debate: debate ? { is_clear: debate.is_clear, synthesis: (debate.synthesis||'').substring(0,200), ranked_count: (debate.ranked||[]).length } : null,
+    synthesis: syn ? { is_clear: syn.is_clear, conclusion: (syn.conclusion||'').substring(0,200), lessons_count: (syn.pending_lessons||[]).length } : null,
+    verify: ver ? { verdict: ver.verdict, fake_clarity: ver.fake_clarity, issues_count: (ver.issues||[]).length } : null,
+  },
 }
