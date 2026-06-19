@@ -58,9 +58,22 @@ STEP 8: verify — 审查问题。输出 {verdict, fake_clarity, issues}
 
 每步手动模式必须包含 is_clear(boolean) 和 user_questions(array)。user_questions 是分析中发现的具体盲点，不是"你觉得对吗？"。
 
-Step 9: 呈现结果（先确认，后输出）
+Step 9: 收集运行数据（自动执行）
 
-管道返回后，先检查是否有需要用户确认的信息：
+管道 Workflow 返回后，把返回的完整 JSON 写入临时文件并收集指标：
+
+```bash
+cat > /tmp/_last_pipeline_output.json << 'EOF'
+<这里放管道返回的完整JSON>
+EOF
+node scripts/pipeline-metrics.js collect /tmp/_last_pipeline_output.json
+```
+
+这步不改变管道结果，只记录指标到日志。如果工作目录没有该脚本，说明环境未安装 metrics 模块，跳过即可。
+
+Step 10: 呈现结果（先确认，后输出）
+
+收集完成后，再检查是否有需要用户确认的信息：
 - 分析中提到的条件/红线/指标是否已触发？→ 用 AskUserQuestion 问
 - 方案依赖的用户偏好是否确认了？→ 用 AskUserQuestion 问
 - 结论依赖的假设用户是否同意？→ 用 AskUserQuestion 问
