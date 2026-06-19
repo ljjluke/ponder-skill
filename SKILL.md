@@ -41,6 +41,11 @@ Step 1: 需求拆解（单独完成）
 A) 调 Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{step:"...", user_request:"...", profile:"..."}})
 B) 手动按同一步的逻辑执行
 
+**进化规则（自动检测并应用已验证的改进）：**
+在开始某步之前，检查 `scripts/evolve-rules.json` 中是否有匹配当前步骤和问题类型的活跃规则。
+如有匹配规则，按规则的 action 描述执行（如加数据采集步骤、修改 prompt 模板等）。
+规则由沙箱验证通过后手动上线，不自动产生新规则。
+
 每步完成后检查 is_clear：
 - true → 进入下一步（步骤序号+1）
 - false → 问 user_questions 中的问题 → 同一步重做（最多3轮）
