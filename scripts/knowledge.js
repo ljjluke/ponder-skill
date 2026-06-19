@@ -181,8 +181,15 @@ function store(entry) {
   // Determine emotion based on confidence
   const emotion = entry.emotion || 'an';
 
+  // 结晶化: 如果有推理上下文,追加到描述中
+  var desc = entry.description
+  if (entry._reasoning) {
+    var r = entry._reasoning
+    desc = desc + '\n\n---\n[推理] ' + (r.divergence_consensus||'') + ' | ' + (r.dimension_finding||'') + ' | ' + (r.verification_verdict||'')
+  }
+
   const payload = JSON.stringify({
-    description: entry.description,
+    description: desc,
     tags: entry.tags || [],
     category: 'tools_and_means',
     emotion,
