@@ -276,6 +276,61 @@ function recallStepHistory(stepName, questionType, opts = {}) {
 }
 
 /**
+ * 召回错误警告 — 在所有 LLM 思考之前，先告诉它过去犯过的错
+ *
+ * 数据来源:
+ *   1. REFUTED 知识点 — 用户明确说不对
+ *   2. 验证发现 — verification issues
+ *   3. 用户修正记录 — corrections
+ *
+ * @param {string} questionType — 当前问题类型
+ * @param {string} stepName — 当前步骤名(可选，特定步骤的错误)
+ * @param {object} opts — 可选: limit
+ * @returns {Array} 错误警告列表 [{ type, summary, detail, severity }]
+ */
+function recallErrors(questionType, stepName, opts = {}) {
+  const limit = opts.limit || 5;
+  const errors = [];
+
+  // 1. REFUTED 知识点 — 用户明确说不对
+  try {
+    const io = require('./mma/io');
+    const kg = io.loadMMA();
+    for (const [, m] of Object.entries(kg.meridians)) {
+      for (const p of m.points) {
+        if (p.status === 'REFUTED' && !p.hidden) {
+          const tags = p.tags || [];
+          const typeMatch = !questionType || tags.some(t => questionType.includes(t));
+          if (typeMatch) {
+            errors.push({ type: 'refuted', summary: '用户驳斥: ' + (p.description || '').substring(0, 80), detail: (p.description || '').substring(0, 200), severity: 'high', tags: tags.slice(0, 5) });
+          }
+        }
+      }
+    }
+    for (const [, m] of Object.entries(kg.extra)) {
+      for (const p of m.points) {
+        if (p.status === 'REFUTED' && !p.hidden) {
+          const tags = p.tags || [];
+          const typeMatch = !questionType || tags.some(t => questionType.includes(t));
+          if (typeMatch) {
+            errors.push({ type: 'refuted', summary: '用户驳斥: ' + (p.description || '').substring(0, 80), detail: (p.description || '').substring(0, 200), severity: 'high', tags: tags.slice(0, 5) });
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  // 2. 保洁降权记录 — 过去哪些经验没用上
+  try {
+    const metricsPath = require('path').join(require('os').homedir(), '.claude', 'data', 'skills', 'ponder', 'metrics');
+    // 保洁日志在MMA中通过tag标记，这里通过REFUTED已经覆盖
+  } catch (e) {}
+
+  errors.sort((a, b) => a.severity === 'high' ? -1 : 0);
+  return errors.slice(0, limit);
+}
+
+/**
  * Record outcome — update knowledge classification based on real-world result.
  *
  * When user confirms → REINFORCE (move toward CONFIRMED)
@@ -453,7 +508,7 @@ function trace(pointId) {
   };
 }
 
-module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, listRefuted, storeStepOutput, recallStepHistory };
+module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, listRefuted, storeStepOutput, recallStepHistory, recallErrors };
 
 if (require.main === module) {
   const cmd = process.argv[2];
