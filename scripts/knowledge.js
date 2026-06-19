@@ -89,6 +89,45 @@ function acquire(query, options = {}, stepName = '') {
     } catch (e) { /* grooming non-blocking */ }
   }
 
+  // Phase 1.5: Semantic relevance re-ranking
+  // 在标签匹配基础上，计算查询与每条候选经验的语义重叠度
+  if (result.entries.length > 0 && query.tags) {
+    const queryText = (Array.isArray(query.tags) ? query.tags.join(' ') : '') + ' ' + (query.query || '');
+    const queryWords = queryText.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+    const queryTopics = new Set(queryWords);
+
+    for (const entry of result.entries) {
+      // 语义重叠分: 描述词 + 标签词 与查询词的共现比例
+      const descWords = (entry.content || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+      const tagWords = (entry.tags || []).join(' ').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+      const allWords = new Set([...descWords, ...tagWords]);
+
+      let overlap = 0;
+      for (const qw of queryTopics) {
+        // 精确匹配 或 词根包含关系
+        for (const aw of allWords) {
+          if (aw === qw || aw.includes(qw) || qw.includes(aw)) {
+            overlap++;
+            break;
+          }
+        }
+      }
+      const semanticScore = queryTopics.size > 0 ? overlap / queryTopics.size : 0;
+
+      // 类别匹配加分
+      const categoryBonus = query.query && entry.content && entry.content.includes(query.query) ? 0.2 : 0;
+
+      // 综合评分 = deqi置信度 × 0.6 + 语义重叠 × 0.3 + 精确匹配加分
+      entry._match_score = (entry.confidence || 0) * 0.6 + semanticScore * 0.3 + categoryBonus;
+      entry._semantic_score = Math.round(semanticScore * 100) / 100;
+    }
+
+    // 按综合评分重新排序
+    result.entries.sort((a, b) => (b._match_score || 0) - (a._match_score || 0));
+    result.entries = result.entries.slice(0, limit);
+    result._reranked_by_semantic = true;
+  }
+
   // Phase 2: If MMA has results, return them
   if (result.entries.length > 0) return result;
 
