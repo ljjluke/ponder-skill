@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: Data-driven analysis pipeline for Claude Code. 7-phase cognitive workflow with code-enforced depth loop. Every claim needs a source. Domain-agnostic.
-version: 1.15.2
+version: 1.15.3
 license: MIT
 ---
 
