@@ -204,6 +204,78 @@ function store(entry) {
 }
 
 /**
+ * 存储步骤输出 — 每个管道步骤的结果存进MMA，供后续同类问题参考
+ *
+ * @param {string} stepName — 步骤名: divergence|dimension|plans|simulate|debate|synthesis|verify
+ * @param {string} questionType — 问题类型: 市场分析|技术选型|...
+ * @param {object|string} output — 该步骤的结构化输出
+ * @param {object} opts — 可选: tags, user_request
+ * @returns {object|null} stored point info
+ */
+function storeStepOutput(stepName, questionType, output, opts = {}) {
+  if (!MMA_SCRIPT || !stepName || !questionType) return null;
+  const content = typeof output === 'string' ? output.substring(0, 300) : JSON.stringify(output).substring(0, 300);
+  const entry = {
+    description: `[step:${stepName}] ${questionType}: ${content.substring(0, 200)}`,
+    tags: ['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])],
+    category: stepName === 'divergence' ? 'judgment_and_strategy' :
+              stepName === 'dimension' ? 'core_decision' :
+              stepName === 'verify' ? 'verification_and_validation' : 'tools_and_means',
+    emotion: 'xi',
+    q: 0.7,
+    source: 'step_history',
+  };
+  const result = store(entry);
+  if (result && opts.user_request) {
+    // 额外打上用户请求的标签
+    try {
+      const io = require('./mma/io');
+      const kg = io.loadMMA();
+      const point = io.findPointById(kg, result.id);
+      if (point) {
+        point.point.tags = point.point.tags || [];
+        if (!point.point.tags.includes('req:' + opts.user_request.substring(0, 30))) {
+          point.point.tags.push('step_history:' + stepName);
+          io.saveMMA(kg);
+        }
+      }
+    } catch (e) {}
+  }
+  return result;
+}
+
+/**
+ * 召回历史步骤输出 — 为当前步骤找到最相关的历史输出
+ *
+ * 先用标签匹配候选，再用语义重叠度重新排名
+ *
+ * @param {string} stepName — 步骤名
+ * @param {string} questionType — 当前问题类型
+ * @param {object} opts — 可选: tags, limit(default 8), query
+ * @returns {Array} 排序后的历史条目
+ */
+function recallStepHistory(stepName, questionType, opts = {}) {
+  // 取20个候选，后续由LLM从中选top8
+  const limit = opts.limit || 20;
+  const searchTags = ['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])];
+  const result = acquire({
+    tags: searchTags,
+    limit: limit * 2, // 先多取再筛选
+    query: opts.query || questionType || '',
+  });
+  if (!result.entries || result.entries.length === 0) return [];
+
+  // 过滤: 只匹配当前步骤 + 语义分 > 0 或 有标签重叠
+  const scored = result.entries
+    .filter(e => e.content && e.content.startsWith('[step:' + stepName + ']'))
+    .filter(e => (e._semantic_score || 0) > 0 || (e.tags || []).some(t => searchTags.includes(t)))
+    .sort((a, b) => (b._match_score || 0) - (a._match_score || 0))
+    .slice(0, limit);
+
+  return scored;
+}
+
+/**
  * Record outcome — update knowledge classification based on real-world result.
  *
  * When user confirms → REINFORCE (move toward CONFIRMED)
@@ -381,7 +453,7 @@ function trace(pointId) {
   };
 }
 
-module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, listRefuted };
+module.exports = { acquire, store, recordOutcome, classify, link, tagVerdict, usedInStep, trace, listRefuted, storeStepOutput, recallStepHistory };
 
 if (require.main === module) {
   const cmd = process.argv[2];

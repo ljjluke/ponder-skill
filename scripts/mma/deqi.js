@@ -90,11 +90,13 @@ function deqi(kg, query, context = {}) {
 
     // 过滤所有来源中的失效点 (REFUTED/DISPUTED/hidden)
     // 上焦工作记忆中的点可能是reinforce之前的旧快照，需要重新验证
-    results = results.filter(r => {
+    var filteredResults = results.filter(r => {
         if (!r.point || r.point.hidden) return false;
         if (r.point.status === 'REFUTED' || r.point.status === 'DISPUTED') return false;
         return true;
     });
+    results.length = 0;
+    results.push.apply(results, filteredResults);
 
     // ── 排序 ──
     results.sort((a, b) => b.deqi_score - a.deqi_score);

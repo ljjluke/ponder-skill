@@ -14,6 +14,8 @@ const req = args?.user_request || ''
 const profile = args?.profile || ''
 const lessons = args?.lessons || ''
 const appliedRules = args?.applied_rules || []
+// 步骤历史积累: 每个步骤可用的历史输出(如历史发散视角/历史维度等)
+const stepHistory = args?.step_history || {}  // { divergence: [...], dimension: [...], ... }
 
 // Phase 0: Pre-step from evolution rules (e.g. market research before divergence)
 var researchContext = ''
@@ -68,7 +70,20 @@ async function runUntilClear(label, prompt, schema, rounds) {
 
 // Phase 1: Divergence
 phase('发散')
-var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:+lessons'\n+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':'')
+var divCandidates = stepHistory.divergence || []
+var divHistory = ''
+if (divCandidates.length > 0) {
+  phase('历史视角筛选')
+  var divFiltered = await agent('需求: '+req+'\n从以下历史视角中选出最相关的8条用于本次分析:\n'+divCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '视角筛选',
+    schema: { type:'object', properties: {
+      selected_indices:{type:'array',items:{type:'number'},description:'最相关的历史视角编号'},
+      reason:{type:'string'},
+    }, required:['selected_indices'] },
+  })
+  divHistory = '\n\n同类问题历史视角参考:\n' + (divFiltered.selected_indices||[]).map(function(i){return '- '+(divCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
+var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':'')
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     perspectives:{type:'array',items:{type:'object',properties:{
@@ -82,7 +97,20 @@ var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profi
 
 // Phase 2: Dimension
 phase('八卦镜')
-var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:+lessons', {
+var dimCandidates = stepHistory.dimension || []
+var dimHistory = ''
+if (dimCandidates.length > 0) {
+  phase('历史维度筛选')
+  var dimFiltered = await agent('需求: '+req+'\n从以下历史维度中选出最相关的8条用于本次评分:\n'+dimCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '维度筛选',
+    schema: { type:'object', properties: {
+      selected_indices:{type:'array',items:{type:'number'}},
+      reason:{type:'string'},
+    }, required:['selected_indices'] },
+  })
+  dimHistory = '\n\n同类历史维度参考:\n' + (dimFiltered.selected_indices||[]).map(function(i){return '- '+(dimCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
+var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:'+lessons+dimHistory, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     dimensions:{type:'array',items:{type:'object',properties:{

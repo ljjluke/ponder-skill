@@ -42,13 +42,18 @@ A) 调 Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{step:"...", user_
 B) 手动按同一步的逻辑执行
 
 **进化规则（自动检测并应用已验证的改进）：**
-调用管道前，先检测当前步骤和问题类型是否有已上线规则：
+调用管道前，先检测当前步骤和问题类型是否有已上线规则，并加载历史步骤输出：
 
 ```bash
+# 检测规则
 node scripts/evolve.js get-rules "<问题类型>" "<步骤名>"
+# 加载历史积累（取20个候选，管道内LLM筛选top8）
+node -e "JSON.stringify(require('./scripts/knowledge').recallStepHistory('<步骤名>', '<问题类型>', {query:'<问题描述>'}).map(e=>({content:e.content, tags:e.tags})))"
 ```
 
-如有匹配规则（type=prepend_step），先执行规则定义的预步骤（如数据采集），将结果注入管道 args 的 `applied_rules` 和 `research_context` 字段。
+将规则和步骤历史通过管道 args 传入：
+- `applied_rules` — 匹配的规则数组
+- `step_history` — 各步骤的历史积累 `{ divergence: [...], dimension: [...], ... }`
 
 规则由沙箱验证通过后手动上线，不自动产生新规则。
 
