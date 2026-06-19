@@ -237,4 +237,71 @@ function experienceReplay(kg, limit = 10) {
     return candidates.slice(0, limit);
 }
 
-module.exports = { decayCheck, sessionEnd, experienceReplay };
+/**
+ * 知识保洁 — 每次召回时自动触发，防止垃圾堆积
+ *
+ * 机制:
+ *   1. 未使用假设降权: HYPOTHESIS + n=0 + >7d → q-0.1
+ *   2. 长期未用沉睡:   HYPOTHESIS + n=0 + >14d → SLEEPING
+ *   3. 低质量降级:     q<0.2 + n<2 → HYPOTHESIS(若非CONFIRMED)
+ *   4. 自动提升:       HYPOTHESIS + n>=3 + 无REFUTED → PROVISIONAL
+ *
+ * 每次 acquire() 调用时执行，分散式保洁，不积压
+ */
+function knowledgeGroom(kg) {
+  const now = new Date();
+  const actions = [];
+
+  // 扫描所有经脉（包括奇经八脉）
+  const allMeridians = [
+    ...Object.entries(kg.meridians),
+    ...Object.entries(kg.extra).map(([k, m]) => ['_extra_' + k, m]),
+  ];
+
+  for (const [key, m] of allMeridians) {
+    if (!m || !m.points) continue;
+    for (let i = m.points.length - 1; i >= 0; i--) {
+      const p = m.points[i];
+      if (p.hidden) continue;
+
+      const daysSince = (now - new Date(p.last_verified || p.created_at)) / 86400000;
+      const oldStatus = p.status;
+
+      // 1. 未使用假设降权
+      if (p.status === 'HYPOTHESIS' && (p.n || 0) === 0 && daysSince > 7) {
+        const oldQ = p.q || 0.5;
+        p.q = Math.max(0.1, oldQ - 0.1);
+        if (p.q !== oldQ) {
+          actions.push({ id: p.id, type: 'q_decay', from: oldQ.toFixed(2), to: p.q.toFixed(2), days: Math.round(daysSince) });
+        }
+      }
+
+      // 2. 长期未用沉睡
+      if (p.status === 'HYPOTHESIS' && (p.n || 0) === 0 && daysSince > 14) {
+        p.status = 'SLEEPING';
+        p.slept_at = now.toISOString();
+        actions.push({ id: p.id, type: 'sleep', days: Math.round(daysSince) });
+      }
+
+      // 3. 低质量降级（排除用户确认过的）
+      if (p.q < 0.2 && (p.n || 0) < 2 && p.status !== 'REFUTED' && !['CONFIRMED', 'ACTIVE', 'MATURE'].includes(p.status)) {
+        p.status = 'SLEEPING';
+        p.slept_at = now.toISOString();
+        actions.push({ id: p.id, type: 'downgrade_lowq', q: p.q });
+      }
+
+      // 4. 自动提升: 被频繁召回且未驳斥
+      if ((p.status === 'HYPOTHESIS' || p.status === 'PROVISIONAL') && (p.n || 0) >= 3 && daysSince > 3) {
+        const newStatus = p.status === 'HYPOTHESIS' ? 'PROVISIONAL' : 'CONFIRMED';
+        p.status = newStatus;
+        p.consolidation_score = (p.consolidation_score || 0) + 2;
+        actions.push({ id: p.id, type: 'promote', from: oldStatus, to: newStatus, n: p.n });
+      }
+
+      if (p.status !== oldStatus) markDirty(kg, key);
+    }
+  }
+  return actions;
+}
+
+module.exports = { decayCheck, sessionEnd, experienceReplay, knowledgeGroom, slowWavePrune };

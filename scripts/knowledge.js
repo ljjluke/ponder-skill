@@ -78,6 +78,15 @@ function acquire(query, options = {}, stepName = '') {
         }
       } catch (e) {}
     }
+    // 每次召回触发知识保洁，防止垃圾堆积
+    try {
+      const io = require('./mma/io');
+      const kg = io.loadMMA();
+      const { knowledgeGroom } = require('./mma/decay');
+      const actions = knowledgeGroom(kg);
+      if (actions.length > 0) io.saveMMA(kg);
+      if (actions.length > 0) result._groomed = actions.length;
+    } catch (e) { /* grooming non-blocking */ }
   }
 
   // Phase 2: If MMA has results, return them
