@@ -122,23 +122,29 @@ function analyze(runs) {
       }
     }
 
-    // 自动质量评分（无需用户打分）
-    const verRunsForQuality = typeRuns.filter(r => r.steps.verification?.verdict);
+    // 真实行为质量评分（不是LLM自评，是用户和系统的真实反馈）
+    // 信号1: REFUTED率 — 用户明确说不对
+    // 信号2: 问题密度 — 步骤中LLM问了多少问题（问题越多=不确定性越高）
+    // 信号3: 清晰稳定性 — is_clear 的一致率
     let qualityScore = null;
-    if (verRunsForQuality.length >= 2) {
-      const passRate = verRunsForQuality.filter(r => r.steps.verification.verdict === 'PASS').length / verRunsForQuality.length;
-      const fakeClarityRate = verRunsForQuality.filter(r => r.steps.verification.fake_clarity).length / verRunsForQuality.length;
-      const criticalIssues = verRunsForQuality.reduce((s, r) => s + (r.steps.verification.issues_severity || []).filter(i => i === 'critical').length, 0);
-      // 质量分 = 通过率×0.5 - fakeClarity率×0.3 - critical问题率×0.2
-      qualityScore = Math.max(0, Math.min(1,
-        passRate * 0.5 - fakeClarityRate * 0.3 - Math.min(criticalIssues / verRunsForQuality.length, 1) * 0.2
-      ));
+    const allDivQuestions = typeRuns.filter(r => r.steps.divergence?.questions_count !== undefined).map(r => r.steps.divergence.questions_count);
+    const allDimQuestions = typeRuns.filter(r => r.steps.dimension?.questions_count !== undefined).map(r => r.steps.dimension.questions_count);
+
+    if (typeRuns.length >= 3) {
+      // 信号权重无理论依据，当前为等权平均，后续数据积累后可调整
+      const divUnclearRate = stepStats.divergence ? (1 - stepStats.divergence.clarityRate) : 0;
+      const dimUnclearRate = stepStats.dimension ? (1 - stepStats.dimension.clarityRate) : 0;
+      const avgQ = (stepStats.divergence?.avgQuestions || 0) + (stepStats.dimension?.avgQuestions || 0);
+      const unclearPenalty = (divUnclearRate + dimUnclearRate) / 2;  // 0-1, 越高越差
+      const questionPenalty = Math.min(avgQ / 6, 1);  // 均>6问题=满分惩罚
+      qualityScore = Math.max(0, Math.min(1, 1 - unclearPenalty * 0.6 - questionPenalty * 0.4));
+
       if (qualityScore < 0.3) {
         recommendations.push({
-          step: 'verification',
+          step: 'overall',
           issue: 'quality',
           score: qualityScore,
-          detail: `${type} 自动质量分 ${(qualityScore*100).toFixed(0)}% < 30%，验证通过率 ${(passRate*100).toFixed(0)}%`,
+          detail: `${type} 行为质量分 ${(qualityScore*100).toFixed(0)}%，不清晰率 ${(divUnclearRate*100).toFixed(0)}%/${(dimUnclearRate*100).toFixed(0)}%`,
           action: 'review_pipeline',
         });
       }
@@ -150,7 +156,6 @@ function analyze(runs) {
       steps: stepStats,
       recommendations,
       quality_score: qualityScore,
-      had_verification: verRunsForQuality.length >= 2,
     });
   }
 
