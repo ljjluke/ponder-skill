@@ -1,6 +1,6 @@
 {
   "name": "luke",
-  "version": "1.15.1",
+  "version": "1.15.2",
   "description": "Cognitive analysis pipeline for Claude Code. 7-phase structured reasoning: divergence, dimension check, plans, simulation, debate, synthesis, verification. Code-enforced depth loop.",
   "owner": {
     "name": "ljjluke"
@@ -10,7 +10,7 @@
       "name": "luke",
       "description": "Analysis pipeline for Claude Code: divergent thinking, dimension check, plans, simulation, debate, synthesis, verification. Code-enforced depth loop. Data-driven.",
       "source": "./",
-      "version": "1.15.1",
+      "version": "1.15.2",
       "author": {
         "name": "ljjluke"
       },

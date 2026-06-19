@@ -12,6 +12,7 @@ export const meta = {
 
 const req = args?.user_request || ''
 const profile = args?.profile || ''
+const lessons = args?.lessons || ''
 
 // Force depth: run round 1, if not clear run round 2, if not clear run round 3
 // No while/for. Unrolled as sequential if statements.
@@ -50,7 +51,7 @@ async function runUntilClear(label, prompt, schema, rounds) {
 
 // Phase 1: Divergence
 phase('发散')
-var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。', {
+var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:+lessons', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     perspectives:{type:'array',items:{type:'object',properties:{
@@ -64,7 +65,7 @@ var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profi
 
 // Phase 2: Dimension
 phase('八卦镜')
-var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。', {
+var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:+lessons', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     dimensions:{type:'array',items:{type:'object',properties:{
@@ -77,7 +78,7 @@ var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||''
 
 // Phase 3: Plans
 phase('方案')
-var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。', {
+var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。\n历史经验:+lessons', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     plans:{type:'array',items:{type:'object',properties:{
@@ -92,7 +93,7 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
 phase('推演')
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。', {
+  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。\n历史经验:+lessons', {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'}, optimistic:{type:'string',minLength:50},
@@ -109,7 +110,7 @@ phase('辩论')
 var simTxt = simResults.map(function(r) {
   return r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)+' 悲观='+(r.pessimistic||'').substring(0,100)
 }).join('\n\n')
-var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。', {
+var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:+lessons', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     ranked:{type:'array',items:{type:'object',properties:{
@@ -122,12 +123,12 @@ var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n
 
 // Phase 6: Synthesis
 phase('综合')
-var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
+var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)+待存经验(pending_lessons)。分析后认为值得记录的教训→填入pending_lessons。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
     assumptions:{type:'array',items:{type:'string'}},
-    user_confirmed:{type:'boolean'}, pending_user_questions:{type:'array',items:{type:'string'},description:'呈现前必须问用户的问题清单'},
+    user_confirmed:{type:'boolean'}, pending_user_questions:{type:'array',items:{type:'string'},description:'呈现前必须问用户的问题清单'},pending_lessons:{type:'array',items:{type:'object',properties:{scenario:{type:'string'},attempt:{type:'string'},result:{type:'string'},lesson:{type:'string'}},required:['scenario','attempt','result','lesson']},description:'值得记录的教训'},
   }, required:['is_clear','user_questions','conclusion','reasoning','assumptions','user_confirmed','pending_user_questions'],
 }, 0)
 
@@ -151,5 +152,6 @@ return {
   simulations: simResults,
   debate: debate,
   synthesis: syn,
+  lessons_to_store: syn.pending_lessons || [],
   verification: ver,
 }
