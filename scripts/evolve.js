@@ -82,35 +82,46 @@ function analyze(runs) {
       const withData = typeRuns.filter(r => r.steps[step]?.is_clear !== undefined);
       if (withData.length < 2) continue;
 
+      // --- 原始 is_clear 统计 ---
       const unclear = withData.filter(r => !r.steps[step].is_clear).length;
       const avgQ = withData.reduce((s, r) => s + (r.steps[step]?.questions_count || 0), 0) / withData.length;
-      const clarityRate = 1 - (unclear / withData.length);
+      const rawClarityRate = 1 - (unclear / withData.length);
 
-      // is_clear 可信度: 用验证步骤交叉验证
-      // 当步骤 is_clear=true 时, 后续验证 PASS 的比例
-      var precision = null
-      if (typeRuns.length >= 3) {
-        var stepClearRuns = withData.filter(function(r) { return r.steps[step].is_clear })
-        var stepClearAndPassed = stepClearRuns.filter(function(r) {
-          return r.steps.verification && r.steps.verification.verdict === 'PASS'
-        })
-        if (stepClearAndPassed.length >= 2) {
-          precision = stepClearAndPassed.length / stepClearRuns.length
+      // --- 多信号清晰度可信分（不是LLM自评，是行为数据综合）---
+      // 信号1: is_clear 本身 (40%)
+      var sigClear = rawClarityRate * 0.4
+      // 信号2: 问题数惩罚 (30%) — 问题越多说明越不确定
+      var sigQuestions = Math.max(0, 1 - avgQ / 5) * 0.3
+      // 信号3: 验证交叉验证 (30%) — is_clear=true 时验证通过的比例
+      var sigVerify = 0.3
+      var stepClearAndPassed = 0
+      var stepClearTotal = 0
+      if (typeRuns.length >= 2) {
+        stepClearTotal = withData.filter(function(r) { return r.steps[step].is_clear }).length
+        stepClearAndPassed = withData.filter(function(r) {
+          return r.steps[step].is_clear && r.steps.verification && r.steps.verification.verdict === 'PASS'
+        }).length
+        if (stepClearTotal >= 2) {
+          sigVerify = (stepClearAndPassed / stepClearTotal) * 0.3
+        } else {
+          sigVerify = 0.15  // 无验证数据时取中间值
         }
       }
 
-      stepStats[step] = { count: withData.length, clarityRate, avgQuestions: avgQ, unclear, precision: precision };
+      var verifiedClarity = Math.round(Math.min(1, Math.max(0, sigClear + sigQuestions + sigVerify)) * 1000) / 1000
+
+      stepStats[step] = { count: withData.length, clarityRate: rawClarityRate, verifiedClarity: verifiedClarity, avgQuestions: avgQ, unclear: unclear };
     }
 
     // 产出建议
     const recommendations = [];
     for (const [step, st] of Object.entries(stepStats)) {
-      if (st.clarityRate < (1 - THRESHOLDS.unclear_warn)) {
+      if (st.verifiedClarity < (1 - THRESHOLDS.unclear_warn)) {
         recommendations.push({
           step,
           issue: 'clarity',
-          rate: (1 - st.clarityRate),
-          detail: `${type}/${step} 不清晰率 ${(1-st.clarityRate)*100}% > ${THRESHOLDS.unclear_warn*100}%`,
+          rate: (1 - st.verifiedClarity),
+          detail: `${type}/${step} 验证清晰度 ${(st.verifiedClarity*100).toFixed(0)}% < ${(1-THRESHOLDS.unclear_warn)*100}%(原始${(st.clarityRate*100).toFixed(0)}%)`,
           action: step === 'divergence' ? 'add_research' :
                   step === 'dimension' ? 'add_criteria' :
                   step === 'synthesis' ? 'structured_output' : 'review',
@@ -137,8 +148,8 @@ function analyze(runs) {
 
     if (typeRuns.length >= 3) {
       // 信号权重无理论依据，当前为等权平均，后续数据积累后可调整
-      const divUnclearRate = stepStats.divergence ? (1 - stepStats.divergence.clarityRate) : 0;
-      const dimUnclearRate = stepStats.dimension ? (1 - stepStats.dimension.clarityRate) : 0;
+      const divUnclearRate = stepStats.divergence ? (1 - stepStats.divergence.verifiedClarity) : 0;
+      const dimUnclearRate = stepStats.dimension ? (1 - stepStats.dimension.verifiedClarity) : 0;
       const avgQ = (stepStats.divergence?.avgQuestions || 0) + (stepStats.dimension?.avgQuestions || 0);
       const unclearPenalty = (divUnclearRate + dimUnclearRate) / 2;  // 0-1, 越高越差
       const questionPenalty = Math.min(avgQ / 6, 1);  // 均>6问题=满分惩罚
@@ -211,12 +222,8 @@ function report(result) {
     console.log(`● [${tr.type}] ${tr.count}次:`);
     for (const [step, st] of Object.entries(tr.steps)) {
       const qNote = st.avgQuestions > THRESHOLDS.questions_warn ? ' ⚠️问题偏多' : '';
-      var precStr = ''
-      if (st.precision !== null) {
-        var precIcon = st.precision >= 0.8 ? '✅' : st.precision >= 0.5 ? '⚠️' : '❌'
-        precStr = '  is_clear可信:' + precIcon + (st.precision*100).toFixed(0) + '%'
-      }
-      console.log(`   ${step.padEnd(12)} 清晰 ${(st.clarityRate*100).toFixed(0)}%  均问题 ${st.avgQuestions.toFixed(1)}${qNote}${precStr}`);
+      var clarityIcon = st.verifiedClarity >= 0.7 ? '✅' : st.verifiedClarity >= 0.4 ? '⚠️' : '❌'
+      console.log(`   ${step.padEnd(12)} 原始清晰 ${(st.clarityRate*100).toFixed(0)}%  验证清晰 ${clarityIcon}${(st.verifiedClarity*100).toFixed(0)}%  均问题 ${st.avgQuestions.toFixed(1)}${qNote}`);
     }
 
     if (tr.quality_score !== null) {
