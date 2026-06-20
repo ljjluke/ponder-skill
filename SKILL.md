@@ -35,44 +35,33 @@ license: MIT
 Step 1: 需求拆解（单独完成）
 用 AskUserQuestion 一次一问，覆盖天时/地利/人和/法/本质。问完输出画像。
 
-**Steps 2-8: 每步独立执行，一步完了才下一步，不准合并。**
+**Steps 2-8: 一次调用完整管道。不允许手动分步执行。**
 
-每步只有一种方式完成：
-A) 调 Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{step:"...", user_request:"...", profile:"..."}})
-B) 手动按同一步的逻辑执行
+只有一种方式：一次调用 Workflow 执行全部 7 步。
 
-**进化规则（自动检测并应用已验证的改进）：**
-调用管道前，先检测当前步骤和问题类型是否有已上线规则，并加载历史步骤输出：
+调用前先加载规则和历史：
 
 ```bash
 # 检测规则
-node scripts/evolve.js get-rules "<问题类型>" "<步骤名>"
+RULES=$(node scripts/evolve.js get-rules "<问题类型>" "divergence")
 # 加载历史积累（取20个候选，管道内LLM筛选top8）
-node -e "JSON.stringify(require('./scripts/knowledge').recallStepHistory('<步骤名>', '<问题类型>', {query:'<问题描述>'}).map(e=>({content:e.content, tags:e.tags})))"
+DIV_HISTORY=$(node -e "JSON.stringify(require('./scripts/knowledge').recallStepHistory('divergence', '<问题类型>', {query:'<问题描述>'}).map(e=>({content:e.content, tags:e.tags})))")
+DIM_HISTORY=$(node -e "JSON.stringify(require('./scripts/knowledge').recallStepHistory('dimension', '<问题类型>', {query:'<问题描述>'}).map(e=>({content:e.content, tags:e.tags})))")
 ```
 
-将规则和步骤历史通过管道 args 传入：
-- `applied_rules` — 匹配的规则数组
-- `step_history` — 各步骤的历史积累 `{ divergence: [...], dimension: [...], ... }`
+然后一次调用管道（不准分步）：
 
-规则由沙箱验证通过后手动上线，不自动产生新规则。
+```
+Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{
+  user_request: "...", 
+  profile: "...",
+  applied_rules: $RULES,
+  step_history: { divergence: $DIV_HISTORY, dimension: $DIM_HISTORY },
+  error_warnings: {}
+}})
+```
 
-每步完成后检查 is_clear：
-- true → 进入下一步（步骤序号+1）
-- false → 问 user_questions 中的问题 → 同一步重做（最多3轮）
-
-**不准把多步合并到同一个Agent或同一个阶段。每步是一个独立的单元。**
-
-步骤列表（每步独立）：
-STEP 2: divergence — 6视角。每视角必须有数据来源。输出 {is_clear, user_questions, perspectives}
-STEP 3: bagua — 8维度评分。输出 {is_clear, user_questions, dimensions}
-STEP 4: plans — 5-8方案。输出 {is_clear, user_questions, plans}
-STEP 5: simulate — 所有方案并行推演。输出 [{plan_name, optimistic, neutral, pessimistic}]
-STEP 6: debate — 方案排名+综合推荐。输出 {is_clear, user_questions, ranked, synthesis}
-STEP 7: synthesis — 结论+推理链+假设。输出 {is_clear, user_questions, conclusion, reasoning, assumptions}
-STEP 8: verify — 审查问题。输出 {verdict, fake_clarity, issues}
-
-每步手动模式必须包含 is_clear(boolean) 和 user_questions(array)。user_questions 是分析中发现的具体盲点，不是"你觉得对吗？"。
+管道内部自动执行深度循环（is_clear+问题数双重验证），不需要也不允许外部插手。
 
 Step 9: 存储步骤输出（自动执行）
 
@@ -104,14 +93,10 @@ node scripts/pipeline-metrics.js collect /tmp/_last_pipeline_output.json
 
 不改变管道结果，只记录指标到日志。
 
-Step 10: 呈现结果（先确认，后输出）
+Step 11: 直接呈现结果
 
-收集完成后，再检查是否有需要用户确认的信息：
-- 分析中提到的条件/红线/指标是否已触发？→ 用 AskUserQuestion 问
-- 方案依赖的用户偏好是否确认了？→ 用 AskUserQuestion 问
-- 结论依赖的假设用户是否同意？→ 用 AskUserQuestion 问
-
-确认完毕后，再输出最终结论。
+管道已经完成了所有推理。直接输出核心结论、推理链、主要风险。
+不问"还有什么要深挖的吗"，不把盲点推给用户判断。
 
 禁止免责声明。禁止风险提示。
 结论必须清晰。不清晰就是分析不够深，不是需要加免责。
