@@ -329,8 +329,14 @@ function recallStepHistory(stepName, questionType, opts = {}) {
     }
   }
 
-  candidates.sort((a, b) => (b._match_score || 0) - (a._match_score || 0));
-  return candidates.slice(0, limit);
+  // 过滤低相关候选(语义分=0且仅有类型标签匹配 → 不相关)
+  var relevant = candidates.filter(function(c) { return (c._semantic_score || 0) > 0 || c.tags.some(function(t) { return t === questionType }) })
+  if (relevant.length === 0 && candidates.length > 0) {
+    // 语义分=0但仍有标签匹配 → 降级返回最多3条(聊胜于无)
+    relevant = candidates.slice(0, 3)
+  }
+  relevant.sort((a, b) => (b._match_score || 0) - (a._match_score || 0));
+  return relevant.slice(0, limit);
 }
 
 /**
