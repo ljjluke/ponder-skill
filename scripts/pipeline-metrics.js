@@ -97,7 +97,7 @@ function statusReport() {
 
   // 按步骤统计
   const stepStats = {};
-  const stepNames = ['divergence', 'dimension', 'plans', 'debate', 'synthesis', 'verification'];
+  const stepNames = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification'];
   for (const name of stepNames) {
     const steps = runs.filter(r => r.steps[name]?.is_clear !== undefined);
     if (steps.length === 0) continue;
