@@ -163,9 +163,19 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
 
 // Phase 4: Simulation (parallel, no loop needed)
 phase('推演')
+var simHistory = ''
+var simCandidates = stepHistory.simulations || []
+if (simCandidates.length > 0) {
+  phase('历史推演筛选')
+  var simFiltered = await agent('需求: '+req+'\n从以下历史推演结果中选出最相关的8条用于本次模拟:\n'+simCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
+    label: '推演筛选',
+    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
+  })
+  simHistory = '\n\n同类历史推演参考:\n' + (simFiltered.selected_indices||[]).map(function(i){return '- '+(simCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
+}
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。\n历史经验:'+lessons, {
+  return agent('模拟:'+p.name+' 需求:'+req+' 乐观/中性/悲观路径。\n历史经验:'+lessons+simHistory, {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'}, optimistic:{type:'string',minLength:50},
