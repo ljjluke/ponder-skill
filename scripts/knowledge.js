@@ -235,7 +235,11 @@ function storeStepOutput(stepName, questionType, output, opts = {}) {
     tags: ['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])],
     category: stepName === 'divergence' ? 'judgment_and_strategy' :
               stepName === 'dimension' ? 'core_decision' :
-              stepName === 'verify' ? 'verification_and_validation' : 'tools_and_means',
+              stepName === 'plans' ? 'input_and_output' :
+              stepName === 'simulate' ? 'dependencies_and_coordination' :
+              stepName === 'debate' ? 'structure_and_framework' :
+              stepName === 'synthesis' ? 'efficiency_and_resources' :
+              stepName === 'verification' ? 'verification_and_validation' : 'tools_and_means',
     emotion: 'xi',
     q: 0.7,
     source: 'step_history',
