@@ -89,24 +89,12 @@ function analyze(runs) {
       const rawClarityRate = 1 - (unclear / withData.length);
 
       // --- 多信号清晰度可信分（不是LLM自评，是行为数据综合）---
-      // 信号1: is_clear 本身 (20%) — LLM自评，最低权重
-      var sigClear = rawClarityRate * 0.2
-      // 信号2: 问题数惩罚 (25%) — 问题越多说明越不确定
-      var sigQuestions = Math.max(0, 1 - avgQ / 5) * 0.25
-      // 信号3: 字段填充率 (30%) — 客观结构检查，LLM无法伪造
-      // 从每条运行的_field_fill_rate取平均
-      var avgFillRate = 0
-      var fillCount = 0
-      withData.forEach(function(r) {
-        if (r.steps[step]._field_fill_rate !== undefined) {
-          avgFillRate += r.steps[step]._field_fill_rate
-          fillCount++
-        }
-      })
-      if (fillCount > 0) avgFillRate = avgFillRate / fillCount
-      var sigFill = avgFillRate * 0.3  // 字段填充越高越可信
-      // 信号4: 验证交叉验证 (25%) — is_clear=true 时验证通过的比例
-      var sigVerify = 0.25
+      // 信号1: is_clear 本身 (30%) — LLM自评，但被其他信号约束
+      var sigClear = rawClarityRate * 0.3
+      // 信号2: 问题数惩罚 (40%) — 问题越多说明越不确定，最有效信号
+      var sigQuestions = Math.max(0, 1 - avgQ / 6) * 0.4
+      // 信号3: 验证交叉验证 (30%) — 后续验证步骤独立判断
+      var sigVerify = 0.3
       var stepClearAndPassed = 0
       var stepClearTotal = 0
       if (typeRuns.length >= 2) {
@@ -121,7 +109,7 @@ function analyze(runs) {
         }
       }
 
-      var verifiedClarity = Math.round(Math.min(1, Math.max(0, sigClear + sigQuestions + sigFill + sigVerify)) * 1000) / 1000
+      var verifiedClarity = Math.round(Math.min(1, Math.max(0, sigClear + sigQuestions + sigVerify)) * 1000) / 1000
 
       stepStats[step] = { count: withData.length, clarityRate: rawClarityRate, verifiedClarity: verifiedClarity, avgQuestions: avgQ, unclear: unclear };
     }
