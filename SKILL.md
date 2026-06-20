@@ -93,10 +93,11 @@ node scripts/pipeline-metrics.js collect /tmp/_last_pipeline_output.json
 
 不改变管道结果，只记录指标到日志。
 
-Step 11: 直接呈现结果
+Step 11: 呈现结果
 
-管道已经完成了所有推理。直接输出核心结论、推理链、主要风险。
-不问"还有什么要深挖的吗"，不把盲点推给用户判断。
+管道返回的结论中如果包含 `pending_user_questions`（分析过程中发现的具体方向分歧），用 AskUserQuestion 问用户。每个问题必须有具体的分析依据，不是泛泛确认。
+
+如果没有 pending_user_questions，直接呈现核心结论、推理链、主要风险。不问"还有什么要深挖的吗"——真有问题管道会列出来，没问题就不问。
 
 禁止免责声明。禁止风险提示。
 结论必须清晰。不清晰就是分析不够深，不是需要加免责。
