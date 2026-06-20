@@ -108,7 +108,7 @@ function analyze(runs) {
         if (stepClearTotal >= 2) {
           sigVerify = (stepClearAndPassed / stepClearTotal) * 0.3
         } else {
-          sigVerify = 0.15  // 无验证数据时取中间值
+          sigVerify = 0.05  // 无验证数据时取低基线
         }
       }
 
