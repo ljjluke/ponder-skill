@@ -92,10 +92,10 @@ function analyze(runs) {
       // 信号1: is_clear 本身 — 不同步骤可信度不同
       var isClearWeight = step === 'divergence' ? 0.25 : 0.35  // 发散不可信(77%),维度可信(96%)
       var sigClear = rawClarityRate * isClearWeight
-      // 信号2: 问题数惩罚 — 问题越多越不清晰,发散比维度更敏感
-      var questionCap = step === 'divergence' ? 5 : 7  // 发散问题更多时惩罚更重
+      // 信号2: 问题数惩罚 — 问题越多越不清晰,但>4个后不再加重(区分高质量追问vs泛泛疑问)
       var questionWeight = step === 'divergence' ? 0.45 : 0.35
-      var sigQuestions = Math.max(0, 1 - avgQ / questionCap) * questionWeight
+      var qPenalty = avgQ <= 1 ? 0 : avgQ <= 3 ? (avgQ - 1) / 5 : 0.4
+      var sigQuestions = (1 - qPenalty) * questionWeight
       // 信号3: 验证交叉验证 (30%) — 后续验证步骤独立判断
       var sigVerify = 0.3
       var stepClearAndPassed = 0
