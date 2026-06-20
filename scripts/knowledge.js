@@ -182,10 +182,18 @@ function store(entry) {
   const emotion = entry.emotion || 'an';
 
   // 结晶化: 如果有推理上下文,追加到描述中
-  var desc = entry.description
+  const reasoningDesc = entry.description
+  const reasoningParts = []
   if (entry._reasoning) {
-    var r = entry._reasoning
-    desc = desc + '\n\n---\n[推理] ' + (r.divergence_consensus||'') + ' | ' + (r.dimension_finding||'') + ' | ' + (r.verification_verdict||'')
+    const r = entry._reasoning
+    if (r.divergence_consensus) reasoningParts.push(r.divergence_consensus)
+    if (r.dimension_finding) reasoningParts.push(r.dimension_finding)
+    if (r.synthesis_conclusion) reasoningParts.push(r.synthesis_conclusion)
+    if (r.verification_verdict) reasoningParts.push('验证:' + r.verification_verdict)
+  }
+  var desc = reasoningDesc
+  if (reasoningParts.length > 0) {
+    desc = reasoningDesc + '\n\n---\n[推理] ' + reasoningParts.join(' | ')
   }
 
   const payload = JSON.stringify({
@@ -241,7 +249,7 @@ function storeStepOutput(stepName, questionType, output, opts = {}) {
       const point = io.findPointById(kg, result.id);
       if (point) {
         point.point.tags = point.point.tags || [];
-        if (!point.point.tags.includes('req:' + opts.user_request.substring(0, 30))) {
+        if (!point.point.tags.includes('step_history:' + stepName)) {
           point.point.tags.push('step_history:' + stepName);
           io.saveMMA(kg);
         }
@@ -333,7 +341,11 @@ function recallErrors(questionType, stepName, opts = {}) {
     // 保洁日志在MMA中通过tag标记，这里通过REFUTED已经覆盖
   } catch (e) {}
 
-  errors.sort((a, b) => a.severity === 'high' ? -1 : 0);
+  errors.sort(function(a, b) {
+    if (a.severity === 'high' && b.severity !== 'high') return -1
+    if (a.severity !== 'high' && b.severity === 'high') return 1
+    return 0
+  });
   return errors.slice(0, limit);
 }
 

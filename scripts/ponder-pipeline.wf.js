@@ -245,7 +245,11 @@ var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列�
   var reasoningContext = {
     divergence_consensus: (div && div.consensus || '').substring(0, 200),
     dimension_finding: (dim && dim.key_finding || '').substring(0, 200),
+    plans_logic: (plan && plan.logic || '').substring(0, 200),
+    simulations_summary: (simResults || []).length + '个方案推演',
     debate_synthesis: (debate && debate.synthesis || '').substring(0, 200),
+    debate_ranked: ((debate && debate.ranked || []).slice(0,3).map(function(r) { return r.name }).join(', ')),
+    synthesis_conclusion: (syn && syn.conclusion || '').substring(0, 200),
     verification_verdict: ver && ver.verdict || '',
   }
   var lessonsWithReasoning = (syn && syn.pending_lessons || []).map(function(l) {
