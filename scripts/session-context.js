@@ -22,7 +22,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'mcts-td-planner');
+const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
 const SESSION_FILE = path.join(DATA_DIR, 'session-context.json');
 const MMA_SCRIPT = path.join(os.homedir(), '.claude', 'plugins', 'cache', 'luke', 'luke');
 
