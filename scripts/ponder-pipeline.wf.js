@@ -181,46 +181,38 @@ if (simCandidates.length > 0) {
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
   var elemDesc = fiveElements.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
-  return agent('## 五行推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(五行)\n按以下5个阶段逐步推演:\n'+fiveElements.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按木→火→土→金→水顺序,每个阶段走一遍\n2. 每个阶段: 描述推演过程 + 关键事件 + 结论\n3. 最后给出综合V值(0-1):'+simHistoryText, {
+  return agent('## 五行推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(五行)\n按以下5个阶段逐步推演:\n'+fiveElements.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按木→火→土→金→水顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'},
       phases:{type:'array',items:{type:'object',properties:{
         element:{type:'string'}, process:{type:'string'}, event:{type:'string'}, conclusion:{type:'string'},
-      },required:['element','process','conclusion']},minItems:5},
+        achievement:{type:'number',minimum:0,maximum:1,description:'基于推演过程的达成度评估'},
+      },required:['element','process','achievement']},minItems:5},
       optimistic:{type:'string'}, neutral:{type:'string'}, pessimistic:{type:'string'},
-      V:{type:'number',minimum:0,maximum:1},
       note:{type:'string'},
-    }, required:['plan_name','phases','V'] },
+    }, required:['plan_name','phases'] },
   })
 }}))
 
-// V值验证和修正: 用五行权重校准LLM自评的V值
+// V值计算: 五行固定权重,不用LLM输出
 var simResults = (sims||[]).filter(Boolean).map(function(s) {
   var phases = s.phases||[]
-  // 从各阶段推演结论中提取权重分(非LLM打分,从结论文本长度和质量推算)
-  var computedV = 0
-  var hasPhaseData = false
+  var totalWeight = fiveElements.reduce(function(s,e){return s+e.weight},0)
+  var weightedSum = 0, validPhases = 0
   phases.forEach(function(ph) {
     var elem = fiveElements.find(function(e){return e.name===ph.element})
-    if (elem && ph.process && ph.process.length > 10) {
-      var textQuality = Math.min(1, ph.process.length / 100)  // 推演越详实分数越高
-      computedV += textQuality * elem.weight
-      hasPhaseData = true
+    if (elem && ph.achievement !== undefined) {
+      weightedSum += ph.achievement * elem.weight
+      validPhases++
     }
   })
-  if (hasPhaseData) {
-    var totalWeight = fiveElements.reduce(function(s,e){return s+e.weight},0)
-    computedV = Math.round(computedV / totalWeight * 100) / 100
-  }
-  // 综合V值 = LLM自评×0.4 + 五行校准×0.6
-  var v = s.V || 0
-  var finalV = computedV > 0 ? Math.round((v * 0.4 + computedV * 0.6) * 100) / 100 : v
+  var v = validPhases > 0 ? Math.round(weightedSum / totalWeight * 100) / 100 : 0
   return {
     name: s.plan_name||'',
     phases: phases,
     optimistic: s.optimistic||'', neutral: s.neutral||'', pessimistic: s.pessimistic||'',
-    V: Math.max(0, Math.min(1, finalV)),
+    V: Math.max(0, Math.min(1, v)),
     sigma2: Math.round(Math.abs(phases.reduce(function(s,ph){return s+(ph.process?ph.process.length:0)},0) / (phases.length||1) - 100) / 200 * 100) / 100,
   }
 })
