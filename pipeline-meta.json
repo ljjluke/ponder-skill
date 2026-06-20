@@ -1,12 +1,12 @@
 {
-  "version": "1.15.2",
+  "version": "1.17.2",
   "description": "自进化认知管道元配置 — 每次分析后可能被修改",
   "meta_rules": {
     "不变": "最小化自由能（预测误差）",
     "可变": "步骤权重、prompt内容、模块增减、拓扑连接"
   },
   "steps": {
-    "diverge": {
+    "divergence": {
       "label": "6尺度发散",
       "weight": 1,
       "enabled": true,
@@ -18,7 +18,7 @@
       },
       "mutation_history": []
     },
-    "bagua": {
+    "dimension": {
       "label": "八卦镜8维",
       "weight": 1,
       "enabled": true,
@@ -30,19 +30,7 @@
       },
       "mutation_history": []
     },
-    "dmn": {
-      "label": "DMN间歇",
-      "weight": 0.5,
-      "enabled": true,
-      "fitness": {
-        "pass_count": 0,
-        "fail_count": 0,
-        "avg_score": 0.5,
-        "last_free_energy": 0
-      },
-      "mutation_history": []
-    },
-    "simulate": {
+    "simulations": {
       "label": "多场景推演",
       "weight": 1,
       "enabled": true,
@@ -66,31 +54,7 @@
       },
       "mutation_history": []
     },
-    "converge": {
-      "label": "收敛自检",
-      "weight": 1,
-      "enabled": true,
-      "fitness": {
-        "pass_count": 0,
-        "fail_count": 0,
-        "avg_score": 0.5,
-        "last_free_energy": 0
-      },
-      "mutation_history": []
-    },
-    "hierarchy": {
-      "label": "层级预测",
-      "weight": 0.6,
-      "enabled": true,
-      "fitness": {
-        "pass_count": 0,
-        "fail_count": 0,
-        "avg_score": 0.5,
-        "last_free_energy": 0
-      },
-      "mutation_history": []
-    },
-    "verify": {
+    "verification": {
       "label": "独立验证",
       "weight": 1,
       "enabled": true,
@@ -102,9 +66,21 @@
       },
       "mutation_history": []
     },
-    "action": {
-      "label": "具身行动",
-      "weight": 0.4,
+    "plans": {
+      "label": "plans",
+      "weight": 1.0,
+      "enabled": true,
+      "fitness": {
+        "pass_count": 0,
+        "fail_count": 0,
+        "avg_score": 0.5,
+        "last_free_energy": 0
+      },
+      "mutation_history": []
+    },
+    "synthesis": {
+      "label": "synthesis",
+      "weight": 1.0,
       "enabled": true,
       "fitness": {
         "pass_count": 0,
@@ -118,15 +94,13 @@
   "topology": {
     "type": "sequential",
     "order": [
-      "diverge",
-      "bagua",
-      "dmn",
-      "simulate",
+      "divergence",
+      "dimension",
+      "plans",
+      "simulations",
       "debate",
-      "converge",
-      "hierarchy",
-      "verify",
-      "action"
+      "synthesis",
+      "verification"
     ],
     "parallel_groups": [],
     "mutation_count": 0
