@@ -37,61 +37,20 @@ Step 1: 需求拆解（单独完成）
 
 **Steps 2-8: 一次调用完整管道。不允许手动分步执行。**
 
-只有一种方式：一次调用 Workflow 执行全部 7 步。
-
-调用前先加载规则和历史：
+调用前先运行编排器获取参数，然后一次调用 Workflow，完成后再次运行编排器收尾：
 
 ```bash
-# 检测规则
-RULES=$(node scripts/evolve.js get-rules "<问题类型>" "divergence")
-# 加载历史积累（取20个候选，管道内LLM筛选top8）
-DIV_HISTORY=$(node -e "JSON.stringify(require('./scripts/knowledge').recallStepHistory('divergence', '<问题类型>', {query:'<问题描述>'}).map(e=>({content:e.content, tags:e.tags})))")
-DIM_HISTORY=$(node -e "JSON.stringify(require('./scripts/knowledge').recallStepHistory('dimension', '<问题类型>', {query:'<问题描述>'}).map(e=>({content:e.content, tags:e.tags})))")
+# Step A: 获取编排参数(规则+历史+警告)
+ORCH_ARGS=$(node scripts/orchestrate.js before "<问题类型>" "<问题描述>")
+
+# Step B: 一次调用管道(不准分步、不准在中间问用户)
+Workflow({scriptPath:".../ponder-pipeline.wf.js", args: $ORCH_ARGS})
+
+# Step C: 收尾(存步骤输出+收集指标+知识保洁)
+echo '<管道返回的完整JSON>' | node scripts/orchestrate.js after "<问题类型>" "<问题描述>"
 ```
 
-然后一次调用管道（不准分步）：
-
-```
-Workflow({scriptPath:".../ponder-pipeline.wf.js", args:{
-  user_request: "...", 
-  profile: "...",
-  applied_rules: $RULES,
-  step_history: { divergence: $DIV_HISTORY, dimension: $DIM_HISTORY },
-  error_warnings: {}
-}})
-```
-
-管道内部自动执行深度循环（is_clear+问题数双重验证），不需要也不允许外部插手。
-
-Step 9: 存储步骤输出（自动执行）
-
-管道返回后，取出 `_step_outputs` 字段，对每一步执行存储：
-
-```bash
-# 每个步骤的输出存进MMA，供未来同类问题参考
-node -e "
-const { storeStepOutput, recallStepHistory } = require('./scripts/knowledge');
-const outputs = <管道返回的_step_outputs>;  // 从管道返回值中取
-const qType = '<当前问题类型>';
-const req = '<当前问题描述>';
-for (const [step, data] of Object.entries(outputs)) {
-  if (data) storeStepOutput(step, qType, JSON.stringify(data), {tags:[qType], user_request: req});
-}
-"
-```
-
-这样每次管道运行后，所有7步的输出都存进 MMA。下次同类问题时通过 `recallStepHistory` 加载，LLM筛选 top 8 注入对应步骤的 prompt。
-
-Step 10: 收集运行指标
-
-```bash
-cat > /tmp/_last_pipeline_output.json << 'EOF'
-<这里放管道返回的完整JSON>
-EOF
-node scripts/pipeline-metrics.js collect /tmp/_last_pipeline_output.json
-```
-
-不改变管道结果，只记录指标到日志。
+三步，没有 LLM 自由发挥的空间。管道内部自动执行深度循环（is_clear+问题数双重验证），不需要也不允许外部插手。
 
 Step 11: 呈现结果
 
