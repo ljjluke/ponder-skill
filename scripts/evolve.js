@@ -86,15 +86,20 @@ function analyze(runs) {
       const avgQ = withData.reduce((s, r) => s + (r.steps[step]?.questions_count || 0), 0) / withData.length;
       const clarityRate = 1 - (unclear / withData.length);
 
-      stepStats[step] = { count: withData.length, clarityRate, avgQuestions: avgQ, unclear };
-    }
+      // is_clear 可信度: 用验证步骤交叉验证
+      // 当步骤 is_clear=true 时, 后续验证 PASS 的比例
+      var precision = null
+      if (typeRuns.length >= 3) {
+        var stepClearRuns = withData.filter(function(r) { return r.steps[step].is_clear })
+        var stepClearAndPassed = stepClearRuns.filter(function(r) {
+          return r.steps.verification && r.steps.verification.verdict === 'PASS'
+        })
+        if (stepClearAndPassed.length >= 2) {
+          precision = stepClearAndPassed.length / stepClearRuns.length
+        }
+      }
 
-    // 验证统计
-    const verRuns = typeRuns.filter(r => r.steps.verification?.verdict);
-    const verifyStats = null;
-    if (verRuns.length >= 2) {
-      const pass = verRuns.filter(r => r.steps.verification.verdict === 'PASS').length;
-      const fakeC = verRuns.filter(r => r.steps.verification.fake_clarity).length;
+      stepStats[step] = { count: withData.length, clarityRate, avgQuestions: avgQ, unclear, precision: precision };
     }
 
     // 产出建议
@@ -206,7 +211,12 @@ function report(result) {
     console.log(`● [${tr.type}] ${tr.count}次:`);
     for (const [step, st] of Object.entries(tr.steps)) {
       const qNote = st.avgQuestions > THRESHOLDS.questions_warn ? ' ⚠️问题偏多' : '';
-      console.log(`   ${step.padEnd(12)} 清晰 ${(st.clarityRate*100).toFixed(0)}%  均问题 ${st.avgQuestions.toFixed(1)}${qNote}`);
+      var precStr = ''
+      if (st.precision !== null) {
+        var precIcon = st.precision >= 0.8 ? '✅' : st.precision >= 0.5 ? '⚠️' : '❌'
+        precStr = '  is_clear可信:' + precIcon + (st.precision*100).toFixed(0) + '%'
+      }
+      console.log(`   ${step.padEnd(12)} 清晰 ${(st.clarityRate*100).toFixed(0)}%  均问题 ${st.avgQuestions.toFixed(1)}${qNote}${precStr}`);
     }
 
     if (tr.quality_score !== null) {
