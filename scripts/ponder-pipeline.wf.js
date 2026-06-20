@@ -54,29 +54,34 @@ async function runUntilClear(label, prompt, schema, rounds) {
   // Round 1
   r1 = await agent(prompt + ' 第1轮。必须清晰。不清晰填user_questions。', { label: label, schema: schema })
   result = r1
+  r1._depth_rounds = 1
   var lastQ = r1.user_questions || []
   // is_clear + 问题数≤2 同时满足才跳过(防止LLM偷懒说清楚)
-  if (r1.is_clear && (!r1.user_questions || r1.user_questions.length <= 2)) return result
+  if (r1.is_clear && (!r1.user_questions || r1.user_questions.length <= 2)) { r1._depth_rounds = 1; return result }
   if (maxRounds <= 1) return result
   // Round 2 (carrying forward previous blind spots)
   var r2 = await agent(prompt + ' 第2轮。前轮盲点:'+JSON.stringify(lastQ)+'。针对性加深。', { label: label+'R2', schema: schema })
   result = r2
-  if (r2.is_clear && (!r2.user_questions || r2.user_questions.length <= 2)) return result
+  r2._depth_rounds = 2
+  if (r2.is_clear && (!r2.user_questions || r2.user_questions.length <= 2)) { r2._depth_rounds = 2; return result }
   lastQ = r2.user_questions || []
   if (maxRounds <= 2) return result
   // Round 3
   var r3 = await agent(prompt + ' 第3轮。前轮盲点:'+JSON.stringify(lastQ)+'。继续加深。', { label: label+'R3', schema: schema })
   result = r3
-  if (r3.is_clear) return result
+  r3._depth_rounds = 3
+  if (r3.is_clear) { r3._depth_rounds = 3; return result }
   if (maxRounds <= 3) return result
   // Round 4
   var r4 = await agent(prompt + ' 第4轮。', { label: label+'R4', schema: schema })
   result = r4
-  if (r4.is_clear) return result
+  r4._depth_rounds = 4
+  if (r4.is_clear) { r4._depth_rounds = 4; return result }
   if (maxRounds <= 4) return result
   // Round 5
   var r5 = await agent(prompt + ' 第5轮，最后一轮。', { label: label+'R5', schema: schema })
   result = r5
+  r5._depth_rounds = 5
   return result
 }
 
