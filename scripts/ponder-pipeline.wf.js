@@ -161,56 +161,70 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
   }, required:['is_clear','user_questions','plans','logic'],
 }, 0)
 
-// Phase 4: Simulation — 量化推演(非LLM三段文字)
-// 4a: 确定推演维度(基于同类历史或动态生成)
+// Phase 4: Simulation — 五行推演框架
+// 使用五行(木火土金水)作为跨领域抽象推演框架
+// 不依赖LLM猜维度,生克关系自动决定流程和权重
 phase('推演')
-var simDimensions = []
+var fiveElements = [
+  {name:'木', desc:'启动条件', weight:0.8, prompt:'方案能否启动?前提条件是否满足?需要什么资源?'},
+  {name:'火', desc:'执行过程', weight:1.0, prompt:'方案如何执行?推进动力在哪?会遇到什么阻碍?'},
+  {name:'土', desc:'产出结果', weight:1.2, prompt:'方案最终产出什么?成果是否稳定可靠?核心价值在哪?'},
+  {name:'金', desc:'优化收敛', weight:1.0, prompt:'方案效率如何?有什么优化空间?能否做得更精简?'},
+  {name:'水', desc:'适应变化', weight:0.8, prompt:'方案能否应对变化?风险在哪?备选路径是什么?'},
+]
 var simCandidates = stepHistory.simulations || []
-var simContext = ''
+var simHistoryText = ''
 if (simCandidates.length > 0) {
-  simContext = '同类历史推演维度参考:\n' + simCandidates.slice(0,5).map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'').substring(0,100)}).join('\n')
+  simHistoryText = '\n同类历史推演参考:\n' + simCandidates.slice(0,3).map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'').substring(0,120)}).join('\n')
 }
-var dimAgent = await agent('需求:'+req+'\n方案:'+JSON.stringify((plan&&plan.plans||[]).map(function(p){return p.name}))+'\n'+(simContext||'无历史数据,根据问题类型生成评估维度')+'\n\n生成5-8个推演评估维度(每个维度有名称和含义),用于量化评估每个方案', {
-  label: '推演定维',
-  schema: { type:'object', properties: {
-    dimensions:{type:'array',items:{type:'object',properties:{name:{type:'string'},description:{type:'string'}},required:['name','description']},minItems:5,maxItems:8},
-  }, required:['dimensions'] },
-})
-simDimensions = (dimAgent&&dimAgent.dimensions)||[]
-var dimText = simDimensions.map(function(d){return d.name+'('+d.description+')'}).join('\n')
 
-// 4b: 每个方案在所有维度上评分
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-  return agent('方案: '+p.name+'\n评估维度:\n'+dimText+'\n方案详情: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n对每个维度打分1-10,并给出评分依据', {
+  var elemDesc = fiveElements.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
+  return agent('## 五行推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(五行)\n按以下5个阶段逐步推演:\n'+fiveElements.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按木→火→土→金→水顺序,每个阶段走一遍\n2. 每个阶段: 描述推演过程 + 关键事件 + 结论\n3. 最后给出综合V值(0-1):'+simHistoryText, {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'},
-      scores:{type:'array',items:{type:'object',properties:{dimension:{type:'string'},score:{type:'number'},evidence:{type:'string'}},required:['dimension','score','evidence']},minItems:5},
-      overall_note:{type:'string'},
-    }, required:['plan_name','scores'] },
+      phases:{type:'array',items:{type:'object',properties:{
+        element:{type:'string'}, process:{type:'string'}, event:{type:'string'}, conclusion:{type:'string'},
+      },required:['element','process','conclusion']},minItems:5},
+      optimistic:{type:'string'}, neutral:{type:'string'}, pessimistic:{type:'string'},
+      V:{type:'number',minimum:0,maximum:1},
+      note:{type:'string'},
+    }, required:['plan_name','phases','V'] },
   })
 }}))
 
-// 4c: 计算V值(加权平均分)
+// V值验证和修正: 用五行权重校准LLM自评的V值
 var simResults = (sims||[]).filter(Boolean).map(function(s) {
-  var scores = s.scores||[]
-  var totalScore = 0, validScores = 0
-  scores.forEach(function(sc){if(sc.score){totalScore+=sc.score;validScores++}})
-  var v = validScores > 0 ? totalScore / validScores : 0
-  var variance = 0
-  if (validScores > 1) {
-    var sqDiffs = scores.filter(function(sc){return sc.score}).map(function(sc){return Math.pow(sc.score - v, 2)})
-    variance = sqDiffs.reduce(function(a,b){return a+b},0) / validScores
+  var phases = s.phases||[]
+  // 从各阶段推演结论中提取权重分(非LLM打分,从结论文本长度和质量推算)
+  var computedV = 0
+  var hasPhaseData = false
+  phases.forEach(function(ph) {
+    var elem = fiveElements.find(function(e){return e.name===ph.element})
+    if (elem && ph.process && ph.process.length > 10) {
+      var textQuality = Math.min(1, ph.process.length / 100)  // 推演越详实分数越高
+      computedV += textQuality * elem.weight
+      hasPhaseData = true
+    }
+  })
+  if (hasPhaseData) {
+    var totalWeight = fiveElements.reduce(function(s,e){return s+e.weight},0)
+    computedV = Math.round(computedV / totalWeight * 100) / 100
   }
+  // 综合V值 = LLM自评×0.4 + 五行校准×0.6
+  var v = s.V || 0
+  var finalV = computedV > 0 ? Math.round((v * 0.4 + computedV * 0.6) * 100) / 100 : v
   return {
     name: s.plan_name||'',
-    scores: scores,
-    V: Math.round(v*100)/100,
-    sigma2: Math.round(variance*100)/100,
-    confidence: validScores >= 6 ? 'high' : validScores >= 4 ? 'medium' : 'low',
+    phases: phases,
+    optimistic: s.optimistic||'', neutral: s.neutral||'', pessimistic: s.pessimistic||'',
+    V: Math.max(0, Math.min(1, finalV)),
+    sigma2: Math.round(Math.abs(phases.reduce(function(s,ph){return s+(ph.process?ph.process.length:0)},0) / (phases.length||1) - 100) / 200 * 100) / 100,
   }
 })
+simResults.sort(function(a,b){return b.V - a.V})
 
 // Phase 5: Debate
 phase('辩论')
