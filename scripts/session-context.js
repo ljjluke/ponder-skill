@@ -35,15 +35,13 @@ function freshContext() {
     started_at: new Date().toISOString(),
     analyses_count: 0,
     step_tracking: {
-      diverge: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      bagua:  { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      dmn:    { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      simulate: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
+      divergence: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
+      dimension: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
+      plans: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
+      simulations: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
       debate: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      converge: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      hierarchy: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      verify: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
-      action: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
+      synthesis: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
+      verification: { runs: 0, pass_count: 0, fail_count: 0, avg_completion: 0 },
     },
     user_patterns: {
       preferred_domains: [],      // ['tech', 'finance', 'health', ...]

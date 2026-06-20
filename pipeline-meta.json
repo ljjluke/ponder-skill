@@ -7,7 +7,7 @@
   },
   "steps": {
     "divergence": {
-      "label": "6尺度发散",
+      "label": "6视角发散",
       "weight": 1,
       "enabled": true,
       "fitness": {
@@ -31,7 +31,7 @@
       "mutation_history": []
     },
     "simulations": {
-      "label": "多场景推演",
+      "label": "推演模拟",
       "weight": 1,
       "enabled": true,
       "fitness": {
@@ -43,7 +43,7 @@
       "mutation_history": []
     },
     "debate": {
-      "label": "社会认知辩论",
+      "label": "辩论排名",
       "weight": 0.7,
       "enabled": true,
       "fitness": {
@@ -67,7 +67,7 @@
       "mutation_history": []
     },
     "plans": {
-      "label": "plans",
+      "label": "方案生成",
       "weight": 1.0,
       "enabled": true,
       "fitness": {
@@ -79,7 +79,7 @@
       "mutation_history": []
     },
     "synthesis": {
-      "label": "synthesis",
+      "label": "综合结论",
       "weight": 1.0,
       "enabled": true,
       "fitness": {
