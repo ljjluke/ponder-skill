@@ -52,6 +52,17 @@ function collect(pipelineOutput) {
       record.is_clear = step.is_clear;
       record.questions_count = Array.isArray(step.user_questions) ? step.user_questions.length : 0;
       record.questions = step.user_questions || [];
+      // 客观字段完整性检查：LLM无法伪造，直接从输出结构计算
+      if (name === 'divergence' && step.perspectives) {
+        var filledSources = step.perspectives.filter(function(p) { return p.data_source && p.data_source.length > 0 }).length
+        record._field_fill_rate = filledSources / step.perspectives.length
+        record._item_count = step.perspectives.length
+      }
+      if (name === 'dimension' && step.dimensions) {
+        var filledEvidence = step.dimensions.filter(function(d) { return d.evidence && d.evidence.length > 0 }).length
+        record._field_fill_rate = filledEvidence / step.dimensions.length
+        record._item_count = step.dimensions.length
+      }
     }
 
     run.steps[name] = record;
