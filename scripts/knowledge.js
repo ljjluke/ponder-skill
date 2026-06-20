@@ -270,24 +270,63 @@ function storeStepOutput(stepName, questionType, output, opts = {}) {
  * @returns {Array} 排序后的历史条目
  */
 function recallStepHistory(stepName, questionType, opts = {}) {
-  // 取20个候选，后续由LLM从中选top8
   const limit = opts.limit || 20;
-  const searchTags = ['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])];
-  const result = acquire({
-    tags: searchTags,
-    limit: limit * 2, // 先多取再筛选
-    query: opts.query || questionType || '',
-  });
-  if (!result.entries || result.entries.length === 0) return [];
+  const searchTags = new Set(['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])]);
+  const candidates = [];
 
-  // 过滤: 只匹配当前步骤 + 语义分 > 0 或 有标签重叠
-  const scored = result.entries
-    .filter(e => e.content && e.content.startsWith('[step:' + stepName + ']'))
-    .filter(e => (e._semantic_score || 0) > 0 || (e.tags || []).some(t => searchTags.includes(t)))
-    .sort((a, b) => (b._match_score || 0) - (a._match_score || 0))
-    .slice(0, limit);
+  // 直接加载MMA全量搜索（不经过deqi的时间激活限制）
+  try {
+    const io = require('./mma/io');
+    const kg = io.loadMMA();
+    const allMeridians = [...Object.entries(kg.meridians), ...Object.entries(kg.extra).map(([k, m]) => ['_extra_' + k, m])];
 
-  return scored;
+    for (const [, m] of allMeridians) {
+      if (!m || !m.points) continue;
+      for (const p of m.points) {
+        if (p.hidden) continue;
+        if (!p.tags || !p.tags.some(t => searchTags.has(t))) continue;
+        if (!p.description || !p.description.startsWith('[step:' + stepName + ']')) continue;
+
+        // 计算语义重叠度
+        const queryWords = (opts.query || questionType || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        const descWords = (p.description || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        let overlap = 0;
+        for (const qw of queryWords) {
+          if (descWords.some(dw => dw === qw || dw.includes(qw) || qw.includes(dw))) overlap++;
+        }
+        const semanticScore = queryWords.length > 0 ? overlap / queryWords.length : 0;
+        const matchScore = semanticScore * 0.4 + (p.q || 0.5) * 0.3 + (p.n || 0) * 0.1;
+
+        candidates.push({
+          id: p.id,
+          content: p.description,
+          tags: p.tags,
+          q: p.q,
+          status: p.status,
+          source: 'mma',
+          _semantic_score: Math.round(semanticScore * 100) / 100,
+          _match_score: Math.round(matchScore * 1000) / 1000,
+        });
+      }
+    }
+  } catch (e) { /* fallback: 降级到acquire */ }
+
+  // 降级: 如果直接搜索失败，用acquire走deqi
+  if (candidates.length === 0) {
+    const result = acquire({
+      tags: Array.from(searchTags),
+      limit: limit * 2,
+      query: opts.query || questionType || '',
+    });
+    if (result.entries && result.entries.length > 0) {
+      for (const e of result.entries) {
+        if (e.content && e.content.startsWith('[step:' + stepName + ']')) candidates.push(e);
+      }
+    }
+  }
+
+  candidates.sort((a, b) => (b._match_score || 0) - (a._match_score || 0));
+  return candidates.slice(0, limit);
 }
 
 /**
