@@ -89,10 +89,13 @@ function analyze(runs) {
       const rawClarityRate = 1 - (unclear / withData.length);
 
       // --- 多信号清晰度可信分（不是LLM自评，是行为数据综合）---
-      // 信号1: is_clear 本身 (30%) — LLM自评，但被其他信号约束
-      var sigClear = rawClarityRate * 0.3
-      // 信号2: 问题数惩罚 (40%) — 问题越多说明越不确定，最有效信号
-      var sigQuestions = Math.max(0, 1 - avgQ / 6) * 0.4
+      // 信号1: is_clear 本身 — 不同步骤可信度不同
+      var isClearWeight = step === 'divergence' ? 0.25 : 0.35  // 发散不可信(77%),维度可信(96%)
+      var sigClear = rawClarityRate * isClearWeight
+      // 信号2: 问题数惩罚 — 问题越多越不清晰,发散比维度更敏感
+      var questionCap = step === 'divergence' ? 5 : 7  // 发散问题更多时惩罚更重
+      var questionWeight = step === 'divergence' ? 0.45 : 0.35
+      var sigQuestions = Math.max(0, 1 - avgQ / questionCap) * questionWeight
       // 信号3: 验证交叉验证 (30%) — 后续验证步骤独立判断
       var sigVerify = 0.3
       var stepClearAndPassed = 0
