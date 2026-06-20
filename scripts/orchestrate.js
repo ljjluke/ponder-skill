@@ -30,14 +30,14 @@ function before(questionType, userRequest, profile) {
   var rules = []
   try {
     var rulesData = JSON.parse(fs.readFileSync(RULES_FILE, 'utf-8'))
-    rules = rulesData.rules.filter(function(r) { return r.status === 'active' && r.condition && r.condition.question_type && r.condition.question_type.some(function(t) { return questionType.includes(t) }) })
+    rules = rulesData.rules.filter(function(r) { return r.status === 'active' && r.condition && r.condition.question_type && r.condition.question_type.some(function(t) { return questionType.indexOf(t) !== -1 }) })
   } catch(e) {}
 
   // 2. 加载历史步骤输出（每步取20个候选，管道内LLM筛选top8）
   var stepHistory = {}
   try {
     var knowledge = require('./knowledge')
-    var steps = ['divergence', 'dimension', 'plans', 'debate', 'synthesis', 'verify']
+    var steps = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification']
     steps.forEach(function(s) {
       var hist = knowledge.recallStepHistory(s, questionType, { query: userRequest, limit: 20 })
       if (hist && hist.length > 0) stepHistory[s] = hist
@@ -48,7 +48,7 @@ function before(questionType, userRequest, profile) {
   var errorWarnings = {}
   try {
     var knowledge2 = require('./knowledge')
-    var steps2 = ['divergence', 'dimension', 'plans', 'debate', 'synthesis', 'verify']
+    var steps2 = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification']
     steps2.forEach(function(s) {
       var errs = knowledge2.recallErrors(questionType, s, { limit: 5 })
       if (errs && errs.length > 0) errorWarnings[s] = errs

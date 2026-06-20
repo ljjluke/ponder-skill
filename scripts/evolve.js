@@ -76,7 +76,7 @@ function analyze(runs) {
   for (const [type, typeRuns] of Object.entries(byType)) {
     if (typeRuns.length < THRESHOLDS.min_runs_per_type) continue;
 
-    const steps = ['divergence', 'dimension', 'plans', 'debate', 'synthesis'];
+    const steps = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification'];
     const stepStats = {};
 
     for (const step of steps) {
