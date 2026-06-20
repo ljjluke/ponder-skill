@@ -229,9 +229,26 @@ function store(entry) {
  */
 function storeStepOutput(stepName, questionType, output, opts = {}) {
   if (!MMA_SCRIPT || !stepName || !questionType) return null;
-  const content = typeof output === 'string' ? output.substring(0, 300) : JSON.stringify(output).substring(0, 300);
+  // 从输出中提取自然语言文本,而非存JSON(保证语义匹配能命中)
+  var summary = ''
+  if (typeof output === 'string') {
+    summary = output.substring(0, 300)
+  } else if (typeof output === 'object') {
+    // 尝试提取关键文本字段(按优先级)
+    var textFields = ['consensus', 'key_finding', 'synthesis', 'conclusion', 'reasoning', 'detail', 'description', 'insight', 'evidence']
+    for (var i = 0; i < textFields.length; i++) {
+      if (output[textFields[i]] && typeof output[textFields[i]] === 'string' && output[textFields[i]].length > 20) {
+        summary = output[textFields[i]].substring(0, 300)
+        break
+      }
+    }
+    // 无长文本字段 → 取JSON前150字(仍可标签匹配)
+    if (!summary) summary = JSON.stringify(output).substring(0, 150)
+  }
+  var entryDesc = '[step:' + stepName + '] ' + questionType + ': ' + summary
+  if (entryDesc.length > 400) entryDesc = entryDesc.substring(0, 400)
   const entry = {
-    description: `[step:${stepName}] ${questionType}: ${content.substring(0, 200)}`,
+    description: entryDesc,
     tags: ['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])],
     category: stepName === 'divergence' ? 'judgment_and_strategy' :
               stepName === 'dimension' ? 'core_decision' :
