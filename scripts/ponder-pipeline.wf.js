@@ -210,7 +210,7 @@ if (synCandidates.length > 0) {
   })
   synHistory = '\n\n同类历史综合参考:\n' + (synFiltered.selected_indices||[]).map(function(i){return '- '+(synCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+synHistory+errSyn+'\n结论+推理+假设+用户确认+待用户确认事项(pending_user_questions)+待存经验(pending_lessons)。分析后认为值得记录的教训→填入pending_lessons。如分析中发现需要用户补充的信息（如条件是否触发、偏好是否匹配等），填入pending_user_questions。', {
+var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+synHistory+errSyn+'\n重要规则:\n1. 先检查辩论结果中是否存在方向分歧(方案优劣相当/需要用户偏好选择/条件未触发)。如有,必须填入pending_user_questions,不要自己决定。\n2. 只有当某个方案在所有维度(收益/风险/条件)都明显优于其他方案时,才直接出结论。\n3. 结论+推理+假设+用户确认+pending_user_questions+pending_lessons。\n4. 分析后认为值得记录的教训→填入pending_lessons。', {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
