@@ -30,7 +30,7 @@ if (errorWarnings.verify && errorWarnings.verify.length > 0) errVer = '\n\n⚠�
 
 // Phase 0: Pre-step from evolution rules (e.g. market research before divergence)
 var researchContext = ''
-var researchRule = appliedRules.find(function(r) { return r.action?.type === 'prepend_step' && r.action?.step_name === 'market_research' })
+var researchRule = appliedRules.find(function(r) { return r.action?.type === 'prepend_step' })
 if (researchRule) {
   phase('数据采集')
   var rData = await agent('收集市场数据\n需求:' + req + '\n输出: 市场概况,关键数据,趋势', {
