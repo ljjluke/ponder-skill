@@ -55,12 +55,13 @@ async function runUntilClear(label, prompt, schema, rounds) {
   r1 = await agent(prompt + ' 第1轮。必须清晰。不清晰填user_questions。', { label: label, schema: schema })
   result = r1
   var lastQ = r1.user_questions || []
-  if (r1.is_clear) return result
+  // is_clear + 问题数≤2 同时满足才跳过(防止LLM偷懒说清楚)
+  if (r1.is_clear && (!r1.user_questions || r1.user_questions.length <= 2)) return result
   if (maxRounds <= 1) return result
   // Round 2 (carrying forward previous blind spots)
   var r2 = await agent(prompt + ' 第2轮。前轮盲点:'+JSON.stringify(lastQ)+'。针对性加深。', { label: label+'R2', schema: schema })
   result = r2
-  if (r2.is_clear) return result
+  if (r2.is_clear && (!r2.user_questions || r2.user_questions.length <= 2)) return result
   lastQ = r2.user_questions || []
   if (maxRounds <= 2) return result
   // Round 3

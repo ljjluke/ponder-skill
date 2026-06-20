@@ -302,16 +302,17 @@ function cli() {
           effect: { verifiedClarity_before: st.verifiedClarity, verifiedClarity_after: null },
         }
 
-        // 根据步骤类型生成不同修复动作
-        if (step === 'divergence') {
-          fix.action = { type: 'prepend_step', step_name: 'auto_research', description: '自动修复: ' + tr.type + '/发散步骤清晰度不足', details: '发散前自动执行一次数据收集' }
-          fix.baseline = { type: tr.type, step: step, clarity: st.verifiedClarity, questions: st.avgQuestions }
-        } else if (step === 'dimension') {
-          fix.action = { type: 'modify_prompt', target: 'dimension', description: '自动修复: ' + tr.type + '/维度步骤清晰度不足' }
-          fix.baseline = { type: tr.type, step: step, clarity: st.verifiedClarity, questions: st.avgQuestions }
+        // 数据驱动的修复动作: 根据问题数+清晰度联合决定
+        fix.baseline = { type: tr.type, step: step, clarity: st.verifiedClarity, questions: st.avgQuestions }
+        if (st.avgQuestions > 2 && st.verifiedClarity < 0.5) {
+          // 问题多+清晰度低 → 数据不足,加预收集
+          fix.action = { type: 'prepend_step', step_name: 'auto_research_' + step, description: tr.type + '/' + step + ' 问题多(均' + st.avgQuestions.toFixed(1) + '个)清晰度低(' + (st.verifiedClarity*100).toFixed(0) + '%),加数据收集', details: step + '前自动执行数据收集' }
+        } else if (st.verifiedClarity < 0.6) {
+          // 清晰度中等偏低 → 加预步骤
+          fix.action = { type: 'prepend_step', step_name: 'auto_prepare_' + step, description: tr.type + '/' + step + ' 清晰度不足(' + (st.verifiedClarity*100).toFixed(0) + '%),加预备步骤', details: step + '前执行预备分析' }
         } else {
-          fix.action = { type: 'review', description: '自动修复: ' + tr.type + '/' + step + ' 需人工审查' }
-          fix.baseline = { type: tr.type, step: step, clarity: st.verifiedClarity }
+          // 其他情况 → 提示人工
+          fix.action = { type: 'review', description: tr.type + '/' + step + ' 验证清晰度' + (st.verifiedClarity*100).toFixed(0) + '% 需人工审查' }
         }
 
         // 写入修复文件
