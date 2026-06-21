@@ -156,21 +156,26 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
     plans:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, rationale:{type:'string'},
       condition:{type:'string'}, condition_verified:{type:'boolean'},
-    },required:['name','rationale','condition','condition_verified']},minItems:5},
+    },required:['name','rationale','condition','condition_verified']},minItems:10},
     logic:{type:'string'},
   }, required:['is_clear','user_questions','plans','logic'],
 }, 0)
 
-// Phase 4: Simulation — 五行推演框架
-// 使用五行(木火土金水)作为跨领域抽象推演框架
+// Phase 4: Simulation — 十天干推演框架
+// 使用十天干(木火土金水)作为跨领域抽象推演框架
 // 不依赖LLM猜维度,生克关系自动决定流程和权重
 phase('推演')
-var fiveElements = [
-  {name:'木', desc:'启动条件', weight:0.8, prompt:'方案能否启动?前提条件是否满足?需要什么资源?'},
-  {name:'火', desc:'执行过程', weight:1.0, prompt:'方案如何执行?推进动力在哪?会遇到什么阻碍?'},
-  {name:'土', desc:'产出结果', weight:1.2, prompt:'方案最终产出什么?成果是否稳定可靠?核心价值在哪?'},
-  {name:'金', desc:'优化收敛', weight:1.0, prompt:'方案效率如何?有什么优化空间?能否做得更精简?'},
-  {name:'水', desc:'适应变化', weight:0.8, prompt:'方案能否应对变化?风险在哪?备选路径是什么?'},
+var tenStems = [
+  {name:'甲木', desc:'规划筹备', weight:1.0, prompt:'方案规划是否完善?资源、时间、团队是否准备到位?'},
+  {name:'乙木', desc:'执行启动', weight:0.8, prompt:'方案能否顺利启动?初期落地是否顺畅?'},
+  {name:'丙火', desc:'推进加速', weight:1.0, prompt:'方案能否快速推进?核心动力在哪?'},
+  {name:'丁火', desc:'调整优化', weight:0.8, prompt:'遇到问题时能否及时调整?有纠错机制吗?'},
+  {name:'戊土', desc:'稳定产出', weight:1.0, prompt:'方案能稳定产出成果吗?可靠性如何?'},
+  {name:'己土', desc:'品质打磨', weight:0.8, prompt:'产出质量如何?能不能精进?'},
+  {name:'庚金', desc:'效率提升', weight:1.0, prompt:'方案效率如何?有没有浪费?'},
+  {name:'辛金', desc:'精简收敛', weight:0.8, prompt:'能不能更精简?维护成本高不高?'},
+  {name:'壬水', desc:'应变能力', weight:1.0, prompt:'方案能否应对变化?外部环境变动时能否适应?'},
+  {name:'癸水', desc:'风险储备', weight:0.8, prompt:'有没有备选方案?最坏情况有兜底吗?'},
 ]
 var simCandidates = stepHistory.simulations || []
 var simHistoryText = ''
@@ -180,28 +185,28 @@ if (simCandidates.length > 0) {
 
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-  var elemDesc = fiveElements.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
-  return agent('## 五行推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(五行)\n按以下5个阶段逐步推演:\n'+fiveElements.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按木→火→土→金→水顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
+  var elemDesc = tenStems.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
+  return agent('## 十天干推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(十天干)\n按以下5个阶段逐步推演:\n'+tenStems.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按木→火→土→金→水顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'},
       phases:{type:'array',items:{type:'object',properties:{
         element:{type:'string'}, process:{type:'string'}, event:{type:'string'}, conclusion:{type:'string'},
         achievement:{type:'number',minimum:0,maximum:1,description:'基于推演过程的达成度评估'},
-      },required:['element','process','achievement']},minItems:5},
+      },required:['element','process','achievement']},minItems:10},
       optimistic:{type:'string'}, neutral:{type:'string'}, pessimistic:{type:'string'},
       note:{type:'string'},
     }, required:['plan_name','phases'] },
   })
 }}))
 
-// V值计算: 五行固定权重,不用LLM输出
+// V值计算: 十天干固定权重,不用LLM输出
 var simResults = (sims||[]).filter(Boolean).map(function(s) {
   var phases = s.phases||[]
-  var totalWeight = fiveElements.reduce(function(s,e){return s+e.weight},0)
+  var totalWeight = tenStems.reduce(function(s,e){return s+e.weight},0)
   var weightedSum = 0, validPhases = 0
   phases.forEach(function(ph) {
-    var elem = fiveElements.find(function(e){return e.name===ph.element})
+    var elem = tenStems.find(function(e){return e.name===ph.element})
     if (elem && ph.achievement !== undefined) {
       weightedSum += ph.achievement * elem.weight
       validPhases++
