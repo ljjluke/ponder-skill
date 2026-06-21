@@ -323,7 +323,7 @@ var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列�
     dimension: dim ? { is_clear: dim.is_clear, key_finding: (dim.key_finding||'').substring(0,200), dimension_count: (dim.dimensions||[]).length } : null,
     plans: plan ? { is_clear: plan.is_clear, plan_count: (plan.plans||[]).length } : null,
     debate: debate ? { is_clear: debate.is_clear, synthesis: (debate.synthesis||'').substring(0,200), ranked_count: (debate.ranked||[]).length } : null,
-    simulations: simResults ? { count: Array.isArray(simResults) ? simResults.length : 0, dimensions: simDimensions.map(function(d){return d.name}), top_V: simResults.slice(0,3).map(function(r){return r.name+":"+r.V}) } : null,
+    simulations: simResults ? { count: Array.isArray(simResults) ? simResults.length : 0, dimensions: tenStems.map(function(d){return d.name}), top_V: simResults.slice(0,3).map(function(r){return r.name+":"+r.V}) } : null,
     synthesis: syn ? { is_clear: syn.is_clear, conclusion: (syn.conclusion||'').substring(0,200), lessons_count: (syn.pending_lessons||[]).length } : null,
     verify: ver ? { verdict: ver.verdict, fake_clarity: ver.fake_clarity, issues_count: (ver.issues||[]).length } : null,
   },
