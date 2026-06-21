@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.15.3-blue?style=flat-square" alt="version">
+  <img src="https://img.shields.io/badge/version-1.17.4-blue?style=flat-square" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="status">
 </p>
@@ -7,7 +7,7 @@
 <h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
-  <b>A cognitive analysis framework for Claude Code.</b><br>
+  <b>A self-evolving cognitive framework for Claude Code.</b><br>
   <i>Data-driven · Code-enforced · Self-evolving</i>
 </p>
 
@@ -26,27 +26,28 @@
 Most LLM tools answer immediately — and miss the mark. Ponder activates a **complete thinking circuit** before answering. Every step is **code-enforced**, not prompt-suggested.
 
 ```
-┌─ You ask a question ─────────────────────────────────┐
-│                                                       │
-│  Interview → Divergence → Dimension → Plans           │
-│           → Simulation → Debate → Synthesis → Verify  │
-│                                                       │
-│  Each step: clear? → proceed. Unclear? → loop deeper. │
-│  Final: data-backed conclusion → stored as lesson.    │
-│                                                       │
-└───────────────────────────────────────────────────────┘
+┌─ You ask a question ────────────────────────────────┐
+│                                                      │
+│  Interview → Orchestrator → Pipeline(7 phases)       │
+│           → Store → Evolve → Next round is smarter   │
+│                                                      │
+│  Each step: clear? → proceed. Unclear? → loop.       │
+│  Every run feeds back into the next.                 │
+│                                                      │
+└──────────────────────────────────────────────────────┘
 ```
 
 ### 🎯 Core Differentiators
 
 | | Feature | Why It Matters |
 |---|---|---|
-| 🎯 **Data-driven** | Every claim requires a source. LLM never fabricates. |
-| 🔄 **Code-enforced depth loop** | Not clear? Loop deeper. No cap. LLM cannot skip. |
+| 🎯 **Data-driven** | Every claim requires a source. LLM cannot fabricate. |
+| 🔄 **Code-enforced depth loop** | Not clear? Loop deeper. `is_clear` + question-count dual check prevents LLM cheating. |
 | 🚫 **Step enforcement** | All 7 phases mandatory. Code checks, not prompt rules. |
-| 💡 **Error convergence** | Records failures → avoids repeating → gets smarter. |
-| 🌍 **Domain-agnostic** | Finance, medicine, strategy, tech — same framework. |
-| 🧘 **Ancient Chinese philosophy** | Zhuangzi's perspectives, I-Ching's Bagua, 5-element profile. |
+| 💡 **Self-evolving** | `evolve.js` detects bottlenecks, generates fixes, auto-applies via rules. |
+| 🏛️ **Ten Heavenly Stems framework** | 甲木→乙木→...→癸水 — domain-agnostic simulation with fixed weights, no LLM-decided scoring. |
+| 🧠 **MMA Memory** | 135+ knowledge points, semantic matching, Chinese/Japanese/Korean support. |
+| 🧹 **Knowledge grooming** | Unused knowledge auto-decays, low-quality auto-sleeps, frequently used auto-promotes. |
 
 <br>
 
@@ -56,33 +57,34 @@ Most LLM tools answer immediately — and miss the mark. Ponder activates a **co
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        ORCHESTRATOR (LLM)                            │
-│  Interview → Call Workflow → Present → Store lessons                │
-│  Role: translate between user and pipeline. No analysis by LLM.     │
+│                        ORCHESTRATOR (scripts/orchestrate.js)         │
+│  before: loads rules + history + error warnings → passes to pipeline │
+│  after:  stores step outputs + collects metrics + grooming           │
 ├─────────────────────────────────────────────────────────────────────┤
-│                     PONDER PIPELINE (Code-enforced)                   │
+│                     PONDER PIPELINE (7 Phases)                        │
 │                                                                       │
 │      Divergence ──→ Dimension ──→ Plans ──→ Simulation(parallel)     │
-│          │              │            │            │                   │
-│      ←clear?──┐    ←clear?──┐   ←clear?──┐   (no loop needed)      │
-│          │    ↓        │    ↓       │    ↓                           │
-│      ┌──┴──┐     ┌──┴──┐     ┌──┴──┐                                │
-│      │loop │     │loop │     │loop │                                  │
-│      └─────┘     └─────┘     └─────┘                                  │
+│      (6perspectives)  (8 dimensions)   (5-8plans)  (Ten Stems × N)  │
+│          │                │               │              │           │
+│          ←───   Depth Loop (is_clear + questions check)  ───→        │
 │                                                                       │
-│      Debate ──→ Synthesis ──→ Verify ──→ Done                        │
-│      │             │             │                                    │
-│   ←clear?──┐   ←clear?──┐   (one pass)                               │
-│      │    ↓       │    ↓                                              │
-│   ┌──┴──┐    ┌──┴──┐                                                  │
-│   │loop │    │loop │                                                    │
-│   └─────┘    └─────┘                                                  │
+│      Debate ──→ Synthesis ──→ Verification ──→ Output                │
+│      (ranked)   (conclusion)   (independent)                         │
 │                                                                       │
-│  Each loop: carries forward user_questions. Max 5 rounds.             │
+│      Each step: loads top-8 historical matches from MMA              │
 ├─────────────────────────────────────────────────────────────────────┤
-│                     ERROR CONVERGENCE (Background)                     │
-│  Captures failures from sessions → deduplicates → stores lessons     │
-│  Runs continuously via SessionStart hook.                            │
+│                     SELF-EVOLUTION (scripts/evolve.js)                 │
+│  Reads metrics → detects bottlenecks → auto-generates fixes         │
+│  Clarity scoring: is_clear×20% + questions×25% + field_fill×30%     │
+│                   + verification×25% (not just LLM self-assessment)  │
+│  Auto-fix: generates prepend_step rules → deploy/rollback           │
+├─────────────────────────────────────────────────────────────────────┤
+│                     MMA MEMORY (Meridian Memory Algorithm)            │
+│  Stores step history with natural language (not JSON)                │
+│  Semantic matching with Chinese/Japanese/Korean support              │
+│  Knowledge grooming: unused → decay, low-quality → sleep,            │
+│                      frequent → auto-promote                         │
+│  Step history: 72 entries across all 7 steps                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -90,93 +92,78 @@ Most LLM tools answer immediately — and miss the mark. Ponder activates a **co
 
 ---
 
-## 🔄 The Thinking Circuit
-
-### Phase 1: Requirements Decomposition
+## 🔄 How Memory Works
 
 ```
-AskUserQuestion spiral interview → covers 5 dimensions:
-  天时(Timing) · 地利(Resources) · 人和(People) · 法(Rules) · 本质(Essence)
+Every pipeline run → orchestrator after() →
+  1. storeStepOutput() — saves each phase's output to MMA
+     (natural language, not JSON — semantic matching ready)
+  2. Collect metrics to pipeline-metrics
+  3. Knowledge grooming
 
-Output: profile + pending assumptions
+Next similar question → orchestrator before() →
+  1. recallStepHistory() — loads 20 candidates per step
+  2. LLM filters → top 8 most relevant
+  3. Injects into phase prompts
+
+Data accumulates → more candidates → better top-8 → more accurate
 ```
 
-### Phase 2: Analysis (Single Workflow Call)
+### Memory Format
 
-All 7 phases run inside `ponder-pipeline.wf.js`. The LLM calls it once and waits.
-
-| Phase | What It Does | Key Fields |
-|-------|-------------|------------|
-| **Divergence** | 6 perspectives from different angles | `data_source`, `assumption` |
-| **Bagua Mirror** | 8-dimension systematic scoring | `evidence`, `uncertainty` |
-| **Plans** | 5-8 concrete actionable plans | `condition`, `condition_verified` |
-| **Simulation** | Each plan independently simulated (parallel) | `optimistic`, `neutral`, `pessimistic` |
-| **Debate** | Plans ranked and cross-examined | `pros`, `cons`, `synthesis` |
-| **Synthesis** | Final conclusion + reasoning chain | `conclusion`, `reasoning`, `pending_user_questions` |
-| **Verification** | Independent review for flaws | `verdict`, `issues`, `fake_clarity` |
-
-Every phase outputs:
-- `is_clear` — is the result clear enough to proceed?
-- `user_questions` — specific unknowns discovered during this phase
-
-### Depth Loop (Code-Enforced)
-
-No `while`/`for` loops (Workflow parser limitation). Unrolled as sequential `if` statements:
+Step history is stored in natural language (extracted from structured outputs):
 
 ```
-Round 1 → is_clear? → yes → proceed
-       → no → carry user_questions to →
-Round 2 → is_clear? → yes → proceed  
-       → no → carry questions to →
-...
-Round 5 → last round → proceed regardless
+[step:divergence] 技术选型: React在大型项目中更有优势,Vue在中小项目中效率更高
+[step:dimension] 市场分析: 竞争加剧导致获客成本上升,差异化是关键
+[step:simulation] 方案A: 木0.85→火0.78→土0.82→金0.75→水0.68 → V=0.78
 ```
 
-The LLM cannot skip, reduce rounds, or ignore `user_questions`.
-
-### Phase 3: Confirmation Before Delivery
-
-Before presenting results, the LLM **must** check:
-- `pending_user_questions` from the pipeline → ask the user
-- Red lines / conditions → have they been triggered? → ask
-- Assumptions → does the user agree? → ask
-
-Only after confirmation → present final conclusion.
+Not JSON — so semantic matching works across Chinese, English, Japanese, Korean.
 
 <br>
 
 ---
 
-## 💡 Error Convergence (Not a Memory System)
-
-This is **not** a general-purpose memory. It records **what failed** so it's never repeated.
+## 🔄 How Self-Evolution Works
 
 ```
-Decision → Outcome → Stored as lesson
-                      ↓
-Next similar situation → Check past failures → Exclude known bad paths
-                                                ↓
-                                          Less trial and error over time
+evolve.js analyze() →
+  Reads 35+ pipeline runs from metrics
+  Groups by question type (技术选型, 市场分析, 学习规划...)
+  Computes verified clarity per step per type
+  
+  Detects problems:
+    clarity < 70% → generates auto-fix
+    questions > 2 → suggests pre-interview
+    patterns → creates prepend_step rules
+  
+  auto-fix → written to auto-fixes/ → deploy-fix → evolve-rules.json
+                                    → rollback-fix → removed
 ```
 
-### Lesson Format
+### Clarity Assessment (Not LLM Self-Judgment)
 
 ```
-Scenario: what was happening
-Attempt: what was tried
-Conditions: key factors
-Root cause: why it failed
-Alternative: what to do instead
+verifiedClarity = is_clear × 20% (lowest weight, LLM can lie)
+                + question_penalty × 25% (behavioral signal)
+                + field_fill_rate × 30% (objective structural check)
+                + verification × 25% (independent verifier judgment)
 ```
 
-### Storage Rules
+The clarity score is NOT what the LLM says — it's a multi-signal composite that the LLM cannot manipulate.
 
-- ✅ Failures, mistakes, corrections
-- ❌ Market prices, statistics, news (they expire)
-- ❌ User preferences (just ask directly)
-- ❌ Model knowledge (LLM already knows)
+### Ten Heavenly Stems Simulation Framework
 
-The background daemon (`memory-monitor.js`) runs from session start to end, auto-capturing lessons and merging duplicates (newer/better info replaces older entries).
+```
+Fixed 10-dimension evaluation (domain-agnostic):
+  阳干(×1.0): 甲木规划, 丙火推进, 戊土产出, 庚金效率, 壬水应变
+  阴干(×0.8): 乙木执行, 丁火调整, 己土品质, 辛金精简, 癸水储备
+
+V = Σ(achievement × weight) / Σ(weight)
+  achievement = LLM simulates process, not self-judgment
+  weights = fixed by yin-yang, not LLM-decided
+```
 
 <br>
 
@@ -186,12 +173,11 @@ The background daemon (`memory-monitor.js`) runs from session start to end, auto
 
 | Concept | Origin | Application |
 |---------|--------|-------------|
-| 鲲鹏之视 (Peng's View) | Zhuangzi · Free Wandering | Macro perspective |
-| 蜩鸠之视 (Cicada's View) | Zhuangzi | Micro/detail perspective |
-| 朝菌之视 (Morning Mushroom) | Zhuangzi | Short-term perspective |
-| 冥灵之视 (Eternal Tree) | Zhuangzi | Long-term perspective |
+| 十天干 (Ten Heavenly Stems) | Chinese Calendar | 10-dimension simulation evaluation |
+| 五行 (Five Elements) | Chinese Philosophy | Phase relationships for weight derivation |
+| 阴阳 (Yin-Yang) | Taoism | Active/passive dimension splitting (阳=1.0, 阴=0.8) |
 | 八卦镜 (Bagua Mirror) | I Ching | 8-dimension cross-check |
-| 天时/地利/人和 | Chinese strategy | User profile dimensions |
+| 天时/地利/人和 | Chinese Strategy | User profile dimensions |
 
 <br>
 
@@ -207,9 +193,22 @@ The background daemon (`memory-monitor.js`) runs from session start to end, auto
 # Use — any domain
 /luke:ponder Analyze the current market situation
 /luke:ponder Help me plan my Python learning path
-/luke:ponder Analyze this startup competitive landscape
-/luke:ponder Compare remote work vs office work productivity
+/luke:ponder 帮我分析这个项目的技术选型
 ```
+
+### Custom Data Directory
+
+```bash
+# Linux / macOS
+export PONDER_DATA_DIR=/mnt/nas/my-knowledge
+PONDER_DATA_DIR=/mnt/nas/my-knowledge claude
+
+# Windows (PowerShell)
+$env:PONDER_DATA_DIR = "D:\my-knowledge"
+claude
+```
+
+Default: `~/.claude/data/skills/ponder/`
 
 <br>
 
@@ -219,17 +218,20 @@ The background daemon (`memory-monitor.js`) runs from session start to end, auto
 
 ```
 ponder-skill/
-├── SKILL.md                    # Orchestrator instructions (45 lines, minimal)
+├── SKILL.md                    # Orchestrator instructions
 ├── scripts/
-│   ├── ponder-pipeline.wf.js   # 7-phase analysis engine w/ depth loop
-│   └── memory-monitor.js       # Error convergence background daemon
-├── hooks/
-│   └── hooks.json              # Session lifecycle (start/end)
-├── engine/
-│   ├── mcts-simulate.md        # MCTS + CLT-UCB algorithm reference
-│   └── td-learner.md           # TD(lambda) learning reference
-├── .claude-plugin/
-│   └── marketplace.json        # Plugin registry
+│   ├── ponder-pipeline.wf.js   # 7-phase pipeline + ten stems simulation
+│   ├── orchestrate.js          # Before/after orchestrator
+│   ├── evolve.js               # Self-evolution engine
+│   ├── knowledge.js            # Memory: store/recall/semantic matching
+│   ├── pipeline-metrics.js     # Run metrics collector
+│   └── mma/                    # Meridian Memory Algorithm
+│       ├── decay.js            # Knowledge grooming
+│       ├── deqi.js             # Recall engine
+│       ├── reinforce.js        # Value update
+│       └── io.js               # Persistent storage with shard locking
+├── hooks/hooks.json            # Session lifecycle
+├── scripts/evolve-rules.json   # Verified evolution rules
 └── pipeline-meta.json          # Step weights & evolution tracking
 ```
 
@@ -241,11 +243,16 @@ ponder-skill/
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| Pipeline engine | ✅ **Active** | 7 phases, depth loop, data-enforced |
-| Error convergence | ✅ **Active** | Background daemon, merge/update logic |
-| MCTS tree search | ⏳ Dormant | Code exists, not wired to pipeline |
-| TD(lambda) learning | ⏳ Dormant | Weight registry exists, never triggered |
-| Self-evolution | ⏳ Dormant | Pipeline meta tracking ready, not active |
+| 7-phase pipeline | ✅ **Active** | Divergence → Dimension → Plans → Simulate → Debate → Synthesize → Verify |
+| Ten Stems simulation | ✅ **Active** | Parallel agent simulation with fixed-weight V scoring |
+| MMA memory | ✅ **Active** | 135+ knowledge points, semantic matching, knowledge grooming |
+| Self-evolution | ✅ **Active** | `evolve.js` detects bottlenecks, auto-generates fixes, deploys rules |
+| Semantic matching | ✅ **Active** | Chinese/Japanese/Korean support, natural language format |
+| Knowledge grooming | ✅ **Active** | Unused decay, low-quality sleep, frequent promote |
+| Orchestrator | ✅ **Active** | `orchestrate.js before/after` — LLM has no room to forget |
+| MCTS tree search | ⏳ **Available** | Code in `mcts_tree.js`, not yet wired to pipeline |
+| TD(lambda) learning | ⏳ **Available** | Weight registry exists, not yet triggered |
+| Custom data directory | ✅ **Active** | `PONDER_DATA_DIR` env var support |
 
 <br>
 
@@ -254,24 +261,3 @@ ponder-skill/
 <p align="center">
   <sub>Cognitive framework for Claude Code · Built with ❤️ · Not a prompt, a brain</sub>
 </p>
-
-## ⚙️ 数据存储目录
-
-默认记忆数据存储在 `~/.claude/data/skills/ponder/`。可通过环境变量 `PONDER_DATA_DIR` 自定义：
-
-```bash
-# Linux / macOS
-export PONDER_DATA_DIR=/mnt/nas/my-knowledge
-# 或单次运行
-PONDER_DATA_DIR=/mnt/nas/my-knowledge claude
-
-# Windows (PowerShell)
-$env:PONDER_DATA_DIR = "D:\my-knowledge"
-claude
-
-# Windows (CMD)
-set PONDER_DATA_DIR=D:\my-knowledge
-claude
-```
-
-`path.resolve()` 处理跨平台路径安全，绝对路径和相对路径都支持。
