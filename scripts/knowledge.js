@@ -93,7 +93,8 @@ function acquire(query, options = {}, stepName = '') {
   // 在标签匹配基础上，计算查询与每条候选经验的语义重叠度
   if (result.entries.length > 0 && query.tags) {
     const queryText = (Array.isArray(query.tags) ? query.tags.join(' ') : '') + ' ' + (query.query || '');
-    const queryWords = queryText.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+    function _seg(s){if(!s)return[];var r=[];var buf='';for(var i=0;i<s.length;i++){var c=s[i];if(/[a-zA-Z0-9\u00C0-\u024F]/.test(c)){buf+=c}else{if(buf.length>0){r.push(buf);buf=''}if(c.trim()&&!c.match(/[\s,，。、]/))r.push(c)}}if(buf.length>0)r.push(buf);return r}
+const queryWords = _seg(queryText);
     const queryTopics = new Set(queryWords);
 
     for (const entry of result.entries) {
@@ -309,7 +310,7 @@ function recallStepHistory(stepName, questionType, opts = {}) {
         if (!p.description || !p.description.startsWith('[step:' + stepName + ']')) continue;
 
         // 计算语义重叠度
-        const queryWords = (opts.query || questionType || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        const queryWords = _seg(opts.query || questionType || '');
         const descWords = (p.description || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
         let overlap = 0;
         for (const qw of queryWords) {
