@@ -18,9 +18,10 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { WeightRegistry, DEFAULT_WEIGHTS } = require('./weights.js');
 
 // ── 数据源 ──
-const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
+const DATA_DIR = process.env.PONDER_DATA_DIR ? require("path").resolve(process.env.PONDER_DATA_DIR) : path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
 const METRICS_FILE = path.join(DATA_DIR, 'metrics', 'pipeline-runs.ndjson');
 const RULES_FILE = path.join(__dirname, 'evolve-rules.json');
 
@@ -51,6 +52,146 @@ const THRESHOLDS = {
   unclear_warn: 0.30,          // 不清晰率>30% → 提醒
   questions_warn: 2.0,         // 均问题>2 → 提醒
 };
+
+// ── pipeline-meta.json 读写 ──
+const PIPELINE_META_FILE = path.join(DATA_DIR, 'pipeline-meta.json');
+const PROJECT_META_FILE = path.join(__dirname, '..', 'pipeline-meta.json');
+
+function readPipelineMeta() {
+  const metaPath = fs.existsSync(PIPELINE_META_FILE) ? PIPELINE_META_FILE : PROJECT_META_FILE;
+  if (!fs.existsSync(metaPath)) return null;
+  return JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+}
+
+function writePipelineMeta(meta) {
+  const metaPath = fs.existsSync(PIPELINE_META_FILE) ? PIPELINE_META_FILE : PROJECT_META_FILE;
+  meta._updated_at = new Date().toISOString();
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+}
+
+/**
+ * 将 evolve.js 分析结果映射到 WeightRegistry.integrateFromPipeline() 输入格式，
+ * 调用权重学习，然后将权重调整记录写入 pipeline-meta.json 的 mutation_history。
+ * @param {object} result — evolve.js analyze() 的输出
+ * @returns {string[]} — 权重调整日志
+ */
+function integrateWeightsFromAnalysis(result) {
+  const registry = new WeightRegistry();
+
+  // 构造 pipeline 结果对象，从 evolve 分析结果映射关键信号
+  const pipelineResult = {
+    verifyResult: {
+      all_clear: result.all_clear_rate >= 0.7,
+      issues: [],
+    },
+    uncertainty: {
+      history: [],
+    },
+    loopCount: result.total_runs,
+    maxLoops: 10,
+    boundaryTriggered: false,
+    free_energy: 0,
+    selfCheckFailRate: 0,
+  };
+
+  // 从 type_results 构建不确定性历史 + issues + free_energy
+  for (const tr of result.type_results || []) {
+    // 将推荐转译成 issues
+    for (const rec of tr.recommendations || []) {
+      if (rec.issue === 'clarity' || rec.issue === 'quality') {
+        pipelineResult.verifyResult.issues.push({
+          severity: rec.rate > 0.4 ? 'critical' : 'major',
+          claim: tr.type,
+          problem: rec.detail,
+        });
+      }
+    }
+
+    // 从每步清晰度反推不确定性估值
+    for (const [step, st] of Object.entries(tr.steps || {})) {
+      pipelineResult.uncertainty.history.push({
+        ambiguity: Math.max(0, Math.min(1, 1 - (st.verifiedClarity || st.clarityRate || 0))),
+        risk: st.avgQuestions > 1 ? Math.min(1, (st.avgQuestions - 1) / 5) : 0,
+        ignorance: st.count > 0 ? Math.min(1, (st.unclear || 0) / st.count) : 0,
+      });
+    }
+
+    // 用 quality_score 作为 free_energy 代理
+    if (tr.quality_score !== null) {
+      pipelineResult.free_energy = Math.max(
+        pipelineResult.free_energy,
+        1 - tr.quality_score
+      );
+    }
+  }
+
+  // 如果 global all_clear_rate < 0.7 且无 issues，补充泛化 issue
+  if (!pipelineResult.verifyResult.all_clear && pipelineResult.verifyResult.issues.length === 0) {
+    pipelineResult.verifyResult.issues.push({
+      severity: 'major',
+      claim: 'global',
+      problem: `全局通过率仅 ${(result.all_clear_rate * 100).toFixed(0)}%`,
+    });
+  }
+
+  // 边界触发: 如果有步骤清晰度为 0 或 quality 建议，标记为边界未触发
+  const hasQualityIssue = (result.type_results || []).some(
+    tr => tr.recommendations.some(r => r.issue === 'quality')
+  );
+  pipelineResult.boundaryTriggered = !hasQualityIssue;
+
+  // 调用 WeightRegistry 学习
+  const logs = registry.integrateFromPipeline(pipelineResult);
+
+  // 如果有权重调整，写入 pipeline-meta.json
+  if (logs.length > 0) {
+    const meta = readPipelineMeta();
+    if (meta) {
+      const adjustmentRecords = logs.map(log => ({
+        type: 'weight_adjust',
+        log,
+        at: new Date().toISOString(),
+        generation: meta.evolution?.generation || 1,
+      }));
+
+      // 将调整记录写入每步的 mutation_history
+      for (const stepId of Object.keys(meta.steps || {})) {
+        if (!meta.steps[stepId].mutation_history) {
+          meta.steps[stepId].mutation_history = [];
+        }
+        meta.steps[stepId].mutation_history.push(...adjustmentRecords);
+      }
+
+      // 更新顶层进化元数据
+      meta.topology = meta.topology || {};
+      meta.topology.mutation_count = (meta.topology.mutation_count || 0) + logs.length;
+      meta.evolution = meta.evolution || {};
+      meta.evolution.last_mutation = {
+        type: 'weight_adjust',
+        log: logs,
+        at: new Date().toISOString(),
+        generation: meta.evolution.generation || 1,
+      };
+
+      // 记录到 evolution_history（如不存在则创建）
+      if (!meta.evolution_history) meta.evolution_history = [];
+      meta.evolution_history.push(...adjustmentRecords);
+
+      // 更新 free_energy.current
+      meta.free_energy = meta.free_energy || { current: 0, history: [], threshold: 0.4 };
+      meta.free_energy.current = pipelineResult.free_energy;
+      meta.free_energy.history.push({
+        value: pipelineResult.free_energy,
+        at: new Date().toISOString(),
+        mutation: 'weight_adjust',
+      });
+
+      writePipelineMeta(meta);
+    }
+  }
+
+  return logs;
+}
 
 // ══════════════════════════════════════
 //  加载数据
@@ -288,6 +429,24 @@ function cli() {
     const runs = loadRuns();
     if (runs.length < 5) { console.log('数据不足，至少需5次运行'); return; }
     const result = analyze(runs);
+
+    // ── 权重学习闭环: 将分析结果传给 WeightRegistry 自动调整系数 ──
+    const weightLogs = integrateWeightsFromAnalysis(result);
+    if (weightLogs.length > 0) {
+      console.log('\n● 权重学习记录:');
+      for (const log of weightLogs) console.log('   ' + log);
+      // 验证条件: 检查是否有权重偏离默认值
+      const registry = new WeightRegistry();
+      const allW = registry.getAll();
+      let deviated = 0;
+      for (const [k, v] of Object.entries(allW)) {
+        if (!k.startsWith('_')) {
+          if (Math.abs(v - DEFAULT_WEIGHTS[k]) > 0.001) deviated++;
+        }
+      }
+      console.log('   偏离默认值的权重数: ' + deviated);
+    }
+
     var fixed = 0
     for (const tr of result.type_results) {
       if (tr.count < 3) continue
@@ -411,6 +570,22 @@ function cli() {
   }
   const result = analyze(runs);
   report(result);
+
+  // ── 权重学习闭环: 将分析结果传给 WeightRegistry 自动调整系数 ──
+  const weightLogs = integrateWeightsFromAnalysis(result);
+  if (weightLogs.length > 0) {
+    console.log('● 权重学习记录:');
+    for (const log of weightLogs) console.log('   ' + log);
+    const registry = new WeightRegistry();
+    const allW = registry.getAll();
+    let deviated = 0;
+    for (const [k, v] of Object.entries(allW)) {
+      if (!k.startsWith('_')) {
+        if (Math.abs(v - DEFAULT_WEIGHTS[k]) > 0.001) deviated++;
+      }
+    }
+    console.log('   偏离默认值的权重数: ' + deviated);
+  }
 }
 
 if (require.main === module) cli();

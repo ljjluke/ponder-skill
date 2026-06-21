@@ -22,7 +22,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
+const DATA_DIR = process.env.PONDER_DATA_DIR ? require("path").resolve(process.env.PONDER_DATA_DIR) : path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
 const SESSION_FILE = path.join(DATA_DIR, 'session-context.json');
 const MMA_SCRIPT = path.join(os.homedir(), '.claude', 'plugins', 'cache', 'luke', 'luke');
 

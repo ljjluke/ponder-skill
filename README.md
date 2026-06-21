@@ -254,3 +254,24 @@ ponder-skill/
 <p align="center">
   <sub>Cognitive framework for Claude Code · Built with ❤️ · Not a prompt, a brain</sub>
 </p>
+
+## ⚙️ 数据存储目录
+
+默认记忆数据存储在 `~/.claude/data/skills/ponder/`。可通过环境变量 `PONDER_DATA_DIR` 自定义：
+
+```bash
+# Linux / macOS
+export PONDER_DATA_DIR=/mnt/nas/my-knowledge
+# 或单次运行
+PONDER_DATA_DIR=/mnt/nas/my-knowledge claude
+
+# Windows (PowerShell)
+$env:PONDER_DATA_DIR = "D:\my-knowledge"
+claude
+
+# Windows (CMD)
+set PONDER_DATA_DIR=D:\my-knowledge
+claude
+```
+
+`path.resolve()` 处理跨平台路径安全，绝对路径和相对路径都支持。
