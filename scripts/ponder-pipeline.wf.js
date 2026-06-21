@@ -193,7 +193,7 @@ var sims = await parallel(planList.slice(0,8).map(function(p) { return function(
       phases:{type:'array',items:{type:'object',properties:{
         element:{type:'string'}, process:{type:'string'}, event:{type:'string'}, conclusion:{type:'string'},
         achievement:{type:'number',minimum:0,maximum:1,description:'基于推演过程的达成度评估'},
-      },required:['element','process','achievement']},minItems:5},
+      },required:['element','process','achievement']},minItems:10},
       optimistic:{type:'string'}, neutral:{type:'string'}, pessimistic:{type:'string'},
       note:{type:'string'},
     }, required:['plan_name','phases'] },
@@ -222,6 +222,43 @@ var simResults = (sims||[]).filter(Boolean).map(function(s) {
   }
 })
 simResults.sort(function(a,b){return b.V - a.V})
+
+// ── MCTS Tree: Write simResults to persistent tree ──
+try {
+  var mctsMod = require('./mcts_tree');
+  if (mctsMod && simResults.length > 0 && plan && plan.plans && plan.plans.length > 0) {
+    var mctsTree = mctsMod.createTree([]);  // ROOT only
+    simResults.forEach(function(sr) {
+      if (!sr.name || !sr.phases) return;
+      var planRes = mctsMod.addChildren(mctsTree, 'ROOT', [{
+        description: sr.name,
+        nodeType: 'ACTION',
+        solutionId: sr.name,
+      }]);
+      if (!planRes.added || !planRes.added[0]) return;
+      var pnid = planRes.added[0].id;
+      var stemChildren = sr.phases.map(function(ph) {
+        return {
+          description: ph.element + ': ' + (ph.process || '').substring(0, 80),
+          nodeType: 'SIMULATION',
+        };
+      });
+      if (stemChildren.length > 0) {
+        var added = mctsMod.addChildren(mctsTree, pnid, stemChildren);
+        if (added.added) {
+          added.added.forEach(function(ad, ai) {
+            if (ad.id && sr.phases[ai]) {
+              mctsMod.recordSimulation(mctsTree, ad.id, sr.phases[ai].achievement || 0, 0.25);
+              mctsMod.backpropagate(mctsTree, ad.id);
+            }
+          });
+        }
+      }
+    });
+    var savedInfo = mctsMod.saveTree(mctsTree);
+    var mctsSessionId = mctsTree.sessionId;
+  }
+} catch(e) { /* MCTS tree write non-blocking */ }
 
 // Phase 5: Debate
 phase('辩论')
@@ -293,6 +330,25 @@ var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列�
   }, required:['verdict','fake_clarity'] },
 })
 
+// 记录变异 (record-mutation): 验证结果持久化到pipeline-meta.json
+var mutationRecord = {
+  verdict: ver && ver.verdict || 'UNKNOWN',
+  fake_clarity: ver && ver.fake_clarity || false,
+  issues_count: (ver && ver.issues && ver.issues.length) || 0,
+  issues_severity: (ver && ver.issues || []).map(function(i) { return i.severity }),
+  step_counts: {
+    divergence: (div && div._depth_rounds) || 1,
+    dimension: (dim && dim._depth_rounds) || 1,
+    plans: (plan && plan._depth_rounds) || 1,
+    simulations: (simResults && simResults.length) || 0,
+    debate: (debate && debate._depth_rounds) || 1,
+    synthesis: (syn && syn._depth_rounds) || 1,
+  },
+  has_lessons: (syn && syn.pending_lessons && syn.pending_lessons.length > 0) || false,
+  V_scores: (simResults || []).map(function(r) { return { name: r.name, V: r.V } }),
+  pass: ver && ver.verdict === 'PASS' || false,
+}
+
 // 结晶化: lessons附上本次分析的推理上下文
   var reasoningContext = {
     divergence_consensus: (div && div.consensus || '').substring(0, 200),
@@ -318,12 +374,13 @@ var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列�
     lessons_to_store: lessonsWithReasoning,
     reasoning: reasoningContext,
     verification: ver,
+    mutation_record: mutationRecord,
   _step_outputs: {
     divergence: div ? { is_clear: div.is_clear, consensus: (div.consensus||'').substring(0,200), perspective_count: (div.perspectives||[]).length } : null,
     dimension: dim ? { is_clear: dim.is_clear, key_finding: (dim.key_finding||'').substring(0,200), dimension_count: (dim.dimensions||[]).length } : null,
     plans: plan ? { is_clear: plan.is_clear, plan_count: (plan.plans||[]).length } : null,
     debate: debate ? { is_clear: debate.is_clear, synthesis: (debate.synthesis||'').substring(0,200), ranked_count: (debate.ranked||[]).length } : null,
-    simulations: simResults ? { count: Array.isArray(simResults) ? simResults.length : 0, dimensions: tenStems.map(function(d){return d.name}), top_V: simResults.slice(0,3).map(function(r){return r.name+":"+r.V}) } : null,
+    simulations: simResults ? { count: Array.isArray(simResults) ? simResults.length : 0, dimensions: tenStems.map(function(d){return d.name}), top_V: simResults.slice(0,3).map(function(r){return r.name+":"+r.V}), mcts_session: typeof mctsSessionId !== 'undefined' ? mctsSessionId : null } : null,
     synthesis: syn ? { is_clear: syn.is_clear, conclusion: (syn.conclusion||'').substring(0,200), lessons_count: (syn.pending_lessons||[]).length } : null,
     verify: ver ? { verdict: ver.verdict, fake_clarity: ver.fake_clarity, issues_count: (ver.issues||[]).length } : null,
   },
