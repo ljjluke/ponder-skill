@@ -186,7 +186,7 @@ if (simCandidates.length > 0) {
 var planList = (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
   var elemDesc = tenStems.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
-  return agent('## 十天干推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(十天干)\n按以下5个阶段逐步推演:\n'+tenStems.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按木→火→土→金→水顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
+  return agent('## 十天干推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(十天干)\n按以下10个阶段逐步推演:\n'+tenStems.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按甲→乙→丙→丁→戊→己→庚→辛→壬→癸顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
     label: '推演:'+p.name.substring(0,10),
     schema: { type:'object', properties: {
       plan_name:{type:'string'},
@@ -206,7 +206,7 @@ var simResults = (sims||[]).filter(Boolean).map(function(s) {
   var totalWeight = tenStems.reduce(function(s,e){return s+e.weight},0)
   var weightedSum = 0, validPhases = 0
   phases.forEach(function(ph) {
-    var elem = tenStems.find(function(e){return e.name===ph.element})
+    var elem = tenStems.find(function(e){return ph.element&&(ph.element.indexOf(e.name)>=0||e.name.indexOf(ph.element)>=0)})
     if (elem && ph.achievement !== undefined) {
       weightedSum += ph.achievement * elem.weight
       validPhases++
