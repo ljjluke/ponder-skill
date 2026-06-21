@@ -156,7 +156,7 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
     plans:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, rationale:{type:'string'},
       condition:{type:'string'}, condition_verified:{type:'boolean'},
-    },required:['name','rationale','condition','condition_verified']},minItems:10},
+    },required:['name','rationale','condition','condition_verified']},minItems:5},
     logic:{type:'string'},
   }, required:['is_clear','user_questions','plans','logic'],
 }, 0)
@@ -193,7 +193,7 @@ var sims = await parallel(planList.slice(0,8).map(function(p) { return function(
       phases:{type:'array',items:{type:'object',properties:{
         element:{type:'string'}, process:{type:'string'}, event:{type:'string'}, conclusion:{type:'string'},
         achievement:{type:'number',minimum:0,maximum:1,description:'基于推演过程的达成度评估'},
-      },required:['element','process','achievement']},minItems:10},
+      },required:['element','process','achievement']},minItems:5},
       optimistic:{type:'string'}, neutral:{type:'string'}, pessimistic:{type:'string'},
       note:{type:'string'},
     }, required:['plan_name','phases'] },
@@ -206,7 +206,7 @@ var simResults = (sims||[]).filter(Boolean).map(function(s) {
   var totalWeight = tenStems.reduce(function(s,e){return s+e.weight},0)
   var weightedSum = 0, validPhases = 0
   phases.forEach(function(ph) {
-    var elem = tenStems.find(function(e){return ph.element&&(ph.element.indexOf(e.name)>=0||e.name.indexOf(ph.element)>=0)})
+    var elem = tenStems.find(function(e){return ph.element&&(e.name.indexOf(ph.element)>=0||(ph.element.length>=2&&ph.element.indexOf(e.name)>=0))})
     if (elem && ph.achievement !== undefined) {
       weightedSum += ph.achievement * elem.weight
       validPhases++
