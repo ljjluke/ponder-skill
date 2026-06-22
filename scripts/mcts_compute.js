@@ -871,6 +871,30 @@ function main() {
                 });
                 break;
             }
+            case "random-anchor": {
+                const anchors = [
+                    "天气预报的台风路径预测",
+                    "围棋的弃子争先策略",
+                    "咖啡豆的烘焙程度选择",
+                    "河流改道的地质过程",
+                    "细菌的趋化性运动",
+                    "建筑的地基加固方案",
+                    "候鸟的迁徙导航机制",
+                    "发酵面团的时间温度控制",
+                    "象棋中残局的兑子战术",
+                    "植物的向光性生长",
+                    "乐队的即兴配合",
+                    "海啸的传播与折射",
+                    "马拉松的配速策略",
+                    "茶叶的不同发酵程度",
+                    "蜂群的决策机制",
+                    "火箭的分级推进设计",
+                    "光合作用的效率极限",
+                ];
+                const idx = Math.floor(Math.random() * anchors.length);
+                output({ anchor: anchors[idx], hint: "Forced association with current problem — find 1 common point" });
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }

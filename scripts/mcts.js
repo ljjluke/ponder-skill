@@ -34,7 +34,7 @@ const ENGINES = {
                    'root-branch','absence-detect','tension-scan','dong-jing',
                    'mutation-vector','body-use-score','li-shi-split','yan-yi-check',
                    'one-many-check','ti-yong-check',
-                   'get-learning-rate','get-reward-signal','get-terminal-value','project-state','mutation-tiebreak','falsification-check',
+                   'get-learning-rate','get-reward-signal','get-terminal-value','project-state','mutation-tiebreak','falsification-check','random-anchor',
                    'predict-generate','predict-test','predict-propagate','fast-path-check',
                    'attention-gate'],
     },
