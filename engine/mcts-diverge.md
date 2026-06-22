@@ -198,18 +198,46 @@ Output each item — MUST be visible to user:
 
 
 
-## Phase 0.7: Wild Brainstorming
+## Phase 0.7: 无用之用 — Stop Trying to Be Useful
 
-**MANDATORY: generate absurd ideas BEFORE structured perspectives.**
+**庄子的核心洞察: 你越用力"跳出框架", 越在框架内。**
 
-井底之蛙的问题不是它看的方向少, 是它根本不知道天可能不是井口那个形状。
+为什么? 因为"要跳出框架"这个念头本身就是框架的一部分。
 
-Rules:
-1. First produce 3 intentionally absurd ideas (ignore feasibility, ignore reality)
-2. From the absurd, extract 1-2 "seeds" that survive when brought back to constraints
-3. Only then enter the structured 六视 perspectives
+所以这一步不是"想几个疯狂的点子"。是停下来。不直接想答案了。
 
-If every idea from this phase was trivially filterable → divergence was not wild enough.
+### 第一步: 放下
+
+```
+把当前的问题、约束、初始判断全部清出工作区。
+不看输入。不考虑方案。
+现在想一件跟这个问题完全无关的事:
+- 你最近遇到的跟工作学习毫无关系的一个场景
+- 描述它, 越具体越好: 什么时间? 什么气味? 什么光线? 什么触感?
+⛔ 这一步必须有。跳过就是假放下。
+```
+
+### 第二步: 让东西浮出来
+
+```
+继续保持无关场景的画面。从这个画面里, 有没有什么东西隐约让你联想到当前问题?
+不需要有逻辑关联——一个颜色、一个节奏、一种气氛都可以。
+把那个东西写下来, 不用解释原因。
+```
+
+### 第三步: 回头看
+
+```
+现在回到问题上。在无关场景里冒出来的那个东西, 如果强行用到问题上, 会怎样?
+- 可能90%是荒唐的。
+- 但剩下10%——有没有什么之前完全没注意到的角度?
+```
+
+庄子说的"无用之用"就是这个意思: 你不是直接去找有用的东西。你先让自己彻底"没用", 然后有用的东西反而会冒出来。
+
+⛔ 三轮走完才能进逍遥游六视。跳过=假发散。
+
+心理学对应: 默认模式网络(DMN)在你不专注时最活跃。最有创造力的想法不是"想出来"的, 是"冒出来"的。
 
 ## Phase 1: 逍遥游 — Six-Perspective Free Wandering
 
