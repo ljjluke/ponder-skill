@@ -879,6 +879,57 @@ function main() {
                 });
                 break;
             }
+            case "step-gate": {
+                // 步骤门禁: LLM必须调用此命令才能解锁下一步
+                // BLOCKED = LLM不能继续, 必须重做当前步骤
+                const step = o.step || 'unknown';
+                const status = o.status || 'pending';
+                const issues = parseInt(o.issues) || 0;
+
+                const gates = {
+                    interview: {
+                        min_score: 6,
+                        min_questions: 0,
+                        check: (s, i) => {
+                            if (i > 2) return { pass: false, reason: `${i}个矛盾点未解决, 继续追问` };
+                            if (s < 3) return { pass: false, reason: `画像清晰度${s}/10, 太低, 继续追问` };
+                            return { pass: true };
+                        },
+                    },
+                    divergence: {
+                        min_perspectives: 3,
+                        check: (s, i) => {
+                            if (s < 3) return { pass: false, reason: `只有${s}个视角, 至少需要3个` };
+                            return { pass: true };
+                        },
+                    },
+                    falsification: {
+                        min_contradictions: 1,
+                        check: (s, i) => {
+                            if (i < 1) return { pass: false, reason: `反证检验找到0个矛盾, 发散不够深, 退回重做` };
+                            return { pass: true };
+                        },
+                    },
+                    scoring: {
+                        min_dimensions: 3,
+                        check: (s, i) => {
+                            if (s < 3) return { pass: false, reason: `评分维度只有${s}个, 至少需要3个维度` };
+                            return { pass: true };
+                        },
+                    },
+                };
+
+                const gate = gates[step];
+                if (!gate) { output({ step, verdict: 'PASS', note: 'No gate defined for this step' }); break; }
+
+                const result = gate.check(parseFloat(o.score || '5'), issues);
+                if (result.pass) {
+                    output({ step, verdict: 'PASS', gate: 'unlocked' });
+                } else {
+                    output({ step, verdict: 'BLOCKED', reason: result.reason, gate: 'locked', action: '必须重做当前步骤, 不能进入下一步' });
+                }
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }
