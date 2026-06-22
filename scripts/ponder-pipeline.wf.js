@@ -87,7 +87,7 @@ if (plan._aborted) { return { _aborted_at: 'plans', _shensi: shensi, _div: div, 
 
 // ─── 5. 收敛 ───
 phase('收敛')
-var conv = await step('收敛', '基于方案结果\n\n淘汰弱方案,保留3-5个最优并评分。不清晰填user_questions', {
+var conv = await step('收敛', '基于方案结果: ' + JSON.stringify(plan.plans) + '\n\n淘汰弱方案,保留3-5个最优并评分。不清晰填user_questions', {
   type: 'object', properties: {
     is_clear: { type: 'boolean' }, user_questions: { type: 'array', items: { type: 'string' } },
     survivors: { type: 'array', items: { type: 'object', properties: {

@@ -31,7 +31,7 @@ license: MIT
 # Workflow工具调用 — scriptPath必须指向插件目录下的ponder-pipeline.wf.js
 # args用JSON字符串, 不是JS对象
 Workflow({
-  scriptPath: "C:\Users\cloudmap\.claude\plugins\cache\luke\luke\1.17.30\scripts\ponder-pipeline.wf.js",
+  scriptPath: "C:\Users\cloudmap\.claude\plugins\cache\luke\luke\1.17.31\scripts\ponder-pipeline.wf.js",
   args: JSON.stringify({ userRequest: "<问题描述>", userProfile: "<画像>" })
 })
 ```
