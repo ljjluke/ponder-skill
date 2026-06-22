@@ -57,7 +57,6 @@ function main() {
         log("  replay    [limit]                       — Experience replay");
         log("  session-end <session_json>              — Session end consolidation");
         log("  cluster                                 — Acupoint cluster detection");
-        log("  session-context <status|summary|extract|reset> — Session working memory");
         log("  observe   --phase <name> [--data json]   — Observe point route");
         log("  load                                    — Load KG");
         log("  audit     [context_tags_json]            — Full knowledge audit (completeness/contradiction/staleness/five-element)");
