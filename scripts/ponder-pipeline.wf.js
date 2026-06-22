@@ -46,6 +46,16 @@ if (researchRule) {
 
 // Force depth: run round 1, if not clear run round 2, if not clear run round 3
 // No while/for. Unrolled as sequential if statements.
+// 中止检查: 如果某步不清晰且有用户问题, 提前返回
+function abortIfUnclear(stepName, result, resultsSoFar) {
+  if (result && !result.is_clear && result.user_questions && result.user_questions.length > 0) {
+    log('[ABORT] ' + stepName + ' 不清晰, 需要用户反馈')
+    var out = Object.assign({ pending_user_questions: result.user_questions, aborted_at: stepName }, resultsSoFar)
+    return out
+  }
+  return null
+}
+
 async function runUntilClear(label, prompt, schema, rounds) {
   // rounds=0 means unlimited (but we limit to 5 in practice)
   var maxRounds = rounds > 0 ? rounds : 5
@@ -97,6 +107,7 @@ var shensi = runUntilClear('神思', '虚静(清空预设)→神凝→神游(漫
     insight:{type:'string',description:'这个发现对当前问题的启示'},
   }, required:['is_clear','user_questions','reasoning_chain','counter_intuitive','insight'],
 }, 0)
+var aborted = abortIfUnclear('神思', shensi, { step:'shensi', shensi: shensi }); if (aborted) return aborted;
 
 // Phase 1: Divergence
 phase('发散')
@@ -125,6 +136,7 @@ var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profi
     consensus:{type:'string'},
   }, required:['is_clear','user_questions','perspectives','contradictions','consensus'],
 }, 0)
+var aborted = abortIfUnclear('发散', div, { step:'divergence', shensi: shensi, divergence: div }); if (aborted) return aborted;
 
 // Phase 2: Dimension
 phase('八卦镜')
@@ -153,6 +165,7 @@ var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||''
     key_finding:{type:'string'},
   }, required:['is_clear','user_questions','dimensions','key_finding'],
 }, 0)
+var aborted = abortIfUnclear('八卦镜', dim, { step:'dimension', shensi: shensi, divergence: div, dimension: dim }); if (aborted) return aborted;
 
 // Phase 3: Plans
 phase('方案')
@@ -191,6 +204,7 @@ var converge = runUntilClear('收敛', '基于八卦镜评分收敛方案\n八�
     }}},
   }, required:['is_clear','user_questions','reasoning_chain','survivors','eliminated'],
 }, 0)
+var aborted = abortIfUnclear('收敛', converge, { step:'converge', shensi: shensi, divergence: div, dimension: dim, converge: converge }); if (aborted) return aborted;
 
 // Phase 4: Simulation — 十天干推演框架
 // 使用十天干(木火土金水)作为跨领域抽象推演框架
