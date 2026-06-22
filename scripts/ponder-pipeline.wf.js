@@ -103,10 +103,11 @@ if (divCandidates.length > 0) {
 var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+errDiv+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':''), {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    reasoning_chain:{type:'string',minLength:200,description:'从初始分析到最终结论的完整推理过程,包括每一步的分析和数据推演'},
     perspectives:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, insight:{type:'string'}, data_source:{type:'string'},
-      assumption:{type:'string'},
-    },required:['name','insight','data_source','assumption']},minItems:6},
+      assumption:{type:'string'}, reasoning:{type:'string',description:'关于这个视角的完整推理过程'},
+    },required:['name','insight','data_source','assumption','reasoning']},minItems:6},
     contradictions:{type:'array',items:{type:'string'}},
     consensus:{type:'string'},
   }, required:['is_clear','user_questions','perspectives','contradictions','consensus'],
@@ -130,10 +131,12 @@ if (dimCandidates.length > 0) {
 var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:'+lessons+dimHistory+errDim, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    reasoning_chain:{type:'string',minLength:200,description:'完整推理过程'},
     dimensions:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, score:{type:'number'}, evidence:{type:'string'},
       uncertainty:{type:'string'},
-    },required:['name','score','evidence','uncertainty']},minItems:8},
+      reasoning:{type:'string',description:'推理依据'}
+    },required:['name','score','evidence','uncertainty','reasoning']},minItems:8},
     key_finding:{type:'string'},
   }, required:['is_clear','user_questions','dimensions','key_finding'],
 }, 0)
@@ -278,10 +281,12 @@ if (debateCandidates.length > 0) {
 var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:'+lessons+debateHistory+errDebate, {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    reasoning_chain:{type:'string',minLength:200,description:'辩论推理'},
     ranked:{type:'array',items:{type:'object',properties:{
       rank:{type:'number'}, name:{type:'string'},
       pros:{type:'array',items:{type:'string'}}, cons:{type:'array',items:{type:'string'}},
-    },required:['rank','name','pros','cons']},minItems:2},
+      reasoning_chain:{type:'string',description:'推理过程'},
+    },required:['rank','name','pros','cons','reasoning_chain']},minItems:2},
     synthesis:{type:'string',minLength:50},
   }, required:['is_clear','user_questions','ranked','synthesis'],
 }, 0)
