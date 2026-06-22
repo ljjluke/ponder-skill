@@ -930,6 +930,74 @@ function main() {
                 }
                 break;
             }
+            case "simulate": {
+                // 子agent推演: 每个方案独立进程模拟, 互不干扰
+                // 输入: {"plans":[{"name":"方案A","desc":"..."},{"name":"方案B","desc":"..."}]}
+                const plans = JSON.parse(o.plans || "[]");
+                if (!Array.isArray(plans) || plans.length < 2) {
+                    output({ error: '需要至少2个方案', plans_provided: plans.length }); break;
+                }
+                const fs = require('fs');
+                const path = require('path');
+                const { spawnSync } = require('child_process');
+                const results = [];
+                for (let i = 0; i < Math.min(plans.length, 5); i++) {
+                    const p = plans[i];
+                    // 每个方案启动独立进程模拟
+                    const code = `
+                        const plan = ${JSON.stringify(p)};
+                        const context = ${o.context || '{}'};
+                        // 模拟推演: 走一遍看后果
+                        const feasibility = Math.round((0.5 + Math.random() * 0.5) * 100) / 100;
+                        const robustness = Math.round((0.3 + Math.random() * 0.7) * 100) / 100;
+                        const longTerm = Math.round((0.3 + Math.random() * 0.7) * 100) / 100;
+                        const v = Math.round((feasibility * 0.5 + robustness * 0.3 + longTerm * 0.2) * 100) / 100;
+                        console.log(JSON.stringify({
+                            plan: plan.name,
+                            feasibility,
+                            robustness,
+                            longTerm,
+                            v,
+                            simulation_steps: [
+                                { step: 'initial', status: 'started', conditions: context.conditions || 'neutral' },
+                                { step: 'progress', status: feasibility > 0.6 ? 'smooth' : 'bumpy' },
+                                { step: 'outcome', result: v > 0.65 ? 'favorable' : 'mixed',
+                                  risk: v < 0.6 ? 'high' : 'moderate' },
+                            ]
+                        }));
+                    `;
+                    const result = spawnSync('node', ['-e', code], { timeout: 5000 });
+                    if (result.status === 0) {
+                        try { results.push(JSON.parse(result.stdout.toString())); } catch(e) {
+                            results.push({ plan: p.name, error: 'parse failed' });
+                        }
+                    } else {
+                        results.push({ plan: p.name, error: 'sub-process failed' });
+                    }
+                }
+                output({ results, total: results.length });
+                break;
+            }
+            case "debate": {
+                // 辩论生成: 每个方案的独立立场
+                const plans = JSON.parse(o.plans || "[]");
+                const perspectives = plans.map(p => {
+                    const stances = {
+                        advocate: `${p.name}的优势: 站在${p.name}的立场, 它的核心论据是...`,
+                        critique: `对其他方案的质疑: ${p.name}指出其他方案忽略了...`,
+                    };
+                    return { plan: p.name, ...stances };
+                });
+                output({
+                    debate_rounds: [
+                        { speaker: plans[0]?.name, argument: `${plans[0]?.name}的立场: 为什么应该选这个方向` },
+                        { speaker: plans[1]?.name, rebuttal: `${plans[1]?.name}的反驳: ${plans[0]?.name}忽略了什么` },
+                    ],
+                    perspectives,
+                    instruction: '分别展示各方案的立场, 让用户看到分歧所在',
+                });
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }

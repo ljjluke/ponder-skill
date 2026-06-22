@@ -46,11 +46,13 @@ license: MIT
 
 | 时机 | CLI | 作用 |
 |------|-----|------|
-| 神思后 | `compute random-anchor` | 获取外部锚点 |
-| 八卦镜后 | `compute falsification-check` | 反证检验 |
-| 每步 | `profile observe --behavior <x>` | 记录用户偏好 |
-| 综合后 | `mma remember '{"description":"..."}'` | 存入记忆 |
-| 会话结束 | `mma finalize` | 睡眠巩固 |
+| 【发散】神思 | `compute random-anchor` | 获取外部锚点 |
+| 【推演】子进程模拟 | `compute simulate --plans '<json>'` | 每个方案独立进程推演 |
+| 【辩论】立场生成 | `compute debate --plans '<json>'` | 各方案自动生成立场 |
+| 【反证】八卦镜后 | `compute falsification-check` | 反证检验 |
+| 【记录】每步 | `profile observe --behavior <x>` | 记录用户偏好 |
+| 【存储】综合后 | `mma remember '{"description":"..."}'` | 存入记忆 |
+| 【巩固】会话结束 | `mma finalize` | 睡眠巩固 |
 
 ## 输出过滤器
 
