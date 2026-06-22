@@ -201,13 +201,15 @@ Output each item — MUST be visible to user:
 
 ---
 
-**五步走完才能进入逍遥游六视。跳过=假发散。**
+**退出条件**: 不是"五步全走完", 是"有东西浮现了"。如果三步就有东西, 就停。如果六步还没有, 继续。
 
-注: 这五步不确保每次都能产出"有用"的东西。但它的目的不是每次都有用——是确保发散不在旧框架内进行。有用没用, 做了才知道。
+**⛔ 关键规则 — 得鱼忘筌**: 神思产出的东西, 不带任何框架标签。不写"神思成果"、"虚静阶段产出"、"意象浮现"。直接说内容本身。用户不需要知道这些步骤的存在。
 
-## Phase 1: 逍遥游 — Six-Perspective Free Wandering
+## Phase 1: 逍遥游 — Free Wandering (if needed)
 
-**Core principle**: Not "looking at the same problem from different angles" — that's shallow. 逍遥游 is **completely changing the observer's identity, scale, and spacetime position**.
+**只有当神思没有产出足够的方向时才需要进入逍遥游。**
+
+如果神思已经产生了可用的新视角, 直接带着它进入八卦镜。不需要再走 6 个视角——鱼已经捕到了, 不需要再修筌。
 
 Like:
 - Human seeing Earth vs Alien seeing Earth
