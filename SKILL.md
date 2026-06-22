@@ -49,9 +49,12 @@ license: MIT
 【需求拆解】根据用户实际需求描述, 指出用户自己没意识到的矛盾点。
 → 调用: node scripts/mcts.js profile observe default --behavior <行为> (记录习惯)
 
-【跳出框架(神思)】启动外部锚点跳出思维定势:
-   node scripts/mcts.js compute random-anchor
-   用返回的种子从训练数据中选冷门知识, 与问题强关联。
+【跳出框架(神思)】基于《文心雕龙·神思》+《庄子》的五步法:
+  ⛔ MUST LOAD engine/mcts-diverge.md Phase 0.7
+  第一步: 虚静(清空预设, 停止用力) → 第二步: 神凝(凝聚注意力)
+  第三步: 神游(无目的漫游) → 第四步: 意象(让东西浮现)
+  第五步: 言意(把浮现的东西带回问题)
+  可选: 用随机种子辅助神游
 → 调用: node scripts/mcts.js mma capture-divergence (存洞察)
 
 【多尺度审视(六视)】从多个不同尺度审视, 用表格展示各尺度的信号和结论。
