@@ -46,35 +46,43 @@ if (researchRule) {
 
 // Force depth: run round 1, if not clear run round 2, if not clear run round 3
 // No while/for. Unrolled as sequential if statements.
-// 中止检查: 每步客观质量检查 + is_clear自评
+// 清晰度评分: 综合is_clear + 字段填充率 + 深度轮数, 0-10分
+function clarityScore(stepName, result) {
+  if (!result) return 0
+  var score = 0
+  // 1. is_clear自评 (30%)
+  score += (result.is_clear ? 3 : 0)
+  // 2. user_questions惩罚: 问题越多越低 (20%)
+  var qPenalty = Math.min(result.user_questions ? result.user_questions.length : 0, 5) * 0.4
+  score += Math.max(0, 2 - qPenalty)
+  // 3. 深度轮数加成: 多轮深度探索加分 (20%)
+  var rounds = result._depth_rounds || 1
+  score += Math.min(rounds, 5) * 0.4
+  // 4. 字段填充率 (30%)
+  var fillFields = Object.keys(result).filter(function(k) {
+    if (k === 'is_clear' || k === 'user_questions' || k === '_depth_rounds') return false
+    var v = result[k]
+    return v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)
+  })
+  var fillRate = Math.min(fillFields.length / Math.max(Object.keys(result).length - 3, 1), 1)
+  score += fillRate * 3
+  return Math.round(score * 10) / 10
+}
+
+// 中止检查: 清晰度评分 < 6 则拦截
 function abortIfUnclear(stepName, result, resultsSoFar) {
   if (!result) return null
-  var msg = null
-  // 客观结构检查（不依赖LLM自评）
-  if (stepName === '神思') {
-    if (!result.counter_intuitive || result.counter_intuitive.length < 50) msg = '反直觉发现太短'
-    if (!result.insight || result.insight.length < 30) msg = msg || '洞察缺失'
-  } else if (stepName === '发散') {
-    var valid = (result.perspectives||[]).filter(function(p){return p.insight && p.insight.length > 20})
-    if (valid.length < 3) msg = '有效视角不足('+valid.length+'个), 需要至少3个'
-  } else if (stepName === '八卦镜') {
-    var valid = (result.dimensions||[]).filter(function(d){return d.score !== undefined && d.evidence && d.evidence.length > 10})
-    if (valid.length < 6) msg = '有效维度不足('+valid.length+'个), 需要至少6个'
-  } else if (stepName === '收敛') {
-    if (!result.survivors || result.survivors.length < 2) msg = '幸存方案不足('+(result.survivors||[]).length+'个)'
-  }
-  if (msg) {
-    log('[ABORT] ' + stepName + ' 质量不合格: ' + msg)
-    var abortedResultsSoFar = Object.assign({ pending_user_questions: [msg], aborted_at: stepName, quality_issue: msg }, resultsSoFar)
-    return abortedResultsSoFar
-  }
-  // is_clear自评检查
-  if (!result.is_clear && result.user_questions && result.user_questions.length > 0) {
-    log('[ABORT] ' + stepName + ' 不清晰, 需要用户反馈')
-    var out = Object.assign({ pending_user_questions: result.user_questions, aborted_at: stepName }, resultsSoFar)
-    return out
-  }
-  return null
+  var cs = clarityScore(stepName, result)
+  result._clarity_score = cs
+  // 记录清晰度评分
+  log('[CLARITY] ' + stepName + ' 评分: ' + cs + '/10 (轮数:' + (result._depth_rounds||1) + ')')
+  if (cs >= 6) return null // 清晰,放行
+  // 不清晰: 收集user_questions或生成默认问题
+  var questions = result.user_questions && result.user_questions.length > 0
+    ? result.user_questions
+    : [stepName + '分析不够充分(评分' + cs + '/10), 需要补充什么信息?']
+  log('[ABORT] ' + stepName + ' 评分' + cs + '/10, 需要用户反馈')
+  return Object.assign({ pending_user_questions: questions, aborted_at: stepName, clarity_score: cs }, resultsSoFar)
 }
 
 async function runUntilClear(label, prompt, schema, rounds) {
