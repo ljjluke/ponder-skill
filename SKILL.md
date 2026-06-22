@@ -28,11 +28,8 @@ license: MIT
 管道内部自动处理编排、验证、存储，不需要 LLM 单独调任何 Bash 命令。
 
 ```
-# 直接用 Workflow 工具调用, 不是 Bash 命令。不要在前面加 node scripts/mcts.js
-Workflow({
-  scriptPath: "C:\Users\cloudmap\.claude\plugins\cache\luke\luke\1.17.13\scripts\ponder-pipeline.wf.js",
-  args: { userRequest: "<问题描述>", userProfile: "<画像>" }
-})
+# 直接用 Workflow 工具调用 — 不是 Bash, 不是 node脚本, 是平台工具
+Workflow({scriptPath: "<插件目录>/scripts/ponder-pipeline.wf.js", args: { userRequest: "<问题描述>", userProfile: "<画像>" }})
 ```
 
 管道内部: before(加载规则) → 采集→发散→八卦镜→方案→推演(并行子agent)→辩论→综合→验证 → after(存储+指标)
@@ -62,20 +59,11 @@ Workflow({
   子agent B推演[方案B]: [完整推理链, 遇到什么情况, 最后结果]
   子agent C推演[方案C]: [完整推理链, 遇到什么情况, 最后结果]
 
-【辩论】两个子agent立场交锋:
-  [方案A]方观点: "..." → [方案B]方反驳: "..." → 分歧根本点: "..."
-
-【推演】3个子agent各自独立模拟了一个方案 — 3轮深度循环后清晰:
-  子agent A推演[方案A]: [完整推理链, 遇到什么情况, 最后结果]
-  子agent B推演[方案B]: [完整推理链, 遇到什么情况, 最后结果]
-  子agent C推演[方案C]: [完整推理链, 遇到什么情况, 最后结果]
-
 【辩论】两个子agent立场交锋 — ✓ 清晰:
   [方案A]方观点: "..." → [方案B]方反驳: "..." → 分歧根本点: "..."
 
 【综合】推荐[方案]。理由: [引用用户原话]。
 风险: [一句话]
-✓ 综合判断清晰
 ```
 
 ⛔ 管道完成后的 JSON 包含每个子 agent 的完整产出。LLM 必须逐个读取并展开, 不能跳过任何一个阶段。
@@ -94,13 +82,8 @@ Workflow({
 3. 不准替用户做决定。有分支时用 AskUserQuestion 问用户。
 4. 所有问题用带选项的 AskUserQuestion。
 5. **不准在用户面前展示任何 Bash 调用、JSON、代码路径。管道返回的 JSON 必须用自然语言总结后展示。**
-6. 管道内部自动做步骤验证, LLM 不需要单独调 step-gate。
-7. 会话结束时调 `node scripts/mcts.js mma finalize` 巩固记忆。
+6. 管道内部自动做步骤验证、记忆存储、会话收尾, LLM 不需要单独调任何命令。
 
 ## 强制调用
 
-| 时机 | 操作 |
-|------|------|
-| 采访后 | `Workflow({scriptPath: "scripts/ponder-pipeline.wf.js", args})` — 管道内自含所有步骤 |
-| 每步 | `profile observe default --behavior <x>` (Bash调, 但用户看不到输出) |
-| 结束 | `node scripts/mcts.js mma finalize` — 巩固记忆 |
+唯一的 Bash 操作：采访 → 调用 Workflow 工具。管道内部处理所有验证/存储/记忆巩固。不调任何其他 Bash 命令。
