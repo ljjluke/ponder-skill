@@ -46,7 +46,7 @@ Most LLM tools answer immediately — and miss the mark. Ponder activates a **co
 | 🚫 **Step enforcement** | All 7 phases mandatory. Code checks, not prompt rules. |
 | 💡 **Self-evolving** | `evolve.js` detects bottlenecks, generates fixes, auto-applies via rules. |
 | 🏛️ **Ten Heavenly Stems framework** | 甲木→乙木→...→癸水 — domain-agnostic simulation with fixed weights, no LLM-decided scoring. |
-| 🧠 **MMA Memory** | 135+ knowledge points, semantic matching, Chinese/Japanese/Korean support. |
+| 🧠 **MMA Memory** | Knowledge accumulates with use, semantic matching, multi-language support. |
 | 🧹 **Knowledge grooming** | Unused knowledge auto-decays, low-quality auto-sleeps, frequently used auto-promotes. |
 
 <br>
@@ -245,7 +245,7 @@ ponder-skill/
 |-----------|--------|-------------|
 | 7-phase pipeline | ✅ **Active** | Divergence → Dimension → Plans → Simulate → Debate → Synthesize → Verify |
 | Ten Stems simulation | ✅ **Active** | Parallel agent simulation with fixed-weight V scoring |
-| MMA memory | ✅ **Active** | 135+ knowledge points, semantic matching, knowledge grooming |
+| MMA memory | ✅ **Active** | Knowledge grows with use, semantic matching, knowledge grooming |
 | Self-evolution | ✅ **Active** | `evolve.js` detects bottlenecks, auto-generates fixes, deploys rules |
 | Semantic matching | ✅ **Active** | Chinese/Japanese/Korean support, natural language format |
 | Knowledge grooming | ✅ **Active** | Unused decay, low-quality sleep, frequent promote |
