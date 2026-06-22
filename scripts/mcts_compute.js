@@ -851,6 +851,26 @@ function main() {
                 }
                 break;
             }
+            case "falsification-check": {
+                const pred = JSON.parse(o.prediction || "{}");
+                const insights = JSON.parse(o.insights || "[]");
+                let contradictions = 0;
+                for (const ins of insights) {
+                    if (ins.conflicts_with && pred.scores && Math.abs((ins.score || 5) - (pred.scores[ins.conflicts_with] || 5)) > 2) {
+                        contradictions++;
+                    }
+                    if (ins.contradicts_assumption) contradictions++;
+                }
+                const pass = contradictions > 0;
+                output({
+                    pass,
+                    contradictions_found: contradictions,
+                    perspectives_checked: insights.length,
+                    verdict: pass ? '✅ Pass' : '❌ Blocked — no contradictory perspective found',
+                    action: pass ? 'Proceed to converge' : 'Return to 六视 — add a counter-perspective',
+                });
+                break;
+            }
             default: log(`Unknown: ${cmd}`); process.exit(1);
         }
     } catch (e) { log(`Error: ${e.message}`); process.exit(1); }

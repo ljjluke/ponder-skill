@@ -355,8 +355,25 @@ Then answer:
 → Which perspectives make me most uncomfortable? (discomfort = blindspot contact)
 → What if the most uncomfortable perspective is the correct one?
 
+### Falsification Gate — ⛔ MANDATORY
 
----
+如果齐物中**没有发现任何与初始五診预测矛盾的视角** → 说明发散不够深，仍在框架内。
+
+三条强制检验:
+```
+① 有没有视角的结论直接与初始评分矛盾?
+   → 如果没有 → 强行构造一个"反向视角"
+   例如: "如果'天=8(时间宽裕)'完全是错的, 实际时间紧迫, 会怎样?"
+
+② 有没有发现用户没说过但可能推翻需求的事情?
+   → 如果没有 → 说明还在顺着用户思路
+
+③ 如果"最舒服的视角"反而是错的, "最不舒服的视角"才是对的?
+   → 如果结果不变 → 说明这个不舒服不够不舒服
+```
+
+**⛔ 三条全否 → 不能进入收敛 → 回到六视补一个逆反视角重新发散**
+**⛔ 至少通过一条 → 才能进入收敛**
 
 ## Phase 4: 庄周梦蝶 — Ultimate Flip
 
