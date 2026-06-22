@@ -46,26 +46,18 @@ if (researchRule) {
 
 // Force depth: run round 1, if not clear run round 2, if not clear run round 3
 // No while/for. Unrolled as sequential if statements.
-// 清晰度评分: 综合is_clear + 字段填充率 + 深度轮数, 0-10分
+// 清晰度评分: LLM自评 + 行为信号加权, 0-10分
 function clarityScore(stepName, result) {
   if (!result) return 0
   var score = 0
-  // 1. is_clear自评 (30%)
-  score += (result.is_clear ? 3 : 0)
-  // 2. user_questions惩罚: 问题越多越低 (20%)
-  var qPenalty = Math.min(result.user_questions ? result.user_questions.length : 0, 5) * 0.4
-  score += Math.max(0, 2 - qPenalty)
-  // 3. 深度轮数加成: 多轮深度探索加分 (20%)
-  var rounds = result._depth_rounds || 1
-  score += Math.min(rounds, 5) * 0.4
-  // 4. 字段填充率 (30%)
-  var fillFields = Object.keys(result).filter(function(k) {
-    if (k === 'is_clear' || k === 'user_questions' || k === '_depth_rounds') return false
-    var v = result[k]
-    return v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)
-  })
-  var fillRate = Math.min(fillFields.length / Math.max(Object.keys(result).length - 3, 1), 1)
-  score += fillRate * 3
+  // 1. LLM自评 (40%) — LLM判断是否清晰, 权重最高
+  score += (result.is_clear ? 4 : 0)
+  // 2. 深度轮数 (30%) — 多轮深度探索加分, 单轮减分
+  var rounds = Math.min(result._depth_rounds || 1, 5)
+  score += (rounds === 1 ? 1 : rounds === 2 ? 2 : rounds >= 3 ? 3 : 0)
+  // 3. 用户问题数 (30%) — 问题越少越清晰
+  var qCount = result.user_questions ? result.user_questions.length : 0
+  score += qCount === 0 ? 3 : qCount <= 2 ? 2 : 0
   return Math.round(score * 10) / 10
 }
 
@@ -77,10 +69,10 @@ function abortIfUnclear(stepName, result, resultsSoFar) {
   // 记录清晰度评分
   log('[CLARITY] ' + stepName + ' 评分: ' + cs + '/10 (轮数:' + (result._depth_rounds||1) + ')')
   if (cs >= 6) return null // 清晰,放行
-  // 不清晰: 收集user_questions或生成默认问题
+  // 不清晰: 用LLM自己的user_questions, 没有才用默认
   var questions = result.user_questions && result.user_questions.length > 0
     ? result.user_questions
-    : [stepName + '分析不够充分(评分' + cs + '/10), 需要补充什么信息?']
+    : ['分析深度不够(评分' + cs + '/10), 能否补充更多信息以便深入分析?']
   log('[ABORT] ' + stepName + ' 评分' + cs + '/10, 需要用户反馈')
   return Object.assign({ pending_user_questions: questions, aborted_at: stepName, clarity_score: cs }, resultsSoFar)
 }
