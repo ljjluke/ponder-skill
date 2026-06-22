@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: 7-phase cognitive pipeline with code-enforced depth loop. Domain-agnostic.
-version: 1.17.31
+version: 1.17.32
 license: MIT
 ---
 
