@@ -4,7 +4,7 @@ export const meta = {
   description: '全流程一步到位+代码级深度循环',
   phases: [
     { title: '神思', detail: '破框' }, { title: '发散', detail: '6视角' }, { title: '八卦镜', detail: '8维度' },
-    { title: '方案', detail: '收敛' }, { title: '推演', detail: '并行' },
+    { title: '方案', detail: '生成' }, { title: '收敛', detail: '淘汰' }, { title: '推演', detail: '并行' },
     { title: '辩论', detail: '排名' }, { title: '综合', detail: '结论' },
     { title: '验证', detail: '审查' },
   ],
@@ -175,6 +175,21 @@ var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||
     },required:['name','rationale','condition','condition_verified']},minItems:5},
     logic:{type:'string'},
   }, required:['is_clear','user_questions','plans','logic'],
+}, 0)
+
+// Phase 3.5: 收敛 — 基于八卦镜评分淘汰弱方案
+phase('收敛')
+var converge = runUntilClear('收敛', '基于八卦镜评分收敛方案\n八卦镜发现:'+(dim.key_finding||'')+'\n各维度:'+JSON.stringify((dim.dimensions||[]).slice(0,3).map(function(d){return d.name+':'+d.score}))+'\n方案:'+JSON.stringify((plan.plans||[]).map(function(p){return p.name}))+'\n淘汰评分低于阈值的方案,保留3-5个最优方案进入推演。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    reasoning_chain:{type:'string',minLength:100,description:'收敛推理过程'},
+    survivors:{type:'array',items:{type:'object',properties:{
+      name:{type:'string'}, score:{type:'number'}, reason:{type:'string'},
+    },required:['name','score','reason']},minItems:3,maxItems:5},
+    eliminated:{type:'array',items:{type:'object',properties:{
+      name:{type:'string'}, reason:{type:'string'},
+    }}},
+  }, required:['is_clear','user_questions','reasoning_chain','survivors','eliminated'],
 }, 0)
 
 // Phase 4: Simulation — 十天干推演框架

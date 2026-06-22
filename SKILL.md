@@ -103,7 +103,7 @@ Workflow({scriptPath: "<插件目录>/scripts/ponder-pipeline.wf.js", args: { us
 ## 规则
 
 0. **绝对禁止向用户展示任何 Bash 命令、ls、dir、path、JSON。所有 CLI 工具调用必须使用 Workflow 内部 agent 执行, 不得在前台展示。**
-1. 不准跳过步骤。采访→子agent管道(采集→神思→发散→八卦镜→方案→推演→辩论→综合→验证)→输出。
+1. 不准跳过步骤。采访→子agent管道(采集→神思→发散→八卦镜→方案→收敛→推演→辩论→综合→验证)→输出。
 2. 不准无数据做判断。每结论必须有数据来源。
 3. 不准替用户做决定。有分支时用 AskUserQuestion 问用户。
 4. 所有问题用带选项的 AskUserQuestion。
