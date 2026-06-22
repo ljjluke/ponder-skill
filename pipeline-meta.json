@@ -88,6 +88,42 @@
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
           "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
         }
       ]
     },
@@ -172,6 +208,42 @@
           "type": "weight_adjust",
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
           "generation": 1
         }
       ]
@@ -258,6 +330,42 @@
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
           "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
         }
       ]
     },
@@ -342,6 +450,42 @@
           "type": "weight_adjust",
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
           "generation": 1
         }
       ]
@@ -428,6 +572,42 @@
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
           "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
         }
       ]
     },
@@ -512,6 +692,42 @@
           "type": "weight_adjust",
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
           "generation": 1
         }
       ]
@@ -598,6 +814,42 @@
           "log": "验证失败率高 → free_energy_verify+0.01",
           "at": "2026-06-21T06:39:59.533Z",
           "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T00:38:35.988Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "verify通过 → 权重巩固",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "边界加深有效 → 加深阈值+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
+        },
+        {
+          "type": "weight_adjust",
+          "log": "验证失败率高 → free_energy_verify+0.01",
+          "at": "2026-06-22T12:10:15.938Z",
+          "generation": 1
         }
       ]
     }
@@ -614,7 +866,7 @@
       "verification"
     ],
     "parallel_groups": [],
-    "mutation_count": 13
+    "mutation_count": 19
   },
   "free_energy": {
     "current": 0.6696777777777777,
@@ -638,6 +890,16 @@
         "value": 0.6696777777777777,
         "at": "2026-06-21T06:39:59.533Z",
         "mutation": "weight_adjust"
+      },
+      {
+        "value": 0.6696777777777777,
+        "at": "2026-06-22T00:38:35.988Z",
+        "mutation": "weight_adjust"
+      },
+      {
+        "value": 0.6696777777777777,
+        "at": "2026-06-22T12:10:15.938Z",
+        "mutation": "weight_adjust"
       }
     ],
     "threshold": 0.4,
@@ -652,7 +914,7 @@
         "边界加深有效 → 加深阈值+0.01",
         "验证失败率高 → free_energy_verify+0.01"
       ],
-      "at": "2026-06-21T06:39:59.533Z",
+      "at": "2026-06-22T12:10:15.938Z",
       "generation": 1
     },
     "mutation_types_available": [
@@ -736,7 +998,43 @@
       "log": "验证失败率高 → free_energy_verify+0.01",
       "at": "2026-06-21T06:39:59.533Z",
       "generation": 1
+    },
+    {
+      "type": "weight_adjust",
+      "log": "verify通过 → 权重巩固",
+      "at": "2026-06-22T00:38:35.988Z",
+      "generation": 1
+    },
+    {
+      "type": "weight_adjust",
+      "log": "边界加深有效 → 加深阈值+0.01",
+      "at": "2026-06-22T00:38:35.988Z",
+      "generation": 1
+    },
+    {
+      "type": "weight_adjust",
+      "log": "验证失败率高 → free_energy_verify+0.01",
+      "at": "2026-06-22T00:38:35.988Z",
+      "generation": 1
+    },
+    {
+      "type": "weight_adjust",
+      "log": "verify通过 → 权重巩固",
+      "at": "2026-06-22T12:10:15.938Z",
+      "generation": 1
+    },
+    {
+      "type": "weight_adjust",
+      "log": "边界加深有效 → 加深阈值+0.01",
+      "at": "2026-06-22T12:10:15.938Z",
+      "generation": 1
+    },
+    {
+      "type": "weight_adjust",
+      "log": "验证失败率高 → free_energy_verify+0.01",
+      "at": "2026-06-22T12:10:15.938Z",
+      "generation": 1
     }
   ],
-  "_updated_at": "2026-06-21T06:39:59.533Z"
+  "_updated_at": "2026-06-22T12:10:15.938Z"
 }
