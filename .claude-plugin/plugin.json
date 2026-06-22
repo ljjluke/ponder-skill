@@ -1,7 +1,7 @@
 {
   "name": "luke",
-  "version": "1.17.32",
-  "description": "Self-evolving cognitive framework. 7-phase reasoning pipeline + MMA knowledge system + automatic evolution. Code-enforced depth loop. Data-driven optimization.",
+  "version": "1.17.33",
+  "description": "Self-evolving cognitive framework. 8-step reasoning pipeline + MMA knowledge system + automatic evolution. Code-enforced depth loop. Data-driven optimization.",
   "author": {
     "name": "ljjluke",
     "url": "https://github.com/ljjluke/mcts-skill"

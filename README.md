@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.17.32-blue?style=flat-square" alt="version">
+  <img src="https://img.shields.io/badge/version-1.17.33-blue?style=flat-square" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="status">
 </p>
@@ -240,7 +240,14 @@ Default: `~/.claude/data/skills/ponder/`
 ponder-skill/
 ├── SKILL.md                    # Orchestrator instructions
 ├── scripts/
-│   ├── ponder-pipeline.wf.js   # 7-phase pipeline + ten stems simulation
+│   ├── step-shensi.wf.js       # Step 1: Frame-breaking (counter-intuitive)
+│   ├── step-divergence.wf.js   # Step 2: Divergence (6 perspectives)
+│   ├── step-bagua.wf.js        # Step 3: Dimension (8 dimensions)
+│   ├── step-plans.wf.js        # Step 4: Plans (5-8 plans)
+│   ├── step-converge.wf.js     # Step 5: Converge (eliminate weak plans)
+│   ├── step-simulate.wf.js     # Step 6: Simulate (parallel 10 stems)
+│   ├── step-debate.wf.js       # Step 7: Debate (ranking + refutation)
+│   ├── step-synthesis.wf.js    # Step 8: Synthesis (conclusion + risk)
 │   ├── orchestrate.js          # Before/after orchestrator
 │   ├── evolve.js               # Self-evolution engine
 │   ├── knowledge.js            # Memory: store/recall/semantic matching
@@ -263,7 +270,7 @@ ponder-skill/
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| 7-phase pipeline | ✅ **Active** | Divergence → Dimension → Plans → Simulate → Debate → Synthesize → Verify |
+| 8-step pipeline | ✅ **Active** | Divergence → Dimension → Plans → Simulate → Debate → Synthesize → Verify |
 | Ten Stems simulation | ✅ **Active** | Parallel agent simulation with fixed-weight V scoring |
 | MMA memory | ✅ **Active** | Knowledge grows with use, semantic matching, knowledge grooming |
 | Self-evolution | ✅ **Active** | `evolve.js` detects bottlenecks, auto-generates fixes, deploys rules |

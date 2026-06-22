@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/版本-1.17.32-blue?style=flat-square" alt="版本">
+  <img src="https://img.shields.io/badge/版本-1.17.33-blue?style=flat-square" alt="版本">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="许可">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="状态">
 </p>
@@ -228,9 +228,16 @@ claude
 
 ```
 ponder-skill/
-├── SKILL.md                    # 编排指令
+├── SKILL.md                    # LLM编排指令(步骤顺序/错误处理)
 ├── scripts/
-│   ├── ponder-pipeline.wf.js   # 7步管道 + 十天干推演
+│   ├── step-shensi.wf.js       # 步骤1: 神思(反直觉发现)
+│   ├── step-divergence.wf.js   # 步骤2: 发散(6视角)
+│   ├── step-bagua.wf.js        # 步骤3: 八卦镜(8维度)
+│   ├── step-plans.wf.js        # 步骤4: 方案(5-8方案)
+│   ├── step-converge.wf.js     # 步骤5: 收敛(淘汰弱方案)
+│   ├── step-simulate.wf.js     # 步骤6: 推演(并行十天干)
+│   ├── step-debate.wf.js       # 步骤7: 辩论(排名+反驳)
+│   ├── step-synthesis.wf.js    # 步骤8: 综合(结论+风险)
 │   ├── orchestrate.js          # 编排器(before/after)
 │   ├── evolve.js               # 自进化引擎
 │   ├── knowledge.js            # 记忆: 存储/召回/语义匹配
@@ -253,7 +260,7 @@ ponder-skill/
 
 | 组件 | 状态 | 说明 |
 |------|------|------|
-| 7步管道 | ✅ **运行中** | 发散→八卦镜→方案→推演→辩论→综合→验证 |
+| 8步管道 | ✅ **运行中** | 神思→发散→八卦镜→方案→收敛→推演→辩论→综合 |
 | 十天干推演 | ✅ **运行中** | 并行推演,固定权重V值,非LLM自评 |
 | MMA记忆 | ✅ **运行中** | 随使用持续积累,语义匹配,知识保洁 |
 | 自进化 | ✅ **运行中** | evolve.js检测瓶颈,自动生成修复,上线规则 |

@@ -48,7 +48,7 @@ function before(questionType, userRequest, profile) {
   var stepHistory = {}
   try {
     var knowledge = require('./knowledge')
-    var steps = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification']
+    var steps = ['shensi', 'divergence', 'dimension', 'plans', 'converge', 'simulations', 'debate', 'synthesis']
     steps.forEach(function(s) {
       var hist = knowledge.recallStepHistory(s, questionType, { query: userRequest, limit: 20 })
       if (hist && hist.length > 0) stepHistory[s] = hist
