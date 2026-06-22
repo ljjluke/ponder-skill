@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: 7-phase cognitive pipeline with code-enforced depth loop. Domain-agnostic.
-version: 1.17.4
+version: 1.17.22
 license: MIT
 ---
 
@@ -12,8 +12,8 @@ license: MIT
 
 ```
 ╔═══════════════════════════════════════╗
-║           Ponder  v1.17.11           ║
-║  采访 → 子agent管道 → 综合输出       ║
+║           Ponder  v1.17.22           ║
+║  多AI同时从多个维度并行分析你的问题    ║
 ╚═══════════════════════════════════════╝
 ```
 
