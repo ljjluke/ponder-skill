@@ -92,6 +92,23 @@ Most LLM tools answer immediately — and miss the mark. Ponder activates a **co
 
 ---
 
+## 💬 Requirement Refinement — What You Say ≠ What You Need
+
+Most users describe symptoms, not root causes. The first phase of this framework **grills your requirements until they make sense**.
+
+```
+You: "Help me pick a code editor"
+  ↓ Interview phase
+Framework: What kind of project? Team size? Top priority?
+  ↓
+You: "Actually I don't need a tool, I need to catch up on a delayed project"
+  ↓ Requirements clarified, analysis stays on track
+```
+
+Not a one-shot questionnaire — it probes, follows up, and keeps drilling until the picture is clear.
+If 15 rounds aren't enough, it keeps going. No cap.
+You don't need to know what you want before asking — that's the framework's job.
+
 ## 🔄 How Memory Works
 
 ```
