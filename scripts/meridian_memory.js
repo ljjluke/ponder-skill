@@ -124,21 +124,6 @@ function main() {
                 const result = clusterDetect(kg);
                 saveMMA(kg); output(result); break;
             }
-            case "session-context": {
-                const sc = require('./session-context');
-                const scCmd = args[1] || 'status';
-                if (scCmd === 'status') {
-                    const ctx = sc.loadContext();
-                    console.log(`Analyses this session: ${ctx.analyses_count}`);
-                    console.log(`Free energy trend: ${ctx.free_energy_trend.length > 0 ? ctx.free_energy_trend.join(' → ') : '(none)'}`);
-                    for (const [step, d] of Object.entries(ctx.step_tracking)) {
-                        if (d.runs > 0) console.log(`  ${step}: ${d.runs}x runs, pass=${d.pass_count}, fail=${d.fail_count}`);
-                    }
-                } else if (scCmd === 'summary') { console.log(JSON.stringify(sc.getSummary(sc.loadContext()), null, 2)); }
-                else if (scCmd === 'extract') { console.log(JSON.stringify(sc.extractKnowledge(sc.loadContext()), null, 2)); }
-                else if (scCmd === 'reset') { sc.resetSession(); console.log('Session context reset.'); }
-                break;
-            }
             case "load": {
                 output(loadMMA()); break;
             }
