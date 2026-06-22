@@ -46,9 +46,30 @@ if (researchRule) {
 
 // Force depth: run round 1, if not clear run round 2, if not clear run round 3
 // No while/for. Unrolled as sequential if statements.
-// 中止检查: 如果某步不清晰且有用户问题, 提前返回
+// 中止检查: 每步客观质量检查 + is_clear自评
 function abortIfUnclear(stepName, result, resultsSoFar) {
-  if (result && !result.is_clear && result.user_questions && result.user_questions.length > 0) {
+  if (!result) return null
+  var msg = null
+  // 客观结构检查（不依赖LLM自评）
+  if (stepName === '神思') {
+    if (!result.counter_intuitive || result.counter_intuitive.length < 50) msg = '反直觉发现太短'
+    if (!result.insight || result.insight.length < 30) msg = msg || '洞察缺失'
+  } else if (stepName === '发散') {
+    var valid = (result.perspectives||[]).filter(function(p){return p.insight && p.insight.length > 20})
+    if (valid.length < 3) msg = '有效视角不足('+valid.length+'个), 需要至少3个'
+  } else if (stepName === '八卦镜') {
+    var valid = (result.dimensions||[]).filter(function(d){return d.score !== undefined && d.evidence && d.evidence.length > 10})
+    if (valid.length < 6) msg = '有效维度不足('+valid.length+'个), 需要至少6个'
+  } else if (stepName === '收敛') {
+    if (!result.survivors || result.survivors.length < 2) msg = '幸存方案不足('+(result.survivors||[]).length+'个)'
+  }
+  if (msg) {
+    log('[ABORT] ' + stepName + ' 质量不合格: ' + msg)
+    var abortedResultsSoFar = Object.assign({ pending_user_questions: [msg], aborted_at: stepName, quality_issue: msg }, resultsSoFar)
+    return abortedResultsSoFar
+  }
+  // is_clear自评检查
+  if (!result.is_clear && result.user_questions && result.user_questions.length > 0) {
     log('[ABORT] ' + stepName + ' 不清晰, 需要用户反馈')
     var out = Object.assign({ pending_user_questions: result.user_questions, aborted_at: stepName }, resultsSoFar)
     return out
