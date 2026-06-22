@@ -3,3 +3,6 @@
 __pycache__/
 wechat-bridge.py
 .claude/settings.json
+
+# 工具适配生成文件 (非项目代码)
+adapters/

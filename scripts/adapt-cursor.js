@@ -3,8 +3,10 @@
  * Ponder → Cursor 适配脚本
  * 生成 .cursor/rules/ 目录下的 .mdc 规则文件
  *
- * 用法: node scripts/adapt-cursor.js
- * 输出: .cursor/rules/*.mdc + .cursor/modes.json
+ * 用法: node scripts/adapt-cursor.js [--output <目录>]
+ * 默认输出: adapters/cursor/*.mdc + adapters/cursor/modes.json
+ *
+ * 生成的文件是工具无关的适配层 — 用户自行决定是否复制到 .cursor/
  */
 
 const fs = require('fs');
@@ -12,7 +14,10 @@ const path = require('path');
 const os = require('os');
 
 const PLUGIN_NAME = 'ponder-skill';
-const RULES_DIR = path.join(process.cwd(), '.cursor', 'rules');
+const OUTPUT_BASE = process.argv.includes('--output')
+    ? path.resolve(process.argv[process.argv.indexOf('--output') + 1])
+    : path.join(process.cwd(), 'adapters', 'cursor');
+const RULES_DIR = path.join(OUTPUT_BASE, 'rules');
 
 function ensureDir(p) { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); }
 function writeFile(file, content) { fs.writeFileSync(file, content, 'utf-8'); console.log('  ✓ ' + path.relative(process.cwd(), file)); }
@@ -174,8 +179,8 @@ alwaysApply: true
 5. 没有轮数上限, 清为止
 `);
 
-    // .cursor/modes.json
-    const modesPath = path.join(process.cwd(), '.cursor', 'modes.json');
+    // modes.json
+    const modesPath = path.join(OUTPUT_BASE, 'modes.json');
     const modes = {
         modes: [
             {
@@ -204,11 +209,11 @@ alwaysApply: true
     writeFile(modesPath, JSON.stringify(modes, null, 2));
 
     // 输出汇总
-    console.log('\n✅ 已生成 .cursor/rules/ (7个规则文件)');
-    console.log('✅ 已生成 .cursor/modes.json (Ponder Agent 模式)');
+    console.log(`\n✅ 已生成 ${OUTPUT_BASE}/ (7个规则文件 + modes.json)`);
     console.log('\n使用方式:');
+    console.log(`  复制到 .cursor/:  cp -r ${OUTPUT_BASE}/* .cursor/`);
     console.log('  Cursor → Settings → Rules → Add Remote Rule');
-    console.log('  或直接修改 .cursor/modes.json 选择 Ponder 模式');
+    console.log(`  自定义路径: node scripts/adapt-cursor.js --output /your/path`);
     console.log(`\n插件路径: ${pluginPath}`);
 }
 
