@@ -319,7 +319,7 @@ if (verCandidates.length > 0) {
   })
   verHistory = '\n\n同类历史验证参考:\n' + (verFiltered.selected_indices||[]).map(function(i){return '- '+(verCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。'+verHistory+errVer, {
+var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。\n另检查: 输出语言是否与用户语言一致, 是否有框架术语未翻译。'+verHistory+errVer, {
   label: '验证',
   schema: { type:'object', properties: {
     verdict:{type:'string',enum:['PASS','REVISE']},
