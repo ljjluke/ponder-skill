@@ -46,8 +46,11 @@ Most LLM tools answer immediately — and miss the mark. Ponder activates a **co
 | 🚫 **Step enforcement** | All 7 phases mandatory. Code checks, not prompt rules. |
 | 💡 **Self-evolving** | `evolve.js` detects bottlenecks, generates fixes, auto-applies via rules. |
 | 🏛️ **Ten Heavenly Stems framework** | 甲木→乙木→...→癸水 — domain-agnostic simulation with fixed weights, no LLM-decided scoring. |
-| 🧠 **MMA Memory** | Knowledge accumulates with use, semantic matching, multi-language support. |
-| 🧹 **Knowledge grooming** | Unused knowledge auto-decays, low-quality auto-sleeps, frequently used auto-promotes. |
+| 🌪️ **Frame-breaking** | External anchor forces unexpected connections — not "think harder" |
+| 🔍 **Falsification gate** | Must find evidence against own conclusion or go back. No fake confidence. |
+| 🧠 **MMA Memory** | Knowledge accumulates with use, context+emotion matching, multi-language. |
+| 🔄 **Reconsolidation** | Recalled memory can be modified within 30min — like human brain |
+| 🧹 **Knowledge grooming** | Unused auto-decays, low-quality sleeps, frequently used upgrades. |
 
 <br>
 
