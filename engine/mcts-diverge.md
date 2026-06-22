@@ -196,6 +196,21 @@ Output each item — MUST be visible to user:
 
 ---
 
+
+
+## Phase 0.7: Wild Brainstorming
+
+**MANDATORY: generate absurd ideas BEFORE structured perspectives.**
+
+井底之蛙的问题不是它看的方向少, 是它根本不知道天可能不是井口那个形状。
+
+Rules:
+1. First produce 3 intentionally absurd ideas (ignore feasibility, ignore reality)
+2. From the absurd, extract 1-2 "seeds" that survive when brought back to constraints
+3. Only then enter the structured 六视 perspectives
+
+If every idea from this phase was trivially filterable → divergence was not wild enough.
+
 ## Phase 1: 逍遥游 — Six-Perspective Free Wandering
 
 **Core principle**: Not "looking at the same problem from different angles" — that's shallow. 逍遥游 is **completely changing the observer's identity, scale, and spacetime position**.
