@@ -1,482 +1,111 @@
-// Ponder Complete Engine — one call, code-enforced depth loop
+// Ponder Pipeline — single orchestrator agent, sequential execution
 export const meta = {
   name: 'ponder-pipeline',
-  description: '全流程一步到位+代码级深度循环',
-  phases: [
-    { title: '神思', detail: '破框' }, { title: '发散', detail: '6视角' }, { title: '八卦镜', detail: '8维度' },
-    { title: '方案', detail: '生成' }, { title: '收敛', detail: '淘汰' }, { title: '推演', detail: '并行' },
-    { title: '辩论', detail: '排名' }, { title: '综合', detail: '结论' },
-    { title: '验证', detail: '审查' },
-  ],
+  description: '全流程单agent顺序执行',
+  phases: [{ title: '顺序分析', detail: '神思→发散→八卦镜→方案→收敛→推演→辩论→综合→验证' }],
 }
 
 const req = args?.user_request || ''
 const profile = args?.profile || ''
-const lessons = args?.lessons || ''
-const appliedRules = args?.applied_rules || []
-// 步骤历史积累: 每个步骤可用的历史输出(如历史发散视角/历史维度等)
-const stepHistory = args?.step_history || {}  // { divergence: [...], dimension: [...], ... }
-// 错误前置警告: 每步独享，只拿自己相关的错误
-const errorWarnings = args?.error_warnings || {}  // { divergence: [...], dimension: [...], ... }
-// 预计算每步错误警告文本（避免行内函数表达式）
-var errDiv = '', errDim = '', errPlan = '', errDebate = '', errSyn = '', errVer = ''
-// 直接使用 errorWarnings
-if (errorWarnings.divergence && errorWarnings.divergence.length > 0) errDiv = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.divergence.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
-if (errorWarnings.dimension && errorWarnings.dimension.length > 0) errDim = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.dimension.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
-if (errorWarnings.plans && errorWarnings.plans.length > 0) errPlan = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.plans.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
-if (errorWarnings.debate && errorWarnings.debate.length > 0) errDebate = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.debate.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
-if (errorWarnings.synthesis && errorWarnings.synthesis.length > 0) errSyn = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.synthesis.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
-if (errorWarnings.verify && errorWarnings.verify.length > 0) errVer = '\n\n⚠️ 已知错误规避:\n' + errorWarnings.verify.map(function(e) { return '- ['+e.type+'] '+e.summary }).join('\n')
 
-// Phase 0: Pre-step from evolution rules (e.g. market research before divergence)
-var researchContext = ''
-var researchRule = appliedRules.find(function(r) { return r.action?.type === 'prepend_step' })
-if (researchRule) {
-  phase('数据采集')
-  var rData = await agent('收集市场数据\n需求:' + req + '\n输出: 市场概况,关键数据,趋势', {
-    label: '前置研究',
-    schema: { type:'object', properties: {
-      market_overview:{type:'string',minLength:100},
-      key_stats:{type:'array',items:{type:'object',properties:{stat:{type:'string'},source:{type:'string'}}}},
-      trends:{type:'array',items:{type:'string'}},
-    }, required:['market_overview','key_stats','trends'] },
-  })
-  researchContext = '参考数据: ' + (rData.market_overview||'') + '\n关键数据: ' + JSON.stringify((rData.key_stats||[]).slice(0,5)) + '\n趋势: ' + ((rData.trends||[]).join(', '))
-}
-
-// Force depth: run round 1, if not clear run round 2, if not clear run round 3
-// No while/for. Unrolled as sequential if statements.
-// 清晰度评分: LLM自评 + 行为信号加权, 0-10分
-function clarityScore(stepName, result) {
+// 清晰度评分: LLM自评40% + 深度轮数30% + 问题数30%
+function clarityScore(result) {
   if (!result) return 0
   var score = 0
-  // 1. LLM自评 (40%) — LLM判断是否清晰, 权重最高
   score += (result.is_clear ? 4 : 0)
-  // 2. 深度轮数 (30%) — 多轮深度探索加分, 单轮减分
   var rounds = Math.min(result._depth_rounds || 1, 5)
   score += (rounds === 1 ? 1 : rounds === 2 ? 2 : rounds >= 3 ? 3 : 0)
-  // 3. 用户问题数 (30%) — 问题越少越清晰
   var qCount = result.user_questions ? result.user_questions.length : 0
   score += qCount === 0 ? 3 : qCount <= 2 ? 2 : 0
   return Math.round(score * 10) / 10
 }
 
-// 中止检查: 清晰度评分 < 6 则拦截
-function abortIfUnclear(stepName, result, resultsSoFar) {
-  if (!result) return null
-  var cs = clarityScore(stepName, result)
-  result._clarity_score = cs
-  // 记录清晰度评分
-  log('[CLARITY] ' + stepName + ' 评分: ' + cs + '/10 (轮数:' + (result._depth_rounds||1) + ')')
-  if (cs >= 6) return null // 清晰,放行
-  // 不清晰: 用LLM自己的user_questions, 没有才用默认
-  var questions = result.user_questions && result.user_questions.length > 0
-    ? result.user_questions
-    : ['分析深度不够(评分' + cs + '/10), 能否补充更多信息以便深入分析?']
-  log('[ABORT] ' + stepName + ' 评分' + cs + '/10, 需要用户反馈')
-  return Object.assign({ pending_user_questions: questions, aborted_at: stepName, clarity_score: cs }, resultsSoFar)
-}
-
-async function runUntilClear(label, prompt, schema, rounds) {
-  // rounds=0 means unlimited (but we limit to 5 in practice)
-  var maxRounds = rounds > 0 ? rounds : 5
-  var result = null
-  var r1 = null
-  // Round 1
-  r1 = await agent(prompt + ' 第1轮。必须清晰。不清晰填user_questions。', { label: label, schema: schema })
-  result = r1
-  r1._depth_rounds = 1
-  var lastQ = r1.user_questions || []
-  // is_clear + 问题数≤2 同时满足才跳过(防止LLM偷懒说清楚)
-  if (r1.is_clear && (!r1.user_questions || r1.user_questions.length <= 2)) { r1._depth_rounds = 1; return result }
-  if (maxRounds <= 1) return result
-  // Round 2 (carrying forward previous blind spots)
-  var r2 = await agent(prompt + ' 第2轮。前轮盲点:'+JSON.stringify(lastQ)+'。针对性加深。', { label: label+'R2', schema: schema })
-  result = r2
-  r2._depth_rounds = 2
-  if (r2.is_clear && (!r2.user_questions || r2.user_questions.length <= 2)) { r2._depth_rounds = 2; return result }
-  lastQ = r2.user_questions || []
-  if (maxRounds <= 2) return result
-  // Round 3
-  var r3 = await agent(prompt + ' 第3轮。前轮盲点:'+JSON.stringify(lastQ)+'。继续加深。', { label: label+'R3', schema: schema })
-  result = r3
-  r3._depth_rounds = 3
-  if (r3.is_clear) { r3._depth_rounds = 3; return result }
-  if (maxRounds <= 3) return result
-  // Round 4
-  var r4 = await agent(prompt + ' 第4轮。', { label: label+'R4', schema: schema })
-  result = r4
-  r4._depth_rounds = 4
-  if (r4.is_clear) { r4._depth_rounds = 4; return result }
-  if (maxRounds <= 4) return result
-  // Round 5
-  var r5 = await agent(prompt + ' 第5轮，最后一轮。', { label: label+'R5', schema: schema })
-  result = r5
-  r5._depth_rounds = 5
-  return result
-}
-
-
-// Phase 0.5: 神思 — 跳出框架
-phase('神思')
-var shensiResearch = researchContext || ''
-var shensi = runUntilClear('神思', '虚静(清空预设)→神凝→神游(漫游)→意象(浮现)→言意(带回)\n需求:'+req+'\n画像:'+profile+'\n数据:'+shensiResearch.substring(0,500)+'\n产出至少1个反直觉发现。', {
-  type:'object', properties: {
+phase('Ponder全流程')
+var result = await agent('按顺序执行以下所有分析阶段, 每个阶段完成后再进入下一个:\n\n' +
+  '需求:' + req + '\n画像:' + profile + '\n\n' +
+  '阶段1 神思: 虚静→神凝→神游→意象→言意。产出至少1个反直觉发现。\n' +
+  '阶段2 发散: 基于神思发现, 从6个不同视角审视, 每个视角带洞察和数据来源。\n' +
+  '阶段3 八卦镜: 基于发散结果, 从8个维度交叉评分, 找出最异常的维度。\n' +
+  '阶段4 方案: 基于八卦镜结果, 生成5-8个可行方案。\n' +
+  '阶段5 收敛: 基于八卦镜评分淘汰弱方案, 保留3-5个最优。\n' +
+  '阶段6 推演: 对每个幸存方案独立推演, 模拟从开始到结束的完整过程。\n' +
+  '阶段7 辩论: 各方案之间互相反驳, 指出对方漏洞, 给出排名。\n' +
+  '阶段8 综合: 收拢成结论, 给出推荐+理由+风险。\n\n' +
+  '每个阶段产出后检查清晰度。不清晰时填user_questions。', {
+  label: '全流程分析',
+  schema: { type:'object', properties: {
+    reasoning_chain:{type:'string',description:'完整推理过程'},
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    reasoning_chain:{type:'string',minLength:100,description:'完整推理过程'},
-    counter_intuitive:{type:'string',minLength:50,description:'最反直觉的发现'},
-    insight:{type:'string',description:'这个发现对当前问题的启示'},
-  }, required:['is_clear','user_questions','reasoning_chain','counter_intuitive','insight'],
-}, 0)
-var aborted = abortIfUnclear('神思', shensi, { step:'shensi', shensi: shensi }); if (aborted) { throw new Error("ABORT:" + JSON.stringify(aborted)); }
-
-// Phase 1: Divergence
-phase('发散')
-var divCandidates = stepHistory.divergence || []
-var divHistory = ''
-if (divCandidates.length > 0) {
-  phase('历史视角筛选')
-  var divFiltered = await agent('需求: '+req+'\n从以下历史视角中选出最相关的8条用于本次分析:\n'+divCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
-    label: '视角筛选',
-    schema: { type:'object', properties: {
-      selected_indices:{type:'array',items:{type:'number'},description:'最相关的历史视角编号'},
-      reason:{type:'string'},
-    }, required:['selected_indices'] },
-  })
-  divHistory = '\n\n同类问题历史视角参考:\n' + (divFiltered.selected_indices||[]).map(function(i){return '- '+(divCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
-}
-var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n神思发现:'+((shensi && shensi.counter_intuitive)||'')+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+errDiv+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':''), {
-  type:'object', properties: {
-    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    reasoning_chain:{type:'string',minLength:200,description:'从初始分析到最终结论的完整推理过程,包括每一步的分析和数据推演'},
+    // 神思
+    counter_intuitive:{type:'string'}, insight:{type:'string'},
+    // 发散
     perspectives:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, insight:{type:'string'}, data_source:{type:'string'},
-      assumption:{type:'string'}, reasoning:{type:'string',description:'关于这个视角的完整推理过程'},
-    },required:['name','insight','data_source','assumption','reasoning']},minItems:6},
-    contradictions:{type:'array',items:{type:'string'}},
-    consensus:{type:'string'},
-  }, required:['is_clear','user_questions','perspectives','contradictions','consensus'],
-}, 0)
-var aborted = abortIfUnclear('发散', div, { step:'divergence', shensi: shensi, divergence: div }); if (aborted) { throw new Error("ABORT:" + JSON.stringify(aborted)); }
-
-// Phase 2: Dimension
-phase('八卦镜')
-var dimCandidates = stepHistory.dimension || []
-var dimHistory = ''
-if (dimCandidates.length > 0) {
-  phase('历史维度筛选')
-  var dimFiltered = await agent('需求: '+req+'\n从以下历史维度中选出最相关的8条用于本次评分:\n'+dimCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
-    label: '维度筛选',
-    schema: { type:'object', properties: {
-      selected_indices:{type:'array',items:{type:'number'}},
-      reason:{type:'string'},
-    }, required:['selected_indices'] },
-  })
-  dimHistory = '\n\n同类历史维度参考:\n' + (dimFiltered.selected_indices||[]).map(function(i){return '- '+(dimCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
-}
-var dim = runUntilClear('八卦镜', '8维度评分\n发散:'+(div.consensus||'')+'\n每维度:评分+依据。\n历史经验:'+lessons+dimHistory+errDim, {
-  type:'object', properties: {
-    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    reasoning_chain:{type:'string',minLength:200,description:'完整推理过程'},
+      assumption:{type:'string'}, reasoning:{type:'string'},
+    },required:['name','insight','data_source','assumption','reasoning']}},
+    contradictions:{type:'array',items:{type:'string'}}, consensus:{type:'string'},
+    // 八卦镜
     dimensions:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, score:{type:'number'}, evidence:{type:'string'},
-      uncertainty:{type:'string'},
-      reasoning:{type:'string',description:'推理依据'}
-    },required:['name','score','evidence','uncertainty','reasoning']},minItems:8},
+      uncertainty:{type:'string'}, reasoning:{type:'string'},
+    },required:['name','score','evidence','uncertainty','reasoning']}},
     key_finding:{type:'string'},
-  }, required:['is_clear','user_questions','dimensions','key_finding'],
-}, 0)
-var aborted = abortIfUnclear('八卦镜', dim, { step:'dimension', shensi: shensi, divergence: div, dimension: dim }); if (aborted) { throw new Error("ABORT:" + JSON.stringify(aborted)); }
-
-// Phase 3: Plans
-phase('方案')
-var planHistory = ''
-var planCandidates = stepHistory.plans || []
-if (planCandidates.length > 0) {
-  phase('历史方案筛选')
-  var planFiltered = await agent('需求: '+req+'\n从以下历史方案中选出最相关的8条:\n'+planCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
-    label: '方案筛选',
-    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
-  })
-  planHistory = '\n\n同类历史方案参考:\n' + (planFiltered.selected_indices||[]).map(function(i){return '- '+(planCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
-}
-var plan = runUntilClear('方案', '生成5-8方案\n维度:'+(dim.key_finding||'')+'\n每个:名称+依据+条件。\n历史经验:'+lessons+planHistory+errPlan, {
-  type:'object', properties: {
-    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    plans:{type:'array',items:{type:'object',properties:{
-      name:{type:'string'}, rationale:{type:'string'},
-      condition:{type:'string'}, condition_verified:{type:'boolean'},
-    },required:['name','rationale','condition','condition_verified']},minItems:5},
-    logic:{type:'string'},
-  }, required:['is_clear','user_questions','plans','logic'],
-}, 0)
-
-// Phase 3.5: 收敛 — 基于八卦镜评分淘汰弱方案
-phase('收敛')
-var converge = runUntilClear('收敛', '基于八卦镜评分收敛方案\n八卦镜发现:'+(dim.key_finding||'')+'\n各维度:'+JSON.stringify((dim.dimensions||[]).slice(0,3).map(function(d){return d.name+':'+d.score}))+'\n方案:'+JSON.stringify((plan.plans||[]).map(function(p){return p.name}))+'\n淘汰评分低于阈值的方案,保留3-5个最优方案进入推演。', {
-  type:'object', properties: {
-    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    reasoning_chain:{type:'string',minLength:100,description:'收敛推理过程'},
+    // 收敛
     survivors:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, score:{type:'number'}, reason:{type:'string'},
-    },required:['name','score','reason']},minItems:3,maxItems:5},
+    },required:['name','score','reason']}},
     eliminated:{type:'array',items:{type:'object',properties:{
       name:{type:'string'}, reason:{type:'string'},
     }}},
-  }, required:['is_clear','user_questions','reasoning_chain','survivors','eliminated'],
-}, 0)
-var aborted = abortIfUnclear('收敛', converge, { step:'converge', shensi: shensi, divergence: div, dimension: dim, converge: converge }); if (aborted) { throw new Error("ABORT:" + JSON.stringify(aborted)); }
-
-// Phase 4: Simulation — 十天干推演框架
-// 使用十天干(木火土金水)作为跨领域抽象推演框架
-// 不依赖LLM猜维度,生克关系自动决定流程和权重
-phase('推演')
-var tenStems = [
-  {name:'甲木', desc:'规划筹备', weight:1.0, prompt:'方案规划是否完善?资源、时间、团队是否准备到位?'},
-  {name:'乙木', desc:'执行启动', weight:0.8, prompt:'方案能否顺利启动?初期落地是否顺畅?'},
-  {name:'丙火', desc:'推进加速', weight:1.0, prompt:'方案能否快速推进?核心动力在哪?'},
-  {name:'丁火', desc:'调整优化', weight:0.8, prompt:'遇到问题时能否及时调整?有纠错机制吗?'},
-  {name:'戊土', desc:'稳定产出', weight:1.0, prompt:'方案能稳定产出成果吗?可靠性如何?'},
-  {name:'己土', desc:'品质打磨', weight:0.8, prompt:'产出质量如何?能不能精进?'},
-  {name:'庚金', desc:'效率提升', weight:1.0, prompt:'方案效率如何?有没有浪费?'},
-  {name:'辛金', desc:'精简收敛', weight:0.8, prompt:'能不能更精简?维护成本高不高?'},
-  {name:'壬水', desc:'应变能力', weight:1.0, prompt:'方案能否应对变化?外部环境变动时能否适应?'},
-  {name:'癸水', desc:'风险储备', weight:0.8, prompt:'有没有备选方案?最坏情况有兜底吗?'},
-]
-var simCandidates = stepHistory.simulations || []
-var simHistoryText = ''
-if (simCandidates.length > 0) {
-  simHistoryText = '\n同类历史推演参考:\n' + simCandidates.slice(0,3).map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'').substring(0,120)}).join('\n')
-}
-
-var planList = (converge && converge.survivors) || (plan && plan.plans) || []
-var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
-  var elemDesc = tenStems.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
-  return agent('## 十天干推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(十天干)\n按以下10个阶段逐步推演:\n'+tenStems.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按甲→乙→丙→丁→戊→己→庚→辛→壬→癸顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
-    label: '推演:'+p.name.substring(0,10),
-    schema: { type:'object', properties: {
-      plan_name:{type:'string'},
-      phases:{type:'array',items:{type:'object',properties:{
-        element:{type:'string'}, process:{type:'string'}, event:{type:'string'}, conclusion:{type:'string'},
-        achievement:{type:'number',minimum:0,maximum:1,description:'基于推演过程的达成度评估'},
-      },required:['element','process','achievement']},minItems:10},
-      optimistic:{type:'string'}, neutral:{type:'string'}, pessimistic:{type:'string'},
-      note:{type:'string'},
-    }, required:['plan_name','phases'] },
-  })
-}}))
-
-// V值计算: 十天干固定权重,不用LLM输出
-var simResults = (sims||[]).filter(Boolean).map(function(s) {
-  var phases = s.phases||[]
-  var totalWeight = tenStems.reduce(function(s,e){return s+e.weight},0)
-  var weightedSum = 0, validPhases = 0
-  phases.forEach(function(ph) {
-    var elem = tenStems.find(function(e){return ph.element&&(e.name.indexOf(ph.element)>=0||(ph.element.length>=2&&ph.element.indexOf(e.name)>=0))})
-    if (elem && ph.achievement !== undefined) {
-      weightedSum += ph.achievement * elem.weight
-      validPhases++
-    }
-  })
-  var v = validPhases > 0 ? Math.round(weightedSum / totalWeight * 100) / 100 : 0
-  return {
-    name: s.plan_name||'',
-    phases: phases,
-    optimistic: s.optimistic||'', neutral: s.neutral||'', pessimistic: s.pessimistic||'',
-    V: Math.max(0, Math.min(1, v)),
-    sigma2: Math.round(Math.abs(phases.reduce(function(s,ph){return s+(ph.process?ph.process.length:0)},0) / (phases.length||1) - 100) / 200 * 100) / 100,
-  }
-})
-simResults.sort(function(a,b){return b.V - a.V})
-
-// ── MCTS Tree: Write simResults to persistent tree ──
-try {
-  var mctsMod = require('./mcts_tree');
-  if (mctsMod && simResults.length > 0 && plan && plan.plans && plan.plans.length > 0) {
-    var mctsTree = mctsMod.createTree([]);  // ROOT only
-    simResults.forEach(function(sr) {
-      if (!sr.name || !sr.phases) return;
-      var planRes = mctsMod.addChildren(mctsTree, 'ROOT', [{
-        description: sr.name,
-        nodeType: 'ACTION',
-        solutionId: sr.name,
-      }]);
-      if (!planRes.added || !planRes.added[0]) return;
-      var pnid = planRes.added[0].id;
-      var stemChildren = sr.phases.map(function(ph) {
-        return {
-          description: ph.element + ': ' + (ph.process || '').substring(0, 80),
-          nodeType: 'SIMULATION',
-        };
-      });
-      if (stemChildren.length > 0) {
-        var added = mctsMod.addChildren(mctsTree, pnid, stemChildren);
-        if (added.added) {
-          added.added.forEach(function(ad, ai) {
-            if (ad.id && sr.phases[ai]) {
-              mctsMod.recordSimulation(mctsTree, ad.id, sr.phases[ai].achievement || 0, 0.25);
-              mctsMod.backpropagate(mctsTree, ad.id);
-            }
-          });
-        }
-      }
-    });
-    var savedInfo = mctsMod.saveTree(mctsTree);
-    var mctsSessionId = mctsTree.sessionId;
-  }
-} catch(e) { /* MCTS tree write non-blocking */ }
-
-// Phase 5: Debate
-phase('辩论')
-var simTxt = simResults.map(function(r) {
-  return r.name+': 乐观='+(r.optimistic||'').substring(0,100)+' 中性='+(r.neutral||'').substring(0,100)+' 悲观='+(r.pessimistic||'').substring(0,100)
-}).join('\n\n')
-var debateHistory = ''
-var debateCandidates = stepHistory.debate || []
-if (debateCandidates.length > 0) {
-  phase('历史辩论筛选')
-  var debateFiltered = await agent('需求: '+req+'\n从以下历史辩论结论中选出最相关的8条:\n'+debateCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
-    label: '辩论筛选',
-    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
-  })
-  debateHistory = '\n\n同类历史辩论参考:\n' + (debateFiltered.selected_indices||[]).map(function(i){return '- '+(debateCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
-}
-var debate = runUntilClear('辩论', '多方案辩论\n需求:'+req+'\n推演:\n'+simTxt+'\n排名+综合推荐。\n历史经验:'+lessons+debateHistory+errDebate, {
-  type:'object', properties: {
-    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    reasoning_chain:{type:'string',minLength:200,description:'辩论推理'},
+    // 推演
+    simulations:{type:'array',items:{type:'object',properties:{
+      name:{type:'string'}, process:{type:'string'}, result:{type:'string'}, V:{type:'number'},
+    },required:['name','process','result','V']}},
+    // 辩论
     ranked:{type:'array',items:{type:'object',properties:{
       rank:{type:'number'}, name:{type:'string'},
       pros:{type:'array',items:{type:'string'}}, cons:{type:'array',items:{type:'string'}},
-      reasoning_chain:{type:'string',description:'推理过程'},
-    },required:['rank','name','pros','cons','reasoning_chain']},minItems:2},
-    synthesis:{type:'string',minLength:50},
-  }, required:['is_clear','user_questions','ranked','synthesis'],
-}, 0)
-
-// Phase 6: Synthesis
-phase('综合')
-var synHistory = ''
-var synCandidates = stepHistory.synthesis || []
-if (synCandidates.length > 0) {
-  phase('历史综合筛选')
-  var synFiltered = await agent('需求: '+req+'\n从以下历史综合结论中选出最相关的8条:\n'+synCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
-    label: '综合筛选',
-    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
-  })
-  synHistory = '\n\n同类历史综合参考:\n' + (synFiltered.selected_indices||[]).map(function(i){return '- '+(synCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
-}
-var syn = runUntilClear('综合', '综合判断\n需求:'+req+'\n辩论:'+(debate.synthesis||'')+synHistory+errSyn+'\n重要规则:\n1. 先检查辩论结果中是否存在方向分歧(方案优劣相当/需要用户偏好选择/条件未触发)。如有,必须填入pending_user_questions,不要自己决定。\n2. 只有当某个方案在所有维度(收益/风险/条件)都明显优于其他方案时,才直接出结论。\n3. 结论+推理+假设+用户确认+pending_user_questions+pending_lessons。\n4. 分析后认为值得记录的教训→填入pending_lessons。', {
-  type:'object', properties: {
-    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
-    conclusion:{type:'string',minLength:50}, reasoning:{type:'string',minLength:50},
+      reasoning_chain:{type:'string'},
+    },required:['rank','name','pros','cons','reasoning_chain']}},
+    debate_synthesis:{type:'string'},
+    // 综合
+    conclusion:{type:'string'}, reasoning:{type:'string'},
     assumptions:{type:'array',items:{type:'string'}},
-    user_confirmed:{type:'boolean'}, pending_user_questions:{type:'array',items:{type:'string'},description:'呈现前必须问用户的问题清单'},pending_lessons:{type:'array',items:{type:'object',properties:{scenario:{type:'string'},attempt:{type:'string'},result:{type:'string'},lesson:{type:'string'}},required:['scenario','attempt','result','lesson']},description:'值得记录的教训'},
-  }, required:['is_clear','user_questions','conclusion','reasoning','assumptions','user_confirmed','pending_user_questions'],
-}, 0)
-
-// Phase 7: Verification
-phase('验证')
-var verHistory = ''
-var verCandidates = stepHistory.verify || []
-if (verCandidates.length > 0) {
-  phase('历史验证参考')
-  var verFiltered = await agent('需求: '+req+'\n从以下历史验证发现中选出最相关的8条:\n'+verCandidates.map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'')}).join('\n')+'\n\n输出所选编号', {
-    label: '验证筛选',
-    schema: { type:'object', properties: { selected_indices:{type:'array',items:{type:'number'}}, reason:{type:'string'} }, required:['selected_indices'] },
-  })
-  verHistory = '\n\n同类历史验证参考:\n' + (verFiltered.selected_indices||[]).map(function(i){return '- '+(verCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
-}
-var ver = await agent('独立审查\n结论:'+(syn.conclusion||'')+'\n逐条列问题。\n另检查: 输出语言是否与用户语言一致, 是否有框架术语未翻译。'+verHistory+errVer, {
-  label: '验证',
-  schema: { type:'object', properties: {
-    verdict:{type:'string',enum:['PASS','REVISE']},
-    fake_clarity:{type:'boolean'},
-    issues:{type:'array',items:{type:'object',properties:{
-      severity:{type:'string',enum:['critical','major','minor']}, detail:{type:'string'},
-    },required:['severity','detail']}},
-  }, required:['verdict','fake_clarity'] },
+    risk:{type:'string'},
+  }, required:['is_clear','user_questions','reasoning_chain','conclusion','risk']},
 })
 
-// 记录变异 (record-mutation): 验证结果持久化到pipeline-meta.json
-var mutationRecord = {
-  verdict: ver && ver.verdict || 'UNKNOWN',
-  fake_clarity: ver && ver.fake_clarity || false,
-  issues_count: (ver && ver.issues && ver.issues.length) || 0,
-  issues_severity: (ver && ver.issues || []).map(function(i) { return i.severity }),
-  step_counts: {
-    divergence: (div && div._depth_rounds) || 1,
-    dimension: (dim && dim._depth_rounds) || 1,
-    plans: (plan && plan._depth_rounds) || 1,
-    simulations: (simResults && simResults.length) || 0,
-    debate: (debate && debate._depth_rounds) || 1,
-    synthesis: (syn && syn._depth_rounds) || 1,
-  },
-  has_lessons: (syn && syn.pending_lessons && syn.pending_lessons.length > 0) || false,
-  V_scores: (simResults || []).map(function(r) { return { name: r.name, V: r.V } }),
-  pass: ver && ver.verdict === 'PASS' || false,
+// 清晰度检查
+result._depth_rounds = result._depth_rounds || 1
+var cs = clarityScore(result)
+result._clarity_score = cs
+
+if (cs < 6) {
+  var questions = result.user_questions && result.user_questions.length > 0
+    ? result.user_questions : ['分析深度不够(评分' + cs + '/10), 能否补充更多信息?']
+  throw new Error("ABORT:" + JSON.stringify({
+    pending_user_questions: questions, aborted_at: 'pipeline', clarity_score: cs,
+    partial: { counter_intuitive: result.counter_intuitive, consensus: result.consensus, key_finding: result.key_finding },
+  }))
 }
 
-// 结晶化: lessons附上本次分析的推理上下文
-  var reasoningContext = {
-    divergence_consensus: (div && div.consensus || '').substring(0, 200),
-    dimension_finding: (dim && dim.key_finding || '').substring(0, 200),
-    plans_logic: (plan && plan.logic || '').substring(0, 200),
-    simulations_summary: (simResults || []).length + '个方案推演',
-    debate_synthesis: (debate && debate.synthesis || '').substring(0, 200),
-    debate_ranked: ((debate && debate.ranked || []).slice(0,3).map(function(r) { return r.name }).join(', ')),
-    synthesis_conclusion: (syn && syn.conclusion || '').substring(0, 200),
-    verification_verdict: ver && ver.verdict || '',
-  }
-  var lessonsWithReasoning = (syn && syn.pending_lessons || []).map(function(l) {
-    return Object.assign({}, l, { _reasoning: reasoningContext })
-  })
-
-  // 汇总所有步骤中未解决的user_questions
-  var pending_user_questions = [].concat(
-    (shensi && shensi.user_questions) || [],
-    (div && div.user_questions) || [],
-    (dim && dim.user_questions) || [],
-    (converge && converge.user_questions) || [],
-    (plan && plan.user_questions) || [],
-    (debate && debate.user_questions) || [],
-    (syn && syn.user_questions) || []
-  ).filter(Boolean)
-
-  return {
-    pending_user_questions: pending_user_questions.length > 0 ? pending_user_questions : undefined,
-    shensi: shensi,
-    divergence: div,
-    dimension: dim,
-    converge: converge,
-    convergence_summary: converge ? {
-      total: (plan && plan.plans || []).length + '个候选方案',
-      survivors: (converge.survivors||[]).map(function(s){return s.name+'('+s.score+'分)'}),
-      eliminated: (converge.eliminated||[]).map(function(e){return e.name+': '+e.reason}),
-      survivor_count: (converge.survivors||[]).length,
-    } : { total: '未收敛', survivors: [], eliminated: [] },
-    plans: plan,
-    simulations: simResults,
-    debate: debate,
-    debate_summary: debate ? {
-      ranked: (debate.ranked||[]).map(function(r){return '第'+(r.rank||0)+'名: '+r.name}),
-      winner: (debate.ranked||[]).filter(function(r){return r.rank === 1}).map(function(r){return r.name})[0] || '待定',
-      stances: (debate.ranked||[]).map(function(r){return r.name+': 优势:'+(r.pros||[]).join(',')+' 劣势:'+(r.cons||[]).join(',')}),
-    } : null,
-    synthesis: syn,
-    lessons_to_store: lessonsWithReasoning,
-    reasoning: reasoningContext,
-    verification: ver,
-    mutation_record: mutationRecord,
-  _step_outputs: {
-    shensi: shensi ? { is_clear: shensi.is_clear, depth_rounds: shensi._depth_rounds||1, insight: (shensi.counter_intuitive||'').substring(0,200) } : null,
-    divergence: div ? { is_clear: div.is_clear, depth_rounds: div._depth_rounds||1, consensus: (div.consensus||'').substring(0,200), perspective_count: (div.perspectives||[]).length } : null,
-    dimension: dim ? { is_clear: dim.is_clear, depth_rounds: dim._depth_rounds||1, key_finding: (dim.key_finding||'').substring(0,200), dimension_count: (dim.dimensions||[]).length } : null,
-    converge: converge ? { is_clear: converge.is_clear, depth_rounds: converge._depth_rounds||1, survivor_count: (converge.survivors||[]).length, eliminated: (converge.eliminated||[]).map(function(e){return e.name}) } : null,
-    plans: plan ? { is_clear: plan.is_clear, depth_rounds: plan._depth_rounds||1, plan_count: (plan.plans||[]).length } : null,
-    debate: debate ? { is_clear: debate.is_clear, depth_rounds: debate._depth_rounds||1, synthesis: (debate.synthesis||'').substring(0,200), ranked_count: (debate.ranked||[]).length } : null,
-    simulations: simResults ? { count: Array.isArray(simResults) ? simResults.length : 0, dimensions: tenStems.map(function(d){return d.name}), top_V: simResults.slice(0,3).map(function(r){return r.name+":"+r.V}), mcts_session: typeof mctsSessionId !== 'undefined' ? mctsSessionId : null } : null,
-    synthesis: syn ? { is_clear: syn.is_clear, depth_rounds: syn._depth_rounds||1, conclusion: (syn.conclusion||'').substring(0,200), lessons_count: (syn.pending_lessons||[]).length } : null,
-    verify: ver ? { verdict: ver.verdict, fake_clarity: ver.fake_clarity, issues_count: (ver.issues||[]).length } : null,
+// 整理输出
+return {
+  shensi: { counter_intuitive: result.counter_intuitive, insight: result.insight, is_clear: result.is_clear },
+  divergence: { perspectives: result.perspectives, contradictions: result.contradictions, consensus: result.consensus, is_clear: result.is_clear },
+  dimension: { dimensions: result.dimensions, key_finding: result.key_finding, is_clear: result.is_clear },
+  converge: { survivors: result.survivors, eliminated: result.eliminated, is_clear: result.is_clear },
+  convergence_summary: {
+    survivor_count: (result.survivors||[]).length,
+    survivors: (result.survivors||[]).map(function(s){return s.name+'('+s.score+'分)'}),
+    eliminated: (result.eliminated||[]).map(function(e){return e.name+': '+e.reason}),
   },
+  simulations: result.simulations,
+  debate: { ranked: result.ranked, synthesis: result.debate_synthesis, is_clear: result.is_clear },
+  debate_summary: {
+    ranked: (result.ranked||[]).map(function(r){return '第'+r.rank+'名: '+r.name}),
+    stances: (result.ranked||[]).map(function(r){return r.name+': 优势:'+(r.pros||[]).join(',')+' 劣势:'+(r.cons||[]).join(',')}),
+  },
+  synthesis: { conclusion: result.conclusion, reasoning: result.reasoning, assumptions: result.assumptions, risk: result.risk, is_clear: result.is_clear },
+  _clarity: { score: cs, rounds: 1 },
 }
