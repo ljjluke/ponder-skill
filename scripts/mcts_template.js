@@ -204,6 +204,35 @@ Test case — user says "hello":
   Even "hello" goes through full flow. No exceptions.
 `.trim(); }
 
+function depthLoop() { return `
+深度循环: 任何步骤不清晰→不能跳过, 必须重做到清晰为止。
+原因分析: 缺数据(搜索重做) / 缺方向(问用户重做) / 不够深(缩小范围挖)
+没有轮数上限, 不清就一直挖。
+用户可见: 触发时输出"不清晰→深度循环中+原因"。
+`.trim(); }
+
+function pipelineSteps() { return `
+执行步骤(每步完成调step-gate解锁下一步):
+1. 采访: 覆盖天时地利人和法物, 清晰→0问题也行, 不清→追问到清
+2. 发散(神思): 虚静→神凝→神游→意象→言意, 至少1个反直觉发现
+3. 发散(六视): 至少4个不同视角, 一视一发现
+4. 发散(八卦镜): 8维交叉, 完成后调falsification-check
+5. 推演: 每方案单独展开完整推理链
+6. 评分: 表格展示, 至少3维度评分
+7. 辩论: 各方案立场交锋
+8. 综合: 推荐+理由(引用用户原话)+风险
+`.trim(); }
+
+function outputFormat() { return `
+输出要求:
+- 友好: 框架术语翻译为用户语言, 出现在【】标题中
+- 完整: 每步推理链不省略, 不合并
+- 对比数据用表格
+- 方案命名用描述性名称(快速/稳妥/分期)
+- 每步调用 profile observe 记偏好
+- 结束时 mma remember 存记忆 + mma finalize 巩固
+`.trim(); }
+
 function sixViews() { return `
 6 divergence scales (each MUST produce ≥1 insight):
   System level: Where is the real boundary?
@@ -258,6 +287,9 @@ function main() {
             case "hello-test": md = helloTest(); break;
             case "six-views": md = sixViews(); break;
             case "bagua-questions": md = baguaQuestions(); break;
+            case "depth-loop": md = depthLoop(); break;
+            case "pipeline-steps": md = pipelineSteps(); break;
+            case "output-format": md = outputFormat(); break;
             default:
                 log(`Ponder Template Engine\nUsage: node mcts_template.js <command> --data '<JSON>' [--json]\n\nCommands:\n  review-map      Eight-Facet Review Map\n  portrait        Wuzhen Requirement Portrait\n  recon-report    Reconnaissance Report\n  info-gap        Info Gap Round Report\n  mcts-round      MCTS Per-Round Output\n  mcts-final      MCTS Final Summary\n  self-check      Self-Check Verdict\n  decision-report Full Decision Report\n  solution-list   Solution List\n  constraint-list Constraint List\n  dong-template   Dong Mode Compact Output\n  output-spec     Per-step output format rules\n  anti-guessing   Anti-guessing rules\n  interview-script 3-step user interview template\n  forbidden-check  Forbidden rules checklist\n  translate-guide  Concept translation guide\n\nFlags:\n  --data '<JSON>' Input data (required)\n  --json           Output as JSON wrapper instead of raw Markdown`);
                 process.exit(0);

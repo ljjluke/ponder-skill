@@ -83,7 +83,7 @@ const ENGINES = {
         commands: ['review-map','portrait','recon-report','info-gap','mcts-round',
                    'mcts-final','self-check','decision-report','solution-list',
                    'constraint-list','dong-template','stream-flow','all-rules','hello-test','six-views','bagua-questions',
-                   'interview-script','forbidden-check','translate-guide'],
+                   'interview-script','forbidden-check','translate-guide','depth-loop','pipeline-steps','output-format'],
     },
     profile: {
         script: 'mma/user_profile.js',
