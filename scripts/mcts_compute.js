@@ -896,6 +896,13 @@ function main() {
                             return { pass: true };
                         },
                     },
+                    shensi: {
+                        min_score: 5,
+                        check: (s, i) => {
+                            if (s < 5) return { pass: false, reason: `神思只产生${s}个反直觉发现, 至少需要1个, 继续深化` };
+                            return { pass: true };
+                        },
+                    },
                     divergence: {
                         min_perspectives: 3,
                         check: (s, i) => {

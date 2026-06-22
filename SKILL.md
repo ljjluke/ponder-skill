@@ -13,7 +13,7 @@ license: MIT
 ```
 ╔═══════════════════════════════════════╗
 ║           Ponder  v1.17.10           ║
-║   先拆解 → 发散 → 推演 → 收敛        ║
+║   采访 → 神思 → 发散 → 推演 → 收敛    ║
 ╚═══════════════════════════════════════╝
 ```
 
@@ -25,13 +25,14 @@ license: MIT
 | Step | Pass condition | If blocked |
 |------|---------------|------------|
 | interview | score≥6, issues≤2 | keep asking |
-| divergence | score≥3 (≥3 perspectives) | add more |
+| shensi | score≥5 (≥1 counter-intuitive finding) | deepen 神思 |
+| divergence | score≥3 (≥3 perspectives) | add more perspectives |
 | falsification | issues≥1 (≥1 contradiction) | redo divergence |
 | scoring | score≥3 (≥3 dimensions) | add dimensions |
 
 ## 绝对规则
 
-1. 不准跳过步骤。采访→发散(神思→六视→八卦镜)→推演→评分→辩论→综合→验证, 每步必做。
+1. 不准跳过步骤。采访→神思→发散(六视→八卦镜)→推演→评分→辩论→综合→验证, 每步必做。
 2. 不准无数据做判断。每结论必须有数据来源。
 3. 不准替用户做决定。有分支时用 AskUserQuestion 问用户。
 4. 所有问题用带选项的 AskUserQuestion。
@@ -46,7 +47,8 @@ license: MIT
 
 | 时机 | CLI | 作用 |
 |------|-----|------|
-| 【发散】神思 | `compute random-anchor` | 获取外部锚点 |
+| 【神思】打破框架 | `compute random-anchor` | 获取外部锚点, 跳出思维定势 |
+| 【发散】多视角+交叉 | `compute falsification-check` | 六视+八卦镜后反证检验 |
 | 【推演】子进程模拟 | `compute simulate --plans '<json>'` | 每个方案独立进程推演 |
 | 【辩论】立场生成 | `compute debate --plans '<json>'` | 各方案自动生成立场 |
 | 【反证】八卦镜后 | `compute falsification-check` | 反证检验 |
