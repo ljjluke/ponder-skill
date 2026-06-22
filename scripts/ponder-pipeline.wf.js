@@ -124,7 +124,7 @@ if (divCandidates.length > 0) {
   })
   divHistory = '\n\n同类问题历史视角参考:\n' + (divFiltered.selected_indices||[]).map(function(i){return '- '+(divCandidates[i-1]?.content||'').replace(/^\S*?\]/,'')}).join('\n')
 }
-var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+errDiv+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':''), {
+var div = runUntilClear('发散', '6视角分析\n需求:'+req+'\n画像:'+profile+'\n神思发现:'+((shensi && shensi.counter_intuitive)||'')+'\n每个视角:洞察+数据来源+假设。\n历史经验:'+lessons+divHistory+errDiv+(researchContext?'\n\n前置研究数据:\n'+researchContext+'':''), {
   type:'object', properties: {
     is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
     reasoning_chain:{type:'string',minLength:200,description:'从初始分析到最终结论的完整推理过程,包括每一步的分析和数据推演'},
@@ -228,7 +228,7 @@ if (simCandidates.length > 0) {
   simHistoryText = '\n同类历史推演参考:\n' + simCandidates.slice(0,3).map(function(h,i){return (i+1)+'. '+(h.content||'').replace(/^\S*?\]/,'').substring(0,120)}).join('\n')
 }
 
-var planList = (plan && plan.plans) || []
+var planList = (converge && converge.survivors) || (plan && plan.plans) || []
 var sims = await parallel(planList.slice(0,8).map(function(p) { return function() {
   var elemDesc = tenStems.map(function(e){return e.name+'('+e.desc+')'}).join(' → ')
   return agent('## 十天干推演 — 方案: '+p.name+'\n需求: '+req+'\n方案: '+p.rationale+'\n条件: '+(p.condition||'无')+'\n\n## 推演框架(十天干)\n按以下10个阶段逐步推演:\n'+tenStems.map(function(e){return (e.name+'阶段: '+e.prompt)}).join('\n')+'\n\n'+elemDesc+'\n\n## 推演要求\n1. 按甲→乙→丙→丁→戊→己→庚→辛→壬→癸顺序逐步推演\n2. 每个阶段: 描述推演完整过程 + 关键事件 + 结论\n3. 基于推演内容,给出该阶段达成度(achievement,0-1,基于实际分析而非感觉)\n4. 最后给出三条路径(乐观/中性/悲观)'+simHistoryText, {
