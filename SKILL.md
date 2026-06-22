@@ -22,22 +22,18 @@ license: MIT
 ### Step 1: 采访 (LLM直接执行)
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。清晰就少问, 模糊就追问。
 完成后输出画像摘要, 指出用户没意识到的矛盾点。
-→ `node scripts/mcts.js compute step-gate --step interview --score <N> --issues <N>`
 
-### Steps 2-8: 子agent管道 (Workflow执行, 用户看到进度标记)
+### Steps 2-8: 子agent管道 (单次Workflow调用, 无Bash输出)
+
+管道内部自动处理编排、验证、存储，不需要 LLM 单独调任何 Bash 命令。
 
 ```bash
-node scripts/orchestrate.js before "<问题类型>" "<问题描述>"
-# → 输出: { applied_rules, step_history, error_warnings }
-
-Workflow({scriptPath: "scripts/ponder-pipeline.wf.js", args: <上面的输出>})
-# → 管道内部自动执行: 采集→发散→八卦镜→方案→推演(并行子agent)→辩论→综合→验证
-# → 每步由独立 agent 执行, 深度循环由 runUntilClear 递归子 agent 保证
-# → 用户只看到每步完成的进度标记
-
-echo '<管道返回的JSON>' | node scripts/orchestrate.js after "<问题类型>" "<问题描述>"
-# → 自动存储步骤输出 + 收集指标 + 生成auto-fix
+# 只需要一行
+Workflow({scriptPath: "scripts/ponder-pipeline.wf.js", args: { userRequest: "<问题描述>", userProfile: "<画像>" }})
 ```
+
+管道内部: before(加载规则) → 采集→发散→八卦镜→方案→推演(并行子agent)→辩论→综合→验证 → after(存储+指标)
+每步完成后管道内部调 step-gate 自检, 不经过 Bash, 不产生用户可见的输出。
 
 ### Step 11: 呈现结果 — 展开子agent发现
 
@@ -68,17 +64,14 @@ echo '<管道返回的JSON>' | node scripts/orchestrate.js after "<问题类型>
 2. 不准无数据做判断。每结论必须有数据来源。
 3. 不准替用户做决定。有分支时用 AskUserQuestion 问用户。
 4. 所有问题用带选项的 AskUserQuestion。
-5. **不准在用户面前展示任何 CLI 命令、Bash 调用、JSON、代码路径。管道返回的 JSON 必须用自然语言总结后展示。**
-6. 每步完成调 step-gate 验证质量。
+5. **不准在用户面前展示任何 Bash 调用、JSON、代码路径。管道返回的 JSON 必须用自然语言总结后展示。**
+6. 管道内部自动做步骤验证, LLM 不需要单独调 step-gate。
 7. 会话结束时调 `mma finalize` 巩固记忆。
 
-## 强制CLI调用
+## 强制调用
 
-| 时机 | 命令 |
+| 时机 | 操作 |
 |------|------|
-| 采访后 | `compute step-gate --step interview --score <N> --issues <N>` |
-| 管道前 | `orchestrate before "<类型>" "<描述>"` |
-| 管道 | `Workflow({scriptPath: "scripts/ponder-pipeline.wf.js", args})` |
-| 管道后 | `orchestrate after` |
-| 每步 | `profile observe default --behavior <x>` |
-| 结束 | `mma finalize` |
+| 采访后 | `Workflow({scriptPath: "scripts/ponder-pipeline.wf.js", args})` — 管道内自含所有步骤 |
+| 每步 | `profile observe default --behavior <x>` (Bash调, 但用户看不到输出) |
+| 结束 | `mma finalize` — 巩固记忆 |
