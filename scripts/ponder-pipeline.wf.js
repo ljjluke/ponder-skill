@@ -3,7 +3,7 @@ export const meta = {
   name: 'ponder-pipeline',
   description: '全流程一步到位+代码级深度循环',
   phases: [
-    { title: '发散', detail: '6视角' }, { title: '八卦镜', detail: '8维度' },
+    { title: '神思', detail: '破框' }, { title: '发散', detail: '6视角' }, { title: '八卦镜', detail: '8维度' },
     { title: '方案', detail: '收敛' }, { title: '推演', detail: '并行' },
     { title: '辩论', detail: '排名' }, { title: '综合', detail: '结论' },
     { title: '验证', detail: '审查' },
@@ -84,6 +84,19 @@ async function runUntilClear(label, prompt, schema, rounds) {
   r5._depth_rounds = 5
   return result
 }
+
+
+// Phase 0.5: 神思 — 跳出框架
+phase('神思')
+var shensiResearch = researchContext || ''
+var shensi = runUntilClear('神思', '虚静(清空预设)→神凝→神游(漫游)→意象(浮现)→言意(带回)\n需求:'+req+'\n画像:'+profile+'\n数据:'+shensiResearch.substring(0,500)+'\n产出至少1个反直觉发现。', {
+  type:'object', properties: {
+    is_clear:{type:'boolean'}, user_questions:{type:'array',items:{type:'string'}},
+    reasoning_chain:{type:'string',minLength:100,description:'完整推理过程'},
+    counter_intuitive:{type:'string',minLength:50,description:'最反直觉的发现'},
+    insight:{type:'string',description:'这个发现对当前问题的启示'},
+  }, required:['is_clear','user_questions','reasoning_chain','counter_intuitive','insight'],
+}, 0)
 
 // Phase 1: Divergence
 phase('发散')
