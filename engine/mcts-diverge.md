@@ -15,94 +15,15 @@ description: Ponder Step 1 — 逍遥游 Free Wandering Diverge Engine. Zhuangzi
 
 ---
 
-## 🌐 Concept Translation Rule (MANDATORY)
+## 🌐 Translation — Say It in Their Language
 
-**Internal thinking uses cultural concept names. Output MUST translate into user's domain language.**
+**Internal:** Chinese philosophical names (心斋, 逍遥游, 齐物, etc.) describe thinking methods. Use them to think.
 
-Chinese philosophical concepts (心斋, 逍遥游, 齐物, 梦蝶, etc.) are internal "thinking opcodes" — they are NOT output format. The language adaptation layer handles the final translation.
+**Output:** Whatever language and domain the user is speaking — speak that. No translation table needed. The user's own words tell you what domain they're in.
 
-Translation logic (internal concept → what user sees):
-
-心斋 (Xinzhai)  → "Expose default assumptions about this problem"
-鲲鹏之视 (Kunpeng View) → "Redefine the problem from system-wide perspective"
-蜩鸠之视 (Tiaojiu View) → "Notice micro-details macro analysis misses"
-朝菌之视 (Zhaojun View) → "Under extreme time pressure, what's the priority"
-冥灵之视 (Mingling View) → "At geological timescale, what stays, what changes"
-列子御风 (Liezi View) → "If no intervention, where does it naturally go"
-至人无己 (Sage View) → "Remove personal stake — what's optimal for the system"
-八卦镜 (Bagua Mirror) → "Examine from 8 independent perspectives"
-齐物 (Qiwu) → "Every perspective has validity — the uncomfortable one may be key"
-梦蝶翻转 (Dream Flip) → "Invert all assumptions"
-庖丁解牛 (Cook Ding) → "Find the path of least resistance"
-
-
-⛔ FORBIDDEN:
-- Output raw Chinese concepts to non-Chinese users
-- Only explain after user asks "what does that mean"
-- Incomplete translation — translate EVERY time, not just the first
-
-✅ Correct:
-
-Internal: "From 鲲鹏之视, this module is..."
-Output:  "From the system-wide perspective, the positioning of this module is..."
-
-
-### Mapping table (internal → domain language)
-
-| Concept | Essence | Software Engineering | Business Analysis |
-|---------|---------|-------------------|-------------------|
-| 心斋 | Expose unchecked assumptions | "List default tech choices" | "Expose business model premises" |
-| 鲲鹏之视 | System-wide redefinition | "From architecture level" | "From industry chain top" |
-| 蜩鸠之视 | Micro-detail focus | "Per-call UX experience" | "Per-customer touchpoint friction" |
-| 朝菌之视 | Time-compressed action | "What ships in 1 day" | "What adjusts in 1 month" |
-| 冥灵之视 | Long-term change | "Architecture in 10 years" | "Market in 10 years" |
-| 列子御风 | Follow natural flow | "Where users go without new features" | "Where market goes without changes" |
-| 至人无己 | Remove self-interest | "Unbiased tech selection" | "Beyond departmental interest" |
-| 齐物 | Equalize all views | "Every tech has its place" | "Every strategy has merit" |
-| 梦蝶翻转 | Invert assumptions | "What if 'don't build' is best" | "What if 'exit market' is best" |
-
-### Eight Trigrams (八卦镜 facets)
-
-| Internal | Essence | → Translation |
-|----------|---------|-------------|
-| F1 ☰ 乾 (Source of Force) | Where does driving force come from? | "Motivation analysis: what drives this" |
-| F2 ☷ 坤 (Foundation) | What foundation does this rest on? | "Base analysis: available resources and capacity" |
-| F3 ☳ 震 (Change/Disruption) | Where might unexpected change occur? | "Change analysis: where surprises hide" |
-| F4 ☴ 巽 (Penetration) | How does effect spread? | "Spread analysis: how impact propagates" |
-| F5 ☵ 坎 (Risk/Abyss) | Deepest pit? Worst case? | "Risk analysis: worst outcome possible" |
-| F6 ☲ 离 (Visible/Dependent) | Surface vs hidden dependencies? | "Dependency analysis: what supports the surface" |
-| F7 ☶ 艮 (Boundary) | Lines never to cross? | "Boundary analysis: hard constraints" |
-| F8 ☱ 兑 (Convergence) | Balance all interests? | "Balance analysis: stakeholder equilibrium" |
-
-### 诸子百家 Sub-lens Translations
-
-| Internal | Essence | → Translation |
-|----------|---------|-------------|
-| 兵家 | Competition and high ground | "Who's opponent/ally — where's advantage" |
-| 縱横家 | Interest alignment | "Stakeholder positions and alignment" |
-| 農家 | What conditions suit what | "What strategy fits current conditions" |
-| 水利家 | Resource flow and bottlenecks | "How resources flow — where are they stuck" |
-| 醫家 | Symptom vs root cause | "Surface symptom vs root cause" |
-| 陰陽家 | Opposite forces and tipping points | "Counter-direction view and inflection points" |
-| 工匠 | Are tools sufficient | "Is current approach adequate" |
-| 禪家 | Strip to essence | "Remove convention — what's the core" |
-| 史家 | Historical precedent | "Lessons from similar past cases" |
-| 道家 | Risk of over-intervention | "Cost of doing too much" |
-| 法家 | Rules and enforcement | "Rule constraints and enforcement reality" |
-| 儒家 | Who gets overlooked | "Neglected stakeholders and baseline ethics" |
-
-### Validation Concepts
-
-| Internal | Essence | → Translation |
-|----------|---------|-------------|
-| 本末 (Ben-Mo) | Root vs branch factors | "Fundamental vs secondary factors" |
-| 体用 (Ti-Yong) | Universal essence vs specific function | "General principle vs specific application" |
-| 理事 (Li-Shi) | Universal pattern vs concrete case | "General pattern vs specific instance" |
-| 有无 (You-Wu) | Absent-but-expected constraints | "Constraints that should exist but are missing" |
-| 言意 (Yan-Yi) | Words vs intended meaning | "What user said vs what they actually mean" |
-| 一多 (One-Many) | One core + multiple mechanisms | "One essence + multiple implementations" |
-| 动静 (Dong-Jing) | Quick execution vs deep analysis | "Move fast vs analyze thoroughly" |
-| 奇正相生 (Qi-Zheng) | Explore vs exploit balance | "Innovation vs stability balance" |
+⛔ Forbidden:
+- Output raw Chinese concept names as if they're English words
+- Add technical footnotes or parenthetical explanations |
 
 ---
 
