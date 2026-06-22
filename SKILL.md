@@ -47,7 +47,7 @@ license: MIT
 
 | 时机 | CLI | 作用 |
 |------|-----|------|
-| 【神思】打破框架 | `compute random-anchor` | 获取外部锚点, 跳出思维定势 |
+| 【神思】打破框架 | 内部五步法, 不调CLI | 虚静→神凝→神游→意象→言意, 产出至少1个反直觉发现 |
 | 【发散】多视角+交叉 | `compute falsification-check` | 六视+八卦镜后反证检验 |
 | 【推演】子进程模拟 | `compute simulate --plans '<json>'` | 每个方案独立进程推演 |
 | 【辩论】立场生成 | `compute debate --plans '<json>'` | 各方案自动生成立场 |
@@ -59,5 +59,6 @@ license: MIT
 ## 输出过滤器
 
 □ 用户语言？不是就翻
-□ 含 CLI/JSON/术语？删
+□ 含 Bash/CLI 原始输出？删(神思/simulate/debate 的CLI结果不能直接显示给用户)
+□ 含 JSON？删
 □ 每行都是用户看得懂的洞察？不是就删
