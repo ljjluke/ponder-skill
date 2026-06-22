@@ -24,10 +24,13 @@ async function step(label, prompt, schema, maxRounds) {
     var ctx = lastQ.length > 0 ? '\n前轮盲点: ' + JSON.stringify(lastQ) : ''
     var r = await agent(prompt + ' 第' + round + '轮' + ctx, { label: label + '_R' + round, schema: schema })
     r._depth_rounds = round
-    // 清晰条件: is_clear + 问题数≤2
-    if (r.is_clear && (!r.user_questions || r.user_questions.length <= 2)) return r
+    // 清晰条件: is_clear + 问题数≤2 (上层直接判断, 非子agent)
+    var pass = r.is_clear && (!r.user_questions || r.user_questions.length <= 2)
+    log(label + ' 第' + round + '轮: is_clear=' + r.is_clear + ' 问题=' + (r.user_questions || []).length + (pass ? ' ✅通过' : ' ❌不清晰'))
+    if (pass) return r
     lastQ = r.user_questions || []
   }
+  log(label + ' 已达最大轮数, 终止')
   return { _aborted: true, _depth_rounds: maxRounds, user_questions: lastQ }
 }
 
