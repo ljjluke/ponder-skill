@@ -45,7 +45,6 @@ Workflow({scriptPath: "<插件目录>/scripts/ponder-pipeline.wf.js", args: { us
 【神思】子agent跳出框架后最反直觉的发现: [具体发现]
 → 这个发现暗示: [对当前问题的启示]
 ⚠️ 深度循环轮数
-         → 这些数据说明: [分析结论]
          ✓ 清晰 (1轮完成)
 
 【发散】子agent从6个视角审视的完整推理:
