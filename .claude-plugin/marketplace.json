@@ -1,6 +1,6 @@
 {
   "name": "luke",
-  "version": "1.17.18",
+  "version": "1.17.19",
   "description": "Self-evolving cognitive framework. 7-phase reasoning + MMA memory + auto-evolution. Code-enforced depth loop. Data-driven.",
   "owner": {
     "name": "ljjluke"
@@ -10,7 +10,7 @@
       "name": "luke",
       "description": "Self-evolving cognitive framework. 7-phase reasoning + MMA memory + automatic evolution. Code-enforced depth loop. Data-driven optimization.",
       "source": "./",
-      "version": "1.17.18",
+      "version": "1.17.19",
       "author": {
         "name": "ljjluke"
       },
