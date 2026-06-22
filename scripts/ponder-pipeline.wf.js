@@ -397,7 +397,19 @@ var mutationRecord = {
     return Object.assign({}, l, { _reasoning: reasoningContext })
   })
 
+  // 汇总所有步骤中未解决的user_questions
+  var pending_user_questions = [].concat(
+    (shensi && shensi.user_questions) || [],
+    (div && div.user_questions) || [],
+    (dim && dim.user_questions) || [],
+    (converge && converge.user_questions) || [],
+    (plan && plan.user_questions) || [],
+    (debate && debate.user_questions) || [],
+    (syn && syn.user_questions) || []
+  ).filter(Boolean)
+
   return {
+    pending_user_questions: pending_user_questions.length > 0 ? pending_user_questions : undefined,
     shensi: shensi,
     divergence: div,
     dimension: dim,
