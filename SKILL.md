@@ -28,8 +28,12 @@ license: MIT
 管道内部自动处理编排、验证、存储，不需要 LLM 单独调任何 Bash 命令。
 
 ```
-# 直接用 Workflow 工具调用 — 不是 Bash, 不是 node脚本, 是平台工具
-Workflow({scriptPath: "<插件目录>/scripts/ponder-pipeline.wf.js", args: { userRequest: "<问题描述>", userProfile: "<画像>" }})
+# Workflow工具调用 — scriptPath必须指向插件目录下的ponder-pipeline.wf.js
+# args用JSON字符串, 不是JS对象
+Workflow({
+  scriptPath: "C:\Users\cloudmap\.claude\plugins\cache\luke\luke\1.17.30\scripts\ponder-pipeline.wf.js",
+  args: JSON.stringify({ userRequest: "<问题描述>", userProfile: "<画像>" })
+})
 ```
 
 管道内部: before(加载规则) → 采集→发散→八卦镜→方案→推演(并行子agent)→辩论→综合→验证 → after(存储+指标)
