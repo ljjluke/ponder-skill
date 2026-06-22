@@ -398,8 +398,10 @@ var mutationRecord = {
   })
 
   return {
+    shensi: shensi,
     divergence: div,
     dimension: dim,
+    converge: converge,
     plans: plan,
     simulations: simResults,
     debate: debate,
@@ -409,12 +411,14 @@ var mutationRecord = {
     verification: ver,
     mutation_record: mutationRecord,
   _step_outputs: {
-    divergence: div ? { is_clear: div.is_clear, consensus: (div.consensus||'').substring(0,200), perspective_count: (div.perspectives||[]).length } : null,
-    dimension: dim ? { is_clear: dim.is_clear, key_finding: (dim.key_finding||'').substring(0,200), dimension_count: (dim.dimensions||[]).length } : null,
-    plans: plan ? { is_clear: plan.is_clear, plan_count: (plan.plans||[]).length } : null,
-    debate: debate ? { is_clear: debate.is_clear, synthesis: (debate.synthesis||'').substring(0,200), ranked_count: (debate.ranked||[]).length } : null,
+    shensi: shensi ? { is_clear: shensi.is_clear, depth_rounds: shensi._depth_rounds||1, insight: (shensi.counter_intuitive||'').substring(0,200) } : null,
+    divergence: div ? { is_clear: div.is_clear, depth_rounds: div._depth_rounds||1, consensus: (div.consensus||'').substring(0,200), perspective_count: (div.perspectives||[]).length } : null,
+    dimension: dim ? { is_clear: dim.is_clear, depth_rounds: dim._depth_rounds||1, key_finding: (dim.key_finding||'').substring(0,200), dimension_count: (dim.dimensions||[]).length } : null,
+    converge: converge ? { is_clear: converge.is_clear, depth_rounds: converge._depth_rounds||1, survivor_count: (converge.survivors||[]).length, eliminated: (converge.eliminated||[]).map(function(e){return e.name}) } : null,
+    plans: plan ? { is_clear: plan.is_clear, depth_rounds: plan._depth_rounds||1, plan_count: (plan.plans||[]).length } : null,
+    debate: debate ? { is_clear: debate.is_clear, depth_rounds: debate._depth_rounds||1, synthesis: (debate.synthesis||'').substring(0,200), ranked_count: (debate.ranked||[]).length } : null,
     simulations: simResults ? { count: Array.isArray(simResults) ? simResults.length : 0, dimensions: tenStems.map(function(d){return d.name}), top_V: simResults.slice(0,3).map(function(r){return r.name+":"+r.V}), mcts_session: typeof mctsSessionId !== 'undefined' ? mctsSessionId : null } : null,
-    synthesis: syn ? { is_clear: syn.is_clear, conclusion: (syn.conclusion||'').substring(0,200), lessons_count: (syn.pending_lessons||[]).length } : null,
+    synthesis: syn ? { is_clear: syn.is_clear, depth_rounds: syn._depth_rounds||1, conclusion: (syn.conclusion||'').substring(0,200), lessons_count: (syn.pending_lessons||[]).length } : null,
     verify: ver ? { verdict: ver.verdict, fake_clarity: ver.fake_clarity, issues_count: (ver.issues||[]).length } : null,
   },
 }
