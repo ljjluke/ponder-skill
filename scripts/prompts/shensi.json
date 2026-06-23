@@ -1,0 +1,15 @@
+{
+  "name": "shensi",
+  "label": "神思",
+  "stepGoal": "反直觉发现，突破常规思维",
+  "prompt": "虚静→神凝→神游→意象→言意。产出至少1个反直觉发现",
+  "args": ["userRequest", "userProfile"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "counter_intuitive": { "type": "string", "description": "反直觉发现" },
+      "insight": { "type": "string", "description": "洞察" }
+    },
+    "required": ["counter_intuitive", "insight"]
+  }
+}

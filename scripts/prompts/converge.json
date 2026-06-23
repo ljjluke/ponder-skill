@@ -1,0 +1,26 @@
+{
+  "name": "converge",
+  "label": "收敛",
+  "stepGoal": "淘汰弱方案，保留3-5个最优",
+  "prompt": "淘汰弱方案,保留3-5个最优并评分(0-1)",
+  "args": ["plans"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "survivors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "score": { "type": "number", "description": "0-1" },
+            "reason": { "type": "string", "description": "保留理由" }
+          },
+          "required": ["name", "score", "reason"]
+        },
+        "minItems": 3
+      }
+    },
+    "required": ["survivors"]
+  }
+}

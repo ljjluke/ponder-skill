@@ -1,0 +1,17 @@
+{
+  "name": "synthesis",
+  "label": "综合",
+  "stepGoal": "最终结论+风险+未决事项",
+  "prompt": "输出最终结论+推理链+风险+待用户确认事项",
+  "args": ["synthesis", "ranked"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "conclusion": { "type": "string", "description": "最终结论" },
+      "reasoning": { "type": "string", "description": "推理链" },
+      "risk": { "type": "string", "description": "风险" },
+      "pending_user_questions": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["conclusion", "reasoning", "risk"]
+  }
+}

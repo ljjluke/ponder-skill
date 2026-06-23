@@ -1,0 +1,28 @@
+{
+  "name": "bagua",
+  "label": "八卦镜",
+  "stepGoal": "8维度评分，量化评判",
+  "prompt": "从8个维度评分,每个维度:评分+依据+不确定性",
+  "args": ["consensus"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "dimensions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "score": { "type": "number", "description": "0-1" },
+            "evidence": { "type": "string" },
+            "uncertainty": { "type": "string" }
+          },
+          "required": ["name", "score", "evidence", "uncertainty"]
+        },
+        "minItems": 8
+      },
+      "key_finding": { "type": "string", "description": "关键发现" }
+    },
+    "required": ["dimensions", "key_finding"]
+  }
+}

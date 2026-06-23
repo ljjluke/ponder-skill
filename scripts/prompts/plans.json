@@ -1,0 +1,26 @@
+{
+  "name": "plans",
+  "label": "方案",
+  "stepGoal": "生成5-8个可选方案",
+  "prompt": "生成5-8个方案,每个:名称+依据+条件",
+  "args": ["key_finding"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "plans": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "方案名称" },
+            "rationale": { "type": "string", "description": "依据" },
+            "condition": { "type": "string", "description": "适用条件" }
+          },
+          "required": ["name", "rationale", "condition"]
+        },
+        "minItems": 5
+      }
+    },
+    "required": ["plans"]
+  }
+}

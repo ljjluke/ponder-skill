@@ -1,0 +1,28 @@
+{
+  "name": "debate",
+  "label": "辩论",
+  "stepGoal": "各方案互相反驳，排名推荐",
+  "prompt": "各方案互相反驳优缺点,按V值+论证强度排名,输出综合推荐",
+  "args": ["simulations"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "ranked": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "rank": { "type": "number" },
+            "name": { "type": "string" },
+            "pros": { "type": "array", "items": { "type": "string" } },
+            "cons": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["rank", "name", "pros", "cons"]
+        },
+        "minItems": 2
+      },
+      "synthesis": { "type": "string", "description": "综合评述" }
+    },
+    "required": ["ranked", "synthesis"]
+  }
+}

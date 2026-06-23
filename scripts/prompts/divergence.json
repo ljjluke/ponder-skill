@@ -1,0 +1,28 @@
+{
+  "name": "divergence",
+  "label": "发散",
+  "stepGoal": "6视角审视，覆盖不同维度",
+  "prompt": "从6个视角审视,每个视角:洞察+数据来源+假设",
+  "args": ["shensi"],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "perspectives": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "insight": { "type": "string" },
+            "data_source": { "type": "string" },
+            "assumption": { "type": "string" }
+          },
+          "required": ["name", "insight", "data_source", "assumption"]
+        },
+        "minItems": 6
+      },
+      "consensus": { "type": "string", "description": "6视角综合共识" }
+    },
+    "required": ["perspectives", "consensus"]
+  }
+}
