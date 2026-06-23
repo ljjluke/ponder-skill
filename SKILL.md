@@ -16,18 +16,18 @@ license: MIT
 
 主线程步骤 — 读 prompts/<name>.json → 替换参数 → 查 top 3 历史 → 自己思考 → 直接输出内容到对话
 
-| # | 步骤 | 说明 |
-|---|------|------|
-| 2 | 神思 | 读 shensi.json → 反直觉发现 |
-| 3 | 发散 | 读 divergence.json → 6视角 |
-| 4 | 八卦镜 | 读 bagua.json → 8维度评分 |
-| 5 | 方案 | 读 plans.json → 5-8方案 |
-| 6 | 收敛 | 读 converge.json → 保留3-5 |
-| 7 | 推演 | **每幸存方案起一个子 agent**（mcts-simulator），互不干扰 |
-| 8 | 辩论 | 读 debate.json → 排名推荐 |
-| 9 | 综合 | 读 synthesis.json → 结论+风险 |
+子 agent 步骤 — for each item: agent(input, {agentType}) → 把返回内容完整输出到对话 → 等全部运行完 → 汇总进入下一步
 
-推演是唯一使用子 agent 的步骤。各方案模拟相互隔离，天然并行。
+| # | 步骤 | 执行方式 |
+|---|------|---------|
+| 2 | 神思 | 主线程直行 |
+| 3 | 发散 | 主线程直行 |
+| 4 | 八卦镜(8维度) | dimension-evaluator ×8 并行 |
+| 5 | 方案(5-8个) | solution-generator ×N 并行 |
+| 6 | 收敛 | 主线程直行 |
+| 7 | 推演 | mcts-simulator ×N 并行 |
+| 8 | 辩论 | debater ×N 并行 |
+| 9 | 综合 | 主线程直行
 
 每步后 — 清晰度评分，展示分数和结论:
 ```
