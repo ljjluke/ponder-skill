@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning with code-enforced clarity checks. Domain-agnostic. Each step must: read prompt → load engine docs → execute → validate quality."
-version: 1.18.6
+version: 1.18.7
 license: MIT
 ---
 
