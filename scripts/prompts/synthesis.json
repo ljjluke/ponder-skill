@@ -2,7 +2,7 @@
   "name": "synthesis",
   "label": "综合",
   "stepGoal": "最终结论+风险+未决事项",
-  "engine_ref": "engine/mcts-converge.md#step-36-blindspot-audit--言意-gap",
+  "engine_ref": "engine/synthesis.md",
   "agent_ref": "agents/memory-agent.md",
   "tool_ref": ["scripts/language_guard.js"],
   "prompt": "整合辩论结果和推演数据,输出:\n1. 最终结论 — 推荐哪个方案及理由(引用辩论和推演中的关键证据)\n2. 推理链 — 从发散→八卦镜→方案→推演→辩论的决策路径摘要\n3. 主要风险 — 推荐方案面临的最大风险及应对\n4. 待确认事项 — 需要用户自己判断的问题清单\n言意差距检查见 engine/mcts-converge.md。记忆存储和检查点见 agents/memory-agent.md。输出语言可用 scripts/language_guard.js 检测是否与用户语言一致",

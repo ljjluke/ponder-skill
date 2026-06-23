@@ -2,7 +2,7 @@
   "name": "bagua",
   "label": "八卦镜",
   "stepGoal": "8维度评分，量化评判",
-  "engine_ref": "engine/mcts-diverge.md#phase-2-八卦镜-bagua-mirror--eight-facet-examination--诸子百家--cultural-analogy",
+  "engine_ref": "engine/bagua.md",
   "agent_ref": "agents/dimension-evaluator.md",
   "tool_ref": ["scripts/mcts_compute.js hexagram-lookup"],
   "prompt": "从8个维度独立评估,每个维度都必须有评分+依据+不确定性。\n\nF1 驱动力: 推动力的来源是什么?是内生还是外生?\nF2 基础: 这个问题的支撑基础是什么?地基稳吗?\nF3 变化: 哪里可能出现意外?潜在的变化因素?\nF4 渗透: 影响如何扩散?从哪里切入?\nF5 风险: 最大的坑在哪里?最坏情况?\nF6 依附: 表面现象下藏着什么?被忽略的东西?\nF7 边界: 什么绝对不能做?限制在哪里?\nF8 平衡: 各方利益如何调和?最优平衡点?\n\n每个维度都要有详细分析,不能笼统带过。指出哪个维度最异常,以及维度间的冲突。每维度起一个 agent 进行评估，定义见 agents/dimension-evaluator.md。完整八卦镜框架（含诸子百家子视角、体用分析）见 engine/mcts-diverge.md。维度交互可调 scripts/mcts_compute.js hexagram-lookup",
