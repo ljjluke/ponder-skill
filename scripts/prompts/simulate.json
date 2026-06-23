@@ -2,7 +2,9 @@
   "name": "simulate",
   "label": "推演",
   "stepGoal": "模拟各方案的执行过程",
-  "prompt": "对每个幸存方案单独进行模拟。每方案起一个 agent(mcts-simulator)，输入方案描述、假设、约束条件。收集所有模拟结果后汇总对比",
+  "engine_ref": "engine/mcts-simulate.md",
+  "agent_ref": "agents/mcts-simulator.md",
+  "prompt": "对每个幸存方案单独进行模拟。每方案起一个 agent，定义见 agents/mcts-simulator.md。输入方案描述、假设、约束条件。各方案模拟相互隔离。完整推演框架（UCB选择、回溯、收敛判断）见 engine/mcts-simulate.md。收集所有模拟结果后汇总对比",
   "args": ["survivors"],
   "schema": {
     "type": "array",
