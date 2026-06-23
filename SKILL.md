@@ -12,11 +12,11 @@ license: MIT
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
 产出: userRequest + userProfile。
 
-### Steps 2-9: 全部用 agent() 执行
+### Steps 2-9
 
-主线程步骤 — 读 prompts/<name>.json → 替换参数 → 查 top 3 历史 → agent(prompt, schema) → 展示
+主线程步骤 — 读 prompts/<name>.json → 替换参数 → 查 top 3 历史 → 自己思考 → 直接输出内容到对话
 
-子 agent 步骤 — for each item: agent(input, {agentType}) → 立即展示全部返回内容（不可折叠） → 全部收集后汇总
+子 agent 步骤 — for each item: agent(input, {agentType}) → 把返回内容完整输出到对话 → 全部收集后汇总
 
 | # | 步骤 | agent 类型 |
 |---|------|-----------|
