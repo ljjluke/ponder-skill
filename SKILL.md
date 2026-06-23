@@ -18,14 +18,14 @@ license: MIT
 
 | # | 步骤 | 提示文件 | 目标 | 做法 |
 |---|------|---------|------|------|
-| 2 | 神思 | prompts/shensi.json | 跳出常规思维 | 主线程直行 |
-| 3 | 发散 | prompts/divergence.json | 多角度审视 | 主线程直行 |
-| 4 | 八卦镜 | prompts/bagua.json | 8维度评分 | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
-| 5 | 方案 | prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
-| 6 | 收敛 | prompts/converge.json | 保留最优 | 主线程直行 |
+| 2 | 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行 |
+| 3 | 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行 |
+| 4 | 八卦镜 | scripts/prompts/bagua.json | 8维度评分 | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
+| 5 | 方案 | scripts/prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
+| 6 | 收敛 | scripts/prompts/converge.json | 保留最优 | 主线程直行 |
 | 7 | 推演 | — | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
-| 8 | 辩论 | prompts/debate.json | 排名推荐 | 每方案一个 agent(debater)，全部返回后汇总 |
-| 9 | 综合 | prompts/synthesis.json | 结论+风险 | 主线程直行 |
+| 8 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案一个 agent(debater)，全部返回后汇总 |
+| 9 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
 每步后 — 清晰度评分:
 
