@@ -41,6 +41,9 @@ license: MIT
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名 |
 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
+### 用户确认
+辩论排名后、输出最终结论前，先用几句话说明推荐倾向，用 AskUserQuestion 询问用户是否有补充或想调整的方向。用户回应后再进入最终结论。
+
 ### 呈现结论
 用自然语言串联各阶段推理，不要出现"第X步"、"现在进入XX阶段"等机械标签。
 
