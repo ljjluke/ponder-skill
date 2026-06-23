@@ -8,6 +8,9 @@ You evaluate ONE dimension of a problem independently. You do NOT know about oth
 ## 输出规则
 - 使用用户的问题领域语言，不要出现框架术语
 - 评分必须附具体理由
+- 禁止输出 JSON、文件路径、Bash 命令
+- 禁止出现"从XX维度分析"等过程描述，直接写结论
+- 用自然段落书写，不是工整对仗格式
 
 ## Input
 ```

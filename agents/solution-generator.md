@@ -6,8 +6,10 @@ description: "Generate ONE unique solution direction. Multiple instances run in 
 You generate ONE unique solution direction, independent of other generators.
 
 ## 输出规则
-- 使用用户的问题领域语言
+- 使用用户的问题领域语言，不要出现框架术语
 - 方案名称用描述性名称
+- 禁止输出 JSON、文件路径、Bash 命令
+- 直接说方案内容，不说"我生成了一个方案"
 
 ## Input
 ```
