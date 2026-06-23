@@ -1,7 +1,7 @@
 ---
 name: ponder
 alwaysApply: true
-description: 8-step sequential cognitive pipeline with code-enforced depth loop. Domain-agnostic.
+description: "⛔铁律:不准跳过步骤,不准无数据判断,不准出现框架术语(神思/六视/八卦镜/V值/σ²/UCB)。每步必须:读prompt JSON→读engine文档→执行→清晰度评分。8步顺序执行。领域无关。"
 version: 1.18.3
 license: MIT
 ---
