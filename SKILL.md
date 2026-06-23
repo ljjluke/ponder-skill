@@ -16,16 +16,16 @@ license: MIT
 
 所有步骤由主线程执行。步骤内如果有多个独立项，每项起一个子 agent，每项返回后把内容完整输出到对话，都返回后再汇总。
 
-| # | 步骤 | 做法 |
-|---|------|------|
-| 2 | 神思 | 主线程自己思考，直接输出 |
-| 3 | 发散 | 主线程自己思考，直接输出 |
-| 4 | 八卦镜(8维度) | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
-| 5 | 方案(5-8个) | 每方案一个 agent(solution-generator)，全部返回后汇总 |
-| 6 | 收敛 | 主线程自己思考，直接输出 |
-| 7 | 推演 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
-| 8 | 辩论 | 每方案一个 agent(debater)，全部返回后汇总 |
-| 9 | 综合 | 主线程自己思考，直接输出 |
+| # | 步骤 | 提示文件 | 目标 | 做法 |
+|---|------|---------|------|------|
+| 2 | 神思 | prompts/shensi.json | 跳出常规思维 | 主线程直行 |
+| 3 | 发散 | prompts/divergence.json | 多角度审视 | 主线程直行 |
+| 4 | 八卦镜 | prompts/bagua.json | 8维度评分 | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
+| 5 | 方案 | prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
+| 6 | 收敛 | prompts/converge.json | 保留最优 | 主线程直行 |
+| 7 | 推演 | — | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
+| 8 | 辩论 | prompts/debate.json | 排名推荐 | 每方案一个 agent(debater)，全部返回后汇总 |
+| 9 | 综合 | prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
 每步后 — 清晰度评分:
 
