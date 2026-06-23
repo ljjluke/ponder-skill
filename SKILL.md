@@ -15,10 +15,11 @@ license: MIT
 ### Steps 2-9
 
 每步执行模式:
-1. **前置**: 查该步骤的 top 3 历史(`node scripts/knowledge.js acquire`) + 错误警告 → 注入 prompt 上下文
-2. **加载引擎文档**: 读 `scripts/prompts/<步骤>.json` 的 `engine_ref` 字段指向的 `engine/*.md` 文件，获取完整思考框架
-3. **执行**: 主线程直行 或 每独立项起一个子 agent（类型从 JSON 的 `agent_ref` 加载），每项返回后把内容完整输出到对话，都返回后再汇总
-4. **后置**: 清晰度评分 → 通过则 `orchestrate.js step` 存产出 → 不通过则追问重做
+1. **前置**: 查该步骤的 top 3 历史(`node scripts/knowledge.js acquire`) + 错误警告
+2. **读 prompt**: 读 `scripts/prompts/<步骤>.json` — 用 `prompt` 字段指导思考，用 `schema` 约束输出结构
+3. **加载引擎**: 读 `engine_ref` 指向的 `engine/*.md`，获取完整思考框架
+4. **执行**: 主线程直行 或 按 `agent_ref` 起子 agent，每项返回后把内容完整输出到对话，都返回后再汇总
+5. **后置**: 清晰度评分 → 通过则 `orchestrate.js step` 存产出 → 不通过则追问重做
 
 | # | 步骤 | 提示文件 | 目标 | 做法 |
 |---|------|---------|------|------|
