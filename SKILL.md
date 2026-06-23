@@ -1,7 +1,7 @@
 ---
 name: ponder
 alwaysApply: true
-description: "8-step structured reasoning with code-enforced clarity checks. Domain-agnostic. Each step must: read prompt → load engine docs → execute → validate quality."
+description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
 version: 1.18.7
 license: MIT
 ---
@@ -26,7 +26,7 @@ license: MIT
 2. 读 JSON prompt
 3. 读引擎文档
 4. 主线程直行或起子 agent，产出逐条展示到对话
-5. 清晰度检查（通过继续，不通过修正）
+5. orchestrate.js step 存产出（后台）
 ```
 
 | 阶段 | 提示文件 | 目标 | 做法 |
@@ -39,14 +39,6 @@ license: MIT
 | 推演 | scripts/prompts/simulate.json | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名 |
 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
-
-### ⛔ 质量自检（内部，不输出）
-
-```
-检查产出: 无模糊词(可能/大概/也许)、字段完整、有实质内容
-通过 → orchestrate.js step 存产出（后台），继续
-不通过 → 修正后重做
-```
 
 ### 呈现结论
 用自然语言串联各阶段推理，不要出现"第X步"、"现在进入XX阶段"等机械标签。整体读起来像一个人在讲述分析思路。
