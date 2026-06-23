@@ -32,13 +32,7 @@ V值/σ²    → 不出现，后台只用不展示
 ```
 
 ### 流程开始前
-```
-node scripts/orchestrate.js before <问题类型> <问题描述>
-```
-输出: `{ applied_rules, step_history, error_warnings, profile }`
-
-- **step_history**: 每步 20 条候选，自己从中选 top 3 最相关的注入 prompt 上下文
-- **error_warnings**: 该类型问题过去犯过的错，注入每步 prompt 预防重复踩坑
+无需前置加载。各步骤的历史参考由每步独立查询。
 
 ### Step 1: 采访
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项, 不能只让用户打字。不准问废话。
@@ -48,13 +42,14 @@ node scripts/orchestrate.js before <问题类型> <问题描述>
 
 每步模式一样（主线程步骤）:
 ```
-读 prompts/<name>.json → 替换动态参数(注入 top 3 历史+错误警告)
+读 prompts/<name>.json → 替换动态参数
+→ 自己查该步骤的 top 3 历史（node scripts/knowledge.js acquire）
 → agent(prompt, schema) → 展示成果
 ```
 
 子 agent 步骤:
 ```
-for each item: agent(dynamic_prompt + 该步骤的 top 3 历史)
+for each item: agent(dynamic_prompt)
 → 收集所有结果 → 整合展示
 ```
 
