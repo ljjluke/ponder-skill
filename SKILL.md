@@ -34,7 +34,7 @@ license: MIT
 | 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行 |
 | 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行 |
 | 八卦镜 | scripts/prompts/bagua.json | 8维度评分 | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
-| 方案 | scripts/prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
+| 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
 | 收敛 | scripts/prompts/converge.json | 保留最优 | 主线程直行 |
 | 推演 | scripts/prompts/simulate.json | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名 |
