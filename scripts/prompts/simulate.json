@@ -1,0 +1,20 @@
+{
+  "name": "simulate",
+  "label": "推演",
+  "stepGoal": "模拟各方案的执行过程",
+  "prompt": "对每个幸存方案单独进行模拟。每方案起一个 agent(mcts-simulator)，输入方案描述、假设、约束条件。收集所有模拟结果后汇总对比",
+  "args": ["survivors"],
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "V": { "type": "number", "description": "综合评分" },
+        "risk": { "type": "string", "description": "主要风险" },
+        "bottleneck": { "type": "string", "description": "关键瓶颈" }
+      },
+      "required": ["name", "V", "risk"]
+    }
+  }
+}
