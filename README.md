@@ -35,8 +35,8 @@ Every step feeds back into memory. Every run makes the next one sharper.
 
 ### What makes it different
 
-| | Capability | Why It Matters |
-|---|---|---|
+| Capability | Why It Matters |
+|---|---|
 | 🎯 **Requirement Refinement** | The first phase isn't analysis — it's making sure you're solving the right problem. Iterative, option-based questioning until the picture is clear. |
 | 🌪️ **Frame-breaking** | Not "think harder." A structured 5-step cognitive process (empty the mind → focus → wander → image → connect) to force genuinely unexpected insights. |
 | 👁️ **Blindspot Discovery** | 8 dimensions × independent agents systematically scan for what you didn't know you were missing. Surfaces the hidden assumptions before they become blindspots in your decision. |
