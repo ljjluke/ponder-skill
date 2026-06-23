@@ -8,6 +8,8 @@ license: MIT
 
 ## 流程
 
+⛔ 禁止做任何环境检查、配置验证、文件扫描等与用户问题无关的操作。直接开始。
+
 ### 沟通需求
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
 产出: userRequest + userProfile。
