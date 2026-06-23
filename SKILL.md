@@ -14,11 +14,11 @@ license: MIT
 - 必须使用用户的问题领域语言
 - 每步至少输出 3 行推理过程，不能只有结论
 
-### Step 1: 采访
+### 沟通需求
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
 产出: userRequest + userProfile。
 
-### Steps 2-9
+### 分析阶段
 
 ⛔ 每步必须按以下顺序完整执行，跳过任何一步即算流程失败:
 
@@ -30,16 +30,16 @@ license: MIT
 5. 后置: 必须做清晰度评分，不做不能进入下一步
 ```
 
-| # | 步骤 | 提示文件 | 目标 | 做法 |
-|---|------|---------|------|------|
-| 2 | 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行 |
-| 3 | 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行 |
-| 4 | 八卦镜 | scripts/prompts/bagua.json | 8维度评分 | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
-| 5 | 方案 | scripts/prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
-| 6 | 收敛 | scripts/prompts/converge.json | 保留最优 | 主线程直行 |
-| 7 | 推演 | scripts/prompts/simulate.json | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
-| 8 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案一个 agent(debater)，全部返回后汇总 |
-| 9 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
+| 阶段 | 提示文件 | 目标 | 做法 |
+|-----|---------|------|------|
+| 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行 |
+| 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行 |
+| 八卦镜 | scripts/prompts/bagua.json | 8维度评分 | 每维度一个 agent(dimension-evaluator)，全部返回后汇总 |
+| 方案 | scripts/prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
+| 收敛 | scripts/prompts/converge.json | 保留最优 | 主线程直行 |
+| 推演 | scripts/prompts/simulate.json | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
+| 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案一个 agent(debater)，全部返回后汇总 |
+| 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
 ### ⛔ 清晰度评分（不做不能进入下一步）
 
@@ -55,15 +55,15 @@ license: MIT
 4. 必须输出到对话: "清晰度评分: [finalScore]（算法分 [algoScore]×0.35 + LLM分 [clarity_score]×0.65）"
 
 5. if finalScore ≥ 0.55:
-     "✅ 通过 → 继续下一步"
+     "✅ 通过 → 继续"
      必须调用 orchestrate.js step <步骤名> <问题类型> '<步骤产出JSON>' 存产出
    else:
      "❌ 清晰度不足"
      ⛔ 必须逐个 AskUserQuestion(user_questions)，不清必须重做该步，不能跳过
 ```
 
-### Step 10: 呈现
-逐项展示每步推理链和结论。必须遵守输出铁律。
+### 呈现结论
+逐项展示推理链和结论。必须遵守输出铁律。
 
 ### 流程结束后
 ```
