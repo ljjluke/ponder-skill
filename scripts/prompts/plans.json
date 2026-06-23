@@ -3,7 +3,7 @@
   "label": "方案",
   "stepGoal": "根据问题复杂度生成5-10个可选方案",
   "agent_ref": "agents/solution-generator.md",
-  "prompt": "根据问题复杂度生成5-10个方案,每个:名称+依据+条件。简单问题5-6个,复杂问题8-10个。方案之间要有本质差异,不能只是微调。每方案起一个 agent，定义见 agents/solution-generator.md",
+  "prompt": "根据问题复杂度生成5-10个方案,每个:名称+依据+条件。简单问题5-6个,复杂问题8-10个。方案之间要有本质差异,不能只是微调。方案的可行性假设必须标注（不能把未经证实的假设当事实）。每方案起一个 agent，定义见 agents/solution-generator.md",
   "args": ["key_finding"],
   "schema": {
     "type": "object",
