@@ -7,8 +7,8 @@
 <h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
-  <b>A self-evolving cognitive framework for Claude Code.</b><br>
-  <i>Data-driven · Code-enforced · Self-evolving</i>
+  <b>A thinking engine for Claude Code — not a prompt, a cognitive framework.</b><br>
+  <i>Domain-agnostic · Self-learning · Code-structured</i>
 </p>
 
 <p align="center">
@@ -21,182 +21,115 @@
 
 ---
 
-## ✨ What Makes Ponder Different
+## ✨ Why Ponder
 
-Most LLM tools answer immediately — and miss the mark. Ponder activates a **complete thinking circuit** before answering. Every step is **code-enforced**, not prompt-suggested.
+Most LLM tools answer the moment you ask. Ponder **thinks before it speaks** — through a structured sequence of analysis phases, each with its own thinking framework, independent evaluators, and user checkpoints. The result isn't faster answers. It's **answers worth waiting for**.
 
 ```
-┌─ You ask a question ────────────────────────────────┐
-│                                                      │
-│  Interview → Orchestrator → Pipeline(7 phases)       │
-│           → Store → Evolve → Next round is smarter   │
-│                                                      │
-│  Each step: clear? → proceed. Unclear? → loop.       │
-│  Every run feeds back into the next.                 │
-│                                                      │
-└──────────────────────────────────────────────────────┘
+You ask → Requirement refinement → Frame-breaking → Multi-perspective scan
+       → Blindspot discovery → Solution generation → 8-dimension scoring
+       → Simulation → Debate under fire → User confirmation → Final output
+
+Every step feeds back into memory. Every run makes the next one sharper.
 ```
 
-### 🎯 Core Differentiators
+### What makes it different
 
-| | Feature | Why It Matters |
+| | Capability | Why It Matters |
 |---|---|---|
-| 🎯 **Data-driven** | Every claim requires a source. LLM cannot fabricate. |
-| 🔄 **Code-enforced depth loop** | Not clear? Loop deeper. `is_clear` + question-count dual check prevents LLM cheating. |
-| 🚫 **Step enforcement** | All 7 phases mandatory. Code checks, not prompt rules. |
-| 💡 **Self-evolving** | `evolve.js` detects bottlenecks, generates fixes, auto-applies via rules. |
-| 🏛️ **Ten Heavenly Stems framework** | 甲木→乙木→...→癸水 — domain-agnostic simulation with fixed weights, no LLM-decided scoring. |
-| 🌪️ **Frame-breaking** | External anchor forces unexpected connections — not "think harder" |
-| 🔍 **Falsification gate** | Must find evidence against own conclusion or go back. No fake confidence. |
-| 🧠 **MMA Memory** | Knowledge accumulates with use, context+emotion matching, multi-language. |
-| 🔄 **Reconsolidation** | Recalled memory can be modified within 30min — like human brain |
-| 🧹 **Knowledge grooming** | Unused auto-decays, low-quality sleeps, frequently used upgrades. |
-
-<br>
+| 🎯 **Requirement Refinement** | The first phase isn't analysis — it's making sure you're solving the right problem. Iterative, option-based questioning until the picture is clear. |
+| 🌪️ **Frame-breaking** | Not "think harder." A structured 5-step cognitive process (empty the mind → focus → wander → image → connect) to force genuinely unexpected insights. |
+| 👁️ **Blindspot Discovery** | 8 dimensions × independent agents systematically scan for what you didn't know you were missing. Surfaces the hidden assumptions before they become blindspots in your decision. |
+| 📊 **8-Dimension Scoring** | Every proposed solution is scored across 8 orthogonal dimensions (feasibility, resilience, risk, penetration...) by independent agents. No single-point rating. |
+| ⚔️ **Debate Under Fire** | Solutions don't just get compared — they get attacked. Each solution faces combined criticism from all others. The winner is the one that survives, not the one that sounds best. |
+| 🧠 **Persistent Memory** | Every analysis is stored as structured knowledge. Future runs automatically recall top-3 most relevant past experiences per phase. The system gets smarter with use. |
+| 🔄 **Self-Learning** | Weight registry adjusts coefficients based on real outcomes. Knowledge grooming decays unused data, promotes valuable patterns, sleeps low-quality entries. |
+| 🎯 **User Confirmation** | The system doesn't push conclusions. It presents recommendations, surfaces remaining blindspots and assumptions, and asks you to confirm before finalizing. |
 
 ---
 
-## 🏗 Architecture
+## 🏗 Architecture at a Glance
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        ORCHESTRATOR (scripts/orchestrate.js)         │
-│  before: loads rules + history + error warnings → passes to pipeline │
-│  after:  stores step outputs + collects metrics + grooming           │
-├─────────────────────────────────────────────────────────────────────┤
-│                     PONDER PIPELINE (7 Phases)                        │
-│                                                                       │
-│      Divergence ──→ Dimension ──→ Plans ──→ Simulation(parallel)     │
-│      (6perspectives)  (8 dimensions)   (5-8plans)  (Ten Stems × N)  │
-│          │                │               │              │           │
-│          ←───   Depth Loop (is_clear + questions check)  ───→        │
-│                                                                       │
-│      Debate ──→ Synthesis ──→ Verification ──→ Output                │
-│      (ranked)   (conclusion)   (independent)                         │
-│                                                                       │
-│      Each step: loads top-3 historical matches from MMA              │
-├─────────────────────────────────────────────────────────────────────┤
-│                     SELF-EVOLUTION (scripts/evolve.js)                 │
-│  Reads metrics → detects bottlenecks → auto-generates fixes         │
-│  Clarity scoring: is_clear×20% + questions×25% + field_fill×30%     │
-│                   + verification×25% (not just LLM self-assessment)  │
-│  Auto-fix: generates prepend_step rules → deploy/rollback           │
-├─────────────────────────────────────────────────────────────────────┤
-│                     MMA MEMORY (Meridian Memory Algorithm)            │
-│  Stores step history with natural language (not JSON)                │
-│  Semantic matching with Chinese/Japanese/Korean support              │
-│  Knowledge grooming: unused → decay, low-quality → sleep,            │
-│                      frequent → auto-promote                         │
-│  Step history: 72 entries across all 7 steps                         │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                    ORCHESTRATOR (SKILL.md)                        │
+│  The only orchestrator. No pipeline, no workflow engine.          │
+│  LLM reads SKILL.md → executes phases in order → done.           │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─ Requirement Refinement ──────────────────────────────────┐   │
+│  │  AskUserQuestion (one at a time) → Tian/Di/Ren/Fa/Wu      │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                              │                                    │
+│                              ▼                                    │
+│  ┌─ Analysis Sequence ───────────────────────────────────────┐   │
+│  │                                                           │   │
+│  │  神思 Frame-breaking      → 主线程，反直觉发现             │   │
+│  │  发散 6-Perspective Scan  → 主线程，多角度审视             │   │
+│  │  八卦镜 Blindspot Hunt    → 8 agents × 1 dimension        │   │
+│  │  方案 Solution Generation → N agents × 1 plan             │   │
+│  │  方案评分 8-D Scoring     → N agents × 8 dimensions       │   │
+│  │  收敛 Convergence         → 主线程，依据评分淘汰           │   │
+│  │  推演 Simulation          → N agents (mcts-simulator)     │   │
+│  │  辩论 Debate/Attack       → 立论 + 围攻 + 抗压排名         │   │
+│  │  用户确认 User Confirm    → LLM推荐 + 检查遗留盲点         │   │
+│  │  综合 Final Conclusion    → 完整结论+风险+建议             │   │
+│  │                                                           │   │
+│  │  Each phase: load top-3 history → read prompt JSON        │   │
+│  │              → read engine doc → execute → display → store│   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                              │                                    │
+│                              ▼                                    │
+│  ┌─ MMA MEMORY (Meridian Memory Algorithm) ──────────────────┐   │
+│  │  12 primary meridians × knowledge points                  │   │
+│  │  Semantic matching (CJK/EN) · Natural language storage    │   │
+│  │  Knowledge grooming: decay/promote/sleep/archival         │   │
+│  │  Emotional modulation · Reconsolidation window(30min)     │   │
+│  │  WAL + shard locking + atomic writes                     │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                              │                                    │
+│                              ▼                                    │
+│  ┌─ UTILITY SCRIPTS (called when needed) ───────────────────┐   │
+│  │  orchestrate.js  — store output, query history, finalize │   │
+│  │  mcts_compute.js — math engine (UCB, hexagrams, gates)   │   │
+│  │  mcts_guard.js   — compliance checkers                    │   │
+│  │  clarity-check.js — quality scoring (currently disabled)  │   │
+│  │  evolve.js       — offline evolution analysis            │   │
+│  └───────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
 ```
-
-<br>
 
 ---
 
-## 💬 Requirement Refinement — What You Say ≠ What You Need
+## 💡 The Core Insight
 
-Most users describe symptoms, not root causes. The first phase of this framework **grills your requirements until they make sense**.
+**Most bad decisions come from blindspots, not bad reasoning.**
 
-```
-You: "Help me pick a code editor"
-  ↓ Interview phase
-Framework: What kind of project? Team size? Top priority?
-  ↓
-You: "Actually I don't need a tool, I need to catch up on a delayed project"
-  ↓ Requirements clarified, analysis stays on track
-```
+Ponder doesn't just think harder — it thinks **from different positions**. Each phase changes the observer's vantage point:
 
-Not a one-shot questionnaire — it probes, follows up, and keeps drilling until the picture is clear.
-If 15 rounds aren't enough, it keeps going. No cap.
-You don't need to know what you want before asking — that's the framework's job.
+- **神思** changes your mental state (empty → focused → wandering)
+- **发散** changes your scale (cosmic → microscopic → time-compressed → time-expanded)
+- **八卦镜** changes your dimension (force → foundation → risk → boundary → balance)
+- **方案评分** changes your criteria (feasibility → resilience → penetration → value)
+- **辩论** changes your loyalty (defend → attack → survive)
+
+By the end, you've seen the problem from 20+ distinct vantage points. The blindspots that survive that many angles are few.
+
+---
 
 ## 🔄 How Memory Works
 
 ```
-Each step executes → orchestrate.js step() saves output to MMA →
+Each step executes → orchestrate.js step saves output to MMA
   (natural language, not JSON — semantic matching ready)
 
-Next similar question → each step independently queries:
-  1. recallStepHistory() — loads 20 candidates for that step
-  2. LLM filters → top 3 most relevant
-  3. Injects into step prompt
+Next similar question → node scripts/orchestrate.js history <phase> <type>
+  → returns top-3 most relevant historical matches
+  → injected into phase prompt as reference
 
-Data accumulates → more candidates → better top-3 → more accurate
+Old data decays → unused knowledge sleeps → low quality archived
+  → frequently used auto-promotes to CONFIRMED status
 ```
-
-### Memory Format
-
-Step history is stored in natural language (extracted from structured outputs):
-
-```
-[step:divergence] 技术选型: React在大型项目中更有优势,Vue在中小项目中效率更高
-[step:dimension] 市场分析: 竞争加剧导致获客成本上升,差异化是关键
-[step:simulation] 方案A: 木0.85→火0.78→土0.82→金0.75→水0.68 → V=0.78
-```
-
-Not JSON — so semantic matching works across Chinese, English, Japanese, Korean.
-
-<br>
-
----
-
-## 🔄 How Self-Evolution Works
-
-```
-evolve.js analyze() →
-  Reads 35+ pipeline runs from metrics
-  Groups by question type (技术选型, 市场分析, 学习规划...)
-  Computes verified clarity per step per type
-  
-  Detects problems:
-    clarity < 70% → generates auto-fix
-    questions > 2 → suggests pre-interview
-    patterns → creates prepend_step rules
-  
-  auto-fix → written to auto-fixes/ → deploy-fix → evolve-rules.json
-                                    → rollback-fix → removed
-```
-
-### Clarity Assessment (Not LLM Self-Judgment)
-
-```
-verifiedClarity = is_clear × 20% (lowest weight, LLM can lie)
-                + question_penalty × 25% (behavioral signal)
-                + field_fill_rate × 30% (objective structural check)
-                + verification × 25% (independent verifier judgment)
-```
-
-The clarity score is NOT what the LLM says — it's a multi-signal composite that the LLM cannot manipulate.
-
-### Ten Heavenly Stems Simulation Framework
-
-```
-Fixed 10-dimension evaluation (domain-agnostic):
-  阳干(×1.0): 甲木规划, 丙火推进, 戊土产出, 庚金效率, 壬水应变
-  阴干(×0.8): 乙木执行, 丁火调整, 己土品质, 辛金精简, 癸水储备
-
-V = Σ(achievement × weight) / Σ(weight)
-  achievement = LLM simulates process, not self-judgment
-  weights = fixed by yin-yang, not LLM-decided
-```
-
-<br>
-
----
-
-## 🧘 Philosophical Grounding
-
-| Concept | Origin | Application |
-|---------|--------|-------------|
-| 十天干 (Ten Heavenly Stems) | Chinese Calendar | 10-dimension simulation evaluation |
-| 五行 (Five Elements) | Chinese Philosophy | Phase relationships for weight derivation |
-| 阴阳 (Yin-Yang) | Taoism | Active/passive dimension splitting (阳=1.0, 阴=0.8) |
-| 八卦镜 (Bagua Mirror) | I Ching | 8-dimension cross-check |
-| 天时/地利/人和 | Chinese Strategy | User profile dimensions |
-
-<br>
 
 ---
 
@@ -230,58 +163,52 @@ claude
 
 Default: `~/.claude/data/skills/ponder/`
 
-<br>
-
 ---
 
 ## 📁 Project Structure
 
 ```
 ponder-skill/
-├── SKILL.md                    # Orchestrator instructions
+├── SKILL.md                        # Single orchestrator — no pipeline, no workflow
+├── agents/                         # Sub-agent definitions (each = one role)
+│   ├── dimension-evaluator.md      # Blindspot finder per dimension
+│   ├── solution-generator.md       # Independent plan generator
+│   ├── debater.md                  # Solution advocate (opening stance)
+│   └── mcts-simulator.md           # Scenario simulator
+├── engine/                         # Thinking frameworks (one per phase)
+│   ├── shensi.md / divergence.md / bagua.md
+│   ├── converge.md / debate.md / synthesis.md
+│   └── mcts-constraint.md / mcts-predictive.md / td-learner.md
 ├── scripts/
-│   ├── step-shensi.wf.js       # Step 1: Frame-breaking (counter-intuitive)
-│   ├── step-divergence.wf.js   # Step 2: Divergence (6 perspectives)
-│   ├── step-bagua.wf.js        # Step 3: Dimension (8 dimensions)
-│   ├── step-plans.wf.js        # Step 4: Plans (5-8 plans)
-│   ├── step-converge.wf.js     # Step 5: Converge (eliminate weak plans)
-│   ├── step-simulate.wf.js     # Step 6: Simulate (parallel 10 stems)
-│   ├── step-debate.wf.js       # Step 7: Debate (ranking + refutation)
-│   ├── step-synthesis.wf.js    # Step 8: Synthesis (conclusion + risk)
-│   ├── orchestrate.js          # Before/after orchestrator
-│   ├── evolve.js               # Self-evolution engine
-│   ├── knowledge.js            # Memory: store/recall/semantic matching
-│   ├── pipeline-metrics.js     # Run metrics collector
-│   └── mma/                    # Meridian Memory Algorithm
-│       ├── decay.js            # Knowledge grooming
-│       ├── deqi.js             # Recall engine
-│       ├── reinforce.js        # Value update
-│       └── io.js               # Persistent storage with shard locking
-├── hooks/hooks.json            # Session lifecycle
-├── scripts/evolve-rules.json   # Verified evolution rules
-└── pipeline-meta.json          # Step weights & evolution tracking
+│   ├── orchestrate.js             # Step persistence, history query, finalize
+│   ├── mcts_compute.js            # Math engine (80+ commands)
+│   ├── mcts_guard.js              # Compliance guards (15 checkers)
+│   ├── mcts_tree.js               # Tree data structure (optional)
+│   ├── knowledge.js               # MMA memory interface
+│   ├── prompts/                   # Phase prompt templates + schemas
+│   │   ├── shensi.json / divergence.json / bagua.json
+│   │   ├── plans.json / simulate.json / converge.json
+│   │   ├── debate.json / synthesis.json
+│   └── mma/                       # Meridian Memory Algorithm (12 modules)
+│       ├── io.js / deqi.js / ashi.js / reinforce.js / decay.js
+│       ├── constants.js / state_machine.js / ziwu.js
+│       ├── diagnosis.js / cluster.js / audit.js / user_profile.js
+├── hooks/hooks.json               # Session lifecycle
+└── pipeline-meta.json             # Evolutionary metadata
 ```
-
-<br>
 
 ---
 
-## 📊 Maturity
+## 🧘 Design Philosophy
 
-| Component | Status | Description |
-|-----------|--------|-------------|
-| 8-step pipeline | ✅ **Active** | Divergence → Dimension → Plans → Simulate → Debate → Synthesize → Verify |
-| Ten Stems simulation | ✅ **Active** | Parallel agent simulation with fixed-weight V scoring |
-| MMA memory | ✅ **Active** | Knowledge grows with use, semantic matching, knowledge grooming |
-| Self-evolution | ✅ **Active** | `evolve.js` detects bottlenecks, auto-generates fixes, deploys rules |
-| Semantic matching | ✅ **Active** | Chinese/Japanese/Korean support, natural language format |
-| Knowledge grooming | ✅ **Active** | Unused decay, low-quality sleep, frequent promote |
-| Orchestrator | ✅ **Active** | `orchestrate.js before/after` — LLM has no room to forget |
-| MCTS tree search | ⏳ **Available** | Code in `mcts_tree.js`, not yet wired to pipeline |
-| TD(lambda) learning | ⏳ **Available** | Weight registry exists, not yet triggered |
-| Custom data directory | ✅ **Active** | `PONDER_DATA_DIR` env var support |
-
-<br>
+| Principle | Meaning |
+|-----------|---------|
+| **No hidden orchestration** | SKILL.md is the only orchestrator. What you read is what executes. |
+| **Isolate only when necessary** | Sub-agents only for truly parallel, independent work (dimensions, plans, simulations). Everything else runs in the main thread. |
+| **Code structure, not code enforcement** | Prompts guide, schemas constrain, agents specialize. No workflow engine, no pipeline runner. |
+| **Domain-agnostic by design** | All dimensions, frameworks, and prompts use domain-neutral language. No assumptions about software, finance, or any vertical. |
+| **Memory as a first-class citizen** | Every output persists. Every run enriches the next. Knowledge has a lifecycle: born as HYPOTHESIS, matures to CONFIRMED, decays to SLEEPING, or dies as REFUTED. |
+| **Output fit for human consumption** | No JSON, no bash commands, no framework jargon in user-facing output. Tables where appropriate, narrative where better. |
 
 ---
 
