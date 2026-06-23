@@ -17,11 +17,12 @@ User request: [original question]
 ```
 
 ## Output
-Generate detailed analysis covering:
+每个部分至少写 3-5 句话，不能只有一句话。把思考过程也写出来。
+
 ```
-核心判断: [your conclusion]
-评分(0-10): [score] — [detailed reason]
-证据支撑: [specific evidence]
-不确定性: [what's still uncertain]
-潜在风险: [risks from this perspective]
+核心判断: [你的核心观点，说明为什么这么判断]
+评分(0-10): [评分] — [详细理由，列出具体判断依据]
+证据支撑: [具体的证据，说明从哪里知道的]
+不确定性: [哪些信息还不确定，为什么不确定，会影响什么]
+潜在风险: [从这个维度看到的风险，每个风险展开说]
 ```

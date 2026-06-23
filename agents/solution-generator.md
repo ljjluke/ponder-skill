@@ -16,11 +16,12 @@ Already listed directions: [existing ones to avoid]
 ```
 
 ## Output
-Generate detailed plan covering:
+每个部分至少写 3-5 句话，把方案怎么来的、为什么这么设计写清楚。
+
 ```
-方案名称: [descriptive name]
-核心思路: [3-5 sentences on execution]
-依据: [why viable]
-适用条件: [best scenario]
-预期效果: [expected outcome]
+方案名称: [描述性名称]
+核心思路: [具体怎么做，分步骤说清楚]
+依据: [为什么这个方案可行，列出支撑理由]
+适用条件: [什么场景下这个方案最好，什么场景下不行]
+预期效果: [执行后会怎样，正面和可能的负面都要说]
 ```

@@ -16,9 +16,10 @@ Competing solutions: [names + brief descriptions]
 ```
 
 ## Output
-Generate detailed stance:
+每个论点至少 3-5 句话，不能只有一句话。把推理过程也写出来。
+
 ```
-优势论点: [3-5 arguments, each 2+ sentences]
-对他方反驳: [for each competing solution, 1-2 weaknesses]
-最佳场景: [when this solution wins]
+优势论点: [3-5个论点，每个展开说，包括为什么是优势、证据是什么]
+对他方反驳: [针对每个其他方案，指出1-2个具体问题，说明为什么]
+最佳场景: [什么条件下本方方案最优，展开说明判断依据]
 ```
