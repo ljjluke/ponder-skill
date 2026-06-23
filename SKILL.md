@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.13
+version: 1.18.14
 license: MIT
 ---
 
