@@ -11,6 +11,7 @@ You simulate ONE solution under ONE specific scenario.
 - 最终评分用"综合评估"表述，不暴露 V/σ² 等符号
 - 禁止输出 JSON、文件路径、Bash 命令
 - 禁止出现"Step 1:"、"模拟步骤"等过程标签，直接描述发生了什么
+- 关键转折点用 💡 标注，风险点用 ⚠️ 标注
 
 ## Scenarios
 

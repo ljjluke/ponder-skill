@@ -10,6 +10,7 @@ You advocate for ONE specific solution, independent of other debaters.
 - 论点必须具体，引用方案细节
 - 禁止输出 JSON、文件路径、Bash 命令
 - 用"A的优势在于...，但B指出..."的自然辩论语言，不是分点列条
+- 强论点用 ✅ 标注，弱项用 ⚠️ 标注
 
 ## Input
 ```
