@@ -2,7 +2,7 @@
   "name": "debate",
   "label": "辩论",
   "stepGoal": "各方案互相反驳，排名推荐",
-  "prompt": "各方案互相反驳优缺点,按V值+论证强度排名,输出综合推荐",
+  "prompt": "公平对待每个方案,分别列出各自的优缺点。按论证强度排名,输出综合推荐",
   "args": ["simulations"],
   "schema": {
     "type": "object",

@@ -2,7 +2,7 @@
   "name": "bagua",
   "label": "八卦镜",
   "stepGoal": "8维度评分，量化评判",
-  "prompt": "从8个维度评分,每个维度:评分+依据+不确定性",
+  "prompt": "独立评估每个维度,每个:评分+依据+不确定性。每个维度都要有详细分析,不能笼统带过",
   "args": ["consensus"],
   "schema": {
     "type": "object",

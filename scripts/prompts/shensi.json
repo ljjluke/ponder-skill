@@ -1,13 +1,13 @@
 {
   "name": "shensi",
   "label": "神思",
-  "stepGoal": "反直觉发现，突破常规思维",
-  "prompt": "虚静→神凝→神游→意象→言意。产出至少1个反直觉发现",
+  "stepGoal": "跳出常规思维，找到不一样的角度",
+  "prompt": "虚静→神凝→神游→意象→言意。产出至少1个跳出常规的新视角",
   "args": ["userRequest", "userProfile"],
   "schema": {
     "type": "object",
     "properties": {
-      "counter_intuitive": { "type": "string", "description": "反直觉发现" },
+      "counter_intuitive": { "type": "string", "description": "跳出常规的视角" },
       "insight": { "type": "string", "description": "洞察" }
     },
     "required": ["counter_intuitive", "insight"]

@@ -2,7 +2,7 @@
   "name": "plans",
   "label": "方案",
   "stepGoal": "生成5-8个可选方案",
-  "prompt": "生成5-8个方案,每个:名称+依据+条件",
+  "prompt": "生成5-8个方案,每个:名称+依据+条件。方案之间要有本质差异,不能只是微调",
   "args": ["key_finding"],
   "schema": {
     "type": "object",
