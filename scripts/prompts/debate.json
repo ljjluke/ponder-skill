@@ -4,7 +4,7 @@
   "stepGoal": "各方案互相反驳，排名推荐",
   "engine_ref": "engine/debate.md",
   "agent_ref": "agents/debater.md",
-  "prompt": "辩论规则:\n1. 每方案起一个 agent(debater)做立论（并行），全部返回后展示每个立论\n2. 第二轮回合: 每方案起一个 agent(critic)评估该方案在承受其他所有方案的批评后还能得多少分。每个 critic 独立运行，不看其他 critic 的结果\n3. 按抗压评分排名，输出综合推荐\n\n定义见 agents/debater.md。自检清单见 engine/mcts-converge.md",
+  "prompt": "辩论规则:\n1. 每方案起一个 agent 做立论（并行），全部返回后展示每个立论\n2. 第二轮回合: 每方案起一个 agent 用其他所有方案的论点**攻击**该方案，评估它扛住攻击后还能得多少分。每个 agent 独立运行，标注为'攻击:方案名'\n3. 按抗压评分排名，输出综合推荐\n\n定义见 agents/debater.md。自检清单见 engine/mcts-converge.md",
   "args": ["simulations"],
   "schema": {
     "type": "object",
