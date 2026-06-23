@@ -12,7 +12,7 @@ license: MIT
 
 ### 沟通需求
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
-产出: userRequest + userProfile。
+沟通完成后用一两句话总结用户需求（不单独展示画像表格）。
 
 ### 分析阶段
 
