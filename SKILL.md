@@ -40,14 +40,12 @@ license: MIT
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名 |
 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
-### ⛔ 清晰度检查（内部执行，不输出评分过程）
+### ⛔ 质量自检（内部，不输出）
 
 ```
-1. 调用 node scripts/clarity-check.js '<步骤产出的JSON>' <步骤名>
-2. if algoScore ≥ 0.7 AND 无 warning:
-     后台调用 orchestrate.js step 存产出，继续下一步
-   else:
-     清晰度不足，修正后重做该步
+检查产出: 无模糊词(可能/大概/也许)、字段完整、有实质内容
+通过 → orchestrate.js step 存产出（后台），继续
+不通过 → 修正后重做
 ```
 
 ### 呈现结论
