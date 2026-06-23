@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.18.1-blue?style=flat-square" alt="version">
+  <img src="https://img.shields.io/badge/version-1.18.2-blue?style=flat-square" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="status">
 </p>
@@ -74,7 +74,7 @@ Most LLM tools answer immediately — and miss the mark. Ponder activates a **co
 │      Debate ──→ Synthesis ──→ Verification ──→ Output                │
 │      (ranked)   (conclusion)   (independent)                         │
 │                                                                       │
-│      Each step: loads top-8 historical matches from MMA              │
+│      Each step: loads top-3 historical matches from MMA              │
 ├─────────────────────────────────────────────────────────────────────┤
 │                     SELF-EVOLUTION (scripts/evolve.js)                 │
 │  Reads metrics → detects bottlenecks → auto-generates fixes         │
@@ -115,18 +115,15 @@ You don't need to know what you want before asking — that's the framework's jo
 ## 🔄 How Memory Works
 
 ```
-Every pipeline run → orchestrator after() →
-  1. storeStepOutput() — saves each phase's output to MMA
-     (natural language, not JSON — semantic matching ready)
-  2. Collect metrics to pipeline-metrics
-  3. Knowledge grooming
+Each step executes → orchestrate.js step() saves output to MMA →
+  (natural language, not JSON — semantic matching ready)
 
-Next similar question → orchestrator before() →
-  1. recallStepHistory() — loads 20 candidates per step
-  2. LLM filters → top 8 most relevant
-  3. Injects into phase prompts
+Next similar question → each step independently queries:
+  1. recallStepHistory() — loads 20 candidates for that step
+  2. LLM filters → top 3 most relevant
+  3. Injects into step prompt
 
-Data accumulates → more candidates → better top-8 → more accurate
+Data accumulates → more candidates → better top-3 → more accurate
 ```
 
 ### Memory Format

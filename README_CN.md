@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/版本-1.18.1-blue?style=flat-square" alt="版本">
+  <img src="https://img.shields.io/badge/版本-1.18.2-blue?style=flat-square" alt="版本">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="许可">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="状态">
 </p>
@@ -72,7 +72,7 @@
 │  辩论 ──→ 综合 ──→ 验证 ──→ 输出                                     │
 │  排名      结论      独立审查                                          │
 │                                                                       │
-│  每步: 从MMA加载历史top8 → LLM筛选 → 注入prompt                      │
+│  每步: 从MMA加载历史top3 → LLM筛选 → 注入prompt                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                      自进化引擎 (scripts/evolve.js)                    │
 │  读指标 → 检测模式 → 自动生成修复                                    │
@@ -112,18 +112,15 @@
 ## 🔄 记忆怎么工作
 
 ```
-每次管道运行 → orchestrate after() →
-  1. storeStepOutput() → 每步输出存进MMA
-     (自然语言,不是JSON — 语义匹配可用)
-  2. 收集指标到pipeline-metrics
-  3. 知识保洁
+每次步骤执行完 → orchestrate.js step() 存产出到MMA →
+  (自然语言,不是JSON — 语义匹配可用)
 
-下次同类问题 → orchestrate before() →
-  1. recallStepHistory() → 每步加载20条候选
-  2. LLM筛选 → 最相关的top8
+下次同类问题 → 每步独立查询:
+  1. recallStepHistory() → 加载20条候选
+  2. LLM筛选 → 最相关的top3
   3. 注入步骤prompt
 
-数据越积累 → 候选越多 → top8越准 → 分析越精准
+数据越积累 → 候选越多 → top3越准 → 分析越精准
 ```
 
 ### 存储格式
@@ -146,7 +143,7 @@
 
 ```
 evolve.js analyze() →
-  读取35+次管道运行记录
+  读取35+次运行记录
   按问题类型分组(技术选型/市场分析/学习规划...)
   计算每类问题的每步验证清晰度
 
@@ -232,27 +229,46 @@ claude
 ```
 ponder-skill/
 ├── SKILL.md                    # LLM编排指令(步骤顺序/错误处理)
+├── agents/                     # 子agent定义
+│   ├── dimension-evaluator.md  # 八卦镜维度评估
+│   ├── solution-generator.md   # 方案生成
+│   ├── debater.md              # 辩论立场
+│   └── mcts-simulator.md       # 推演模拟
 ├── scripts/
-│   ├── step-shensi.wf.js       # 步骤1: 神思(反直觉发现)
-│   ├── step-divergence.wf.js   # 步骤2: 发散(6视角)
-│   ├── step-bagua.wf.js        # 步骤3: 八卦镜(8维度)
-│   ├── step-plans.wf.js        # 步骤4: 方案(5-8方案)
-│   ├── step-converge.wf.js     # 步骤5: 收敛(淘汰弱方案)
-│   ├── step-simulate.wf.js     # 步骤6: 推演(并行十天干)
-│   ├── step-debate.wf.js       # 步骤7: 辩论(排名+反驳)
-│   ├── step-synthesis.wf.js    # 步骤8: 综合(结论+风险)
-│   ├── orchestrate.js          # 编排器(before/after)
+│   ├── orchestrate.js          # 步骤存储 + 流程收尾
+│   ├── mcts.js                 # 统一CLI入口
+│   ├── mcts_compute.js         # 数学引擎
+│   ├── mcts_guard.js           # 合规守卫
+│   ├── clarity-check.js        # 清晰度评分
 │   ├── evolve.js               # 自进化引擎
-│   ├── knowledge.js            # 记忆: 存储/召回/语义匹配
-│   ├── pipeline-metrics.js     # 运行指标收集
-│   └── mma/                    # 经络记忆算法
-│       ├── decay.js            # 知识保洁
+│   ├── knowledge.js            # 知识获取/存储/召回
+│   ├── pipeline-metrics.js     # 指标收集
+│   ├── weights.js              # 权重学习
+│   ├── prompts/                # 7个步骤的JSON prompt
+│   │   ├── shensi.json
+│   │   ├── divergence.json
+│   │   ├── bagua.json
+│   │   ├── plans.json
+│   │   ├── converge.json
+│   │   ├── debate.json
+│   │   └── synthesis.json
+│   └── mma/                    # MMA记忆算法
+│       ├── constants.js
+│       ├── io.js               # 分片存储
 │       ├── deqi.js             # 知识召回
+│       ├── ashi.js             # 知识插入
 │       ├── reinforce.js        # 价值更新
-│       └── io.js               # 分片存储
+│       ├── decay.js            # 记忆衰减
+│       ├── ziwu.js             # 子午流注
+│       ├── diagnosis.js        # 八纲辨证
+│       ├── state_machine.js    # 状态机
+│       ├── cluster.js          # 知识集群
+│       ├── audit.js            # 知识审计
+│       └── user_profile.js     # 用户画像
+├── engine/                     # 引擎文档
 ├── hooks/hooks.json            # 会话生命周期
-├── scripts/evolve-rules.json   # 已验证的进化规则
-└── pipeline-meta.json          # 步骤权重 & 进化追踪
+├── scripts/evolve-rules.json
+└── pipeline-meta.json
 ```
 
 <br>
