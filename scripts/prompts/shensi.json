@@ -7,7 +7,7 @@
     "engine/shensi.md",
     "engine/mcts-predictive.md"
   ],
-  "prompt": "按五步法思考:\n1. 虚静: 放下问题本身,停止用力思考,清空预设\n2. 神凝: 只取问题中最核心的一个矛盾点或意象\n3. 神游: 让思绪自由漫游,接受跳跃联想,不评判\n4. 意象: 留意浮现出来的画面、类比或印象\n5. 言意: 把第四步浮现的东西与当前问题连接\n产出至少1个跳出常规的新视角,不要只分析常规方向。需求画像见 engine/mcts-constraint.md，完整神思框架见 engine/mcts-diverge.md",
+  "prompt": "按五步法思考（内部使用，不输出过程标签）:\n1. 虚静: 放下问题本身\n2. 神凝: 找出核心矛盾\n3. 神游: 自由联想\n4. 意象: 留意浮现的画面\n5. 言意: 连接回问题\n\n产出至少1个跳出常规的新视角。**只输出结论，不输出思考过程标签（虚静/神凝等）**，直接用自然语言表达发现。需求画像见 engine/mcts-constraint.md",
   "args": ["userRequest", "userProfile"],
   "schema": {
     "type": "object",

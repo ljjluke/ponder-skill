@@ -16,7 +16,8 @@ license: MIT
 
 ### 分析阶段
 
-⛔ 每步必须按以下顺序完整执行，跳过任何一步即算流程失败。读文件用 Read 工具（不用 Bash），禁止 bash echo:
+⛔ 所有输出中不允许出现框架内部术语（神思/六视/八卦镜/V值/σ²/UCB等），用自然语言表达。
+⛔ 每步必须按以下顺序完整执行。读文件用 Read 工具（不用 Bash），禁止 bash echo:
 
 ```
 1. 前置: 查 top 3 历史（后台）
@@ -37,18 +38,14 @@ license: MIT
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 一轮立论→汇总展示→二轮反驳→汇总排名 |
 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
-### ⛔ 清晰度检查（不做不能进入下一步）
+### ⛔ 清晰度检查（内部执行，不输出评分过程）
 
 ```
 1. 调用 node scripts/clarity-check.js '<步骤产出的JSON>' <步骤名>
-   返回: { algoScore, fuzzyCount, fieldScore, warning }
-
 2. if algoScore ≥ 0.7 AND 无 warning:
-     "✅ 通过 → 继续"
-     必须调用 orchestrate.js step <步骤名> <问题类型> '<步骤产出JSON>' 存产出
+     后台调用 orchestrate.js step 存产出，继续下一步
    else:
-     "❌ 清晰度不足 — [warning 或 分数不足]"
-     检查问题所在，修正后重做该步
+     清晰度不足，修正后重做该步
 ```
 
 ### 呈现结论
