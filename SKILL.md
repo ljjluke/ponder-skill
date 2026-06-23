@@ -16,7 +16,7 @@ license: MIT
 
 主线程步骤 — 读 prompts/<name>.json → 替换参数 → 查 top 3 历史 → agent(prompt, schema) → 展示
 
-子 agent 步骤 — for each item: agent(input, {agentType}) → 立即展示 → 全部收集后汇总
+子 agent 步骤 — for each item: agent(input, {agentType}) → 立即展示全部返回内容（不可折叠） → 全部收集后汇总
 
 | # | 步骤 | agent 类型 |
 |---|------|-----------|
@@ -29,13 +29,14 @@ license: MIT
 | 8 | 辩论 | debater ×N |
 | 9 | 综合 | 主线程直行 |
 
-每步后 — 清晰度评分:
+每步后 — 清晰度评分，展示分数和结论:
 ```
 clarity-check.js → algoScore
 agent("评估质量...", schema) → llmScore
 综合 = algo×0.35 + llm×0.65
-≥0.55 → orchestrate.js step + 继续
-<0.55 → 追问 → 重试
+展示: "清晰度 X.XX（算法 X.XX ×0.35 + LLM X.XX ×0.65）"
+≥0.55 → "✅ 通过" → orchestrate.js step + 继续
+<0.55 → "❌ 重试" → 追问 → 重做该步
 ```
 
 ### Step 10: 呈现
