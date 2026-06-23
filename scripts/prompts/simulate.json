@@ -1,14 +1,9 @@
 {
   "name": "simulate",
-  "label": "推演",
-  "stepGoal": "模拟各方案的执行过程",
-  "engine_ref": [
-    "engine/mcts-simulate.md",
-    "engine/td-learner.md"
-  ],
-  "agent_ref": "agents/mcts-simulator.md",
-  "tool_ref": ["scripts/mcts_tree.js"],
-  "prompt": "对每个幸存方案单独进行模拟。每方案起一个 agent，定义见 agents/mcts-simulator.md。输入方案描述、假设、约束条件。各方案模拟相互隔离。完整推演框架（UCB选择、回溯、收敛判断）见 engine/mcts-simulate.md。模拟结果的价值更新和知识生命周期见 engine/td-learner.md。MCTS树结构操作见 scripts/mcts_tree.js。收集所有模拟结果后汇总对比",
+  "label": "方案评分",
+  "stepGoal": "用8维度框架对每个幸存方案评分",
+  "engine_ref": ["engine/bagua.md"],
+  "prompt": "对每个幸存方案，从8个维度独立评分(0-10)，每方案起一个 agent。\n\nF1 可行性: 方案在现实条件下能不能落地？\nF2 基础: 方案依赖什么前提条件？这些条件成立吗？\nF3 应变: 方案遇到变化时有没有弹性？\nF4 穿透: 方案能不能真正解决问题，还是浮于表面？\nF5 风险: 方案最大的风险是什么？风险可控吗？\nF6 资源: 方案需要什么资源？资源可得性如何？\nF7 边界: 方案有没有触碰不可逾越的限制？\nF8 综合收益: 方案的综合收益是否大于成本？\n\n收集所有评分后汇总对比",
   "args": ["survivors"],
   "schema": {
     "type": "array",
@@ -16,11 +11,23 @@
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "V": { "type": "number", "description": "综合评分" },
-        "risk": { "type": "string", "description": "主要风险" },
-        "bottleneck": { "type": "string", "description": "关键瓶颈" }
+        "scores": {
+          "type": "object",
+          "properties": {
+            "feasibility": { "type": "number" },
+            "foundation": { "type": "number" },
+            "resilience": { "type": "number" },
+            "penetration": { "type": "number" },
+            "risk": { "type": "number" },
+            "resource": { "type": "number" },
+            "boundary": { "type": "number" },
+            "value": { "type": "number" }
+          }
+        },
+        "total": { "type": "number", "description": "综合评分" },
+        "key_finding": { "type": "string" }
       },
-      "required": ["name", "V", "risk"]
+      "required": ["name", "scores", "total"]
     }
   }
 }

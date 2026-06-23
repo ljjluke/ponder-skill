@@ -1,11 +1,11 @@
 {
   "name": "bagua",
   "label": "八卦镜",
-  "stepGoal": "8维度评分，量化评判",
+  "stepGoal": "发现盲点，找出被忽略的视角",
   "engine_ref": "engine/bagua.md",
   "agent_ref": "agents/dimension-evaluator.md",
   "tool_ref": ["scripts/mcts_compute.js hexagram-lookup"],
-  "prompt": "至少从8个维度独立评估（8个为标准框架，历史经验提示需要额外维度时增加），每个维度都必须有评分+依据+不确定性。\n\nF1 驱动力: 推动力的来源是什么?是内生还是外生?\nF2 基础: 这个问题的支撑基础是什么?地基稳吗?\nF3 变化: 哪里可能出现意外?潜在的变化因素?\nF4 渗透: 影响如何扩散?从哪里切入?\nF5 风险: 最大的坑在哪里?最坏情况?\nF6 依附: 表面现象下藏着什么?被忽略的东西?\nF7 边界: 什么绝对不能做?限制在哪里?\nF8 平衡: 各方利益如何调和?最优平衡点?\n\n⚠️ 参考已提供的历史经验上下文: 如果历史经验中有对当前问题有价值的维度或视角，应当纳入评估，不要局限于标准8个维度。\n\n每个维度都要有详细分析,不能笼统带过。指出哪个维度最异常,以及维度间的冲突。每维度起一个 agent 进行评估，定义见 agents/dimension-evaluator.md。完整八卦镜框架见 engine/mcts-diverge.md。维度交互可调 scripts/mcts_compute.js hexagram-lookup",
+  "prompt": "从8个维度审视问题，发现每个维度下用户可能没注意到的盲点。\n\nF1 驱动力: 真正驱动问题的是什么？有没有被忽略的推动力？\nF2 基础: 有哪些潜在的基础条件被忽略了？\nF3 变化: 哪些变化因素被低估或忽视了？\nF4 渗透: 问题的影响面可能比你以为的大在哪？\nF5 风险: 最大的隐藏风险是什么？大家都忽略了什么？\nF6 依附: 表面问题下藏着什么深层因素？\nF7 边界: 被忽略的边界或限制是什么？\nF8 平衡: 哪些相关方的视角没有被考虑到？\n\n每个维度输出1-2个具体的盲点发现。不需要评分，只需要揭示被忽略的视角。每维度起一个 agent，定义见 agents/dimension-evaluator.md",
   "args": ["consensus"],
   "schema": {
     "type": "object",
@@ -16,15 +16,14 @@
           "type": "object",
           "properties": {
             "name": { "type": "string" },
-            "score": { "type": "number", "description": "0-1" },
-            "evidence": { "type": "string" },
-            "uncertainty": { "type": "string" }
+            "blindspot": { "type": "string", "description": "盲点发现" },
+            "insight": { "type": "string", "description": "这个盲点为什么重要" }
           },
-          "required": ["name", "score", "evidence", "uncertainty"]
+          "required": ["name", "blindspot", "insight"]
         },
         "minItems": 8
       },
-      "key_finding": { "type": "string", "description": "关键发现" }
+      "key_finding": { "type": "string", "description": "最关键的盲点" }
     },
     "required": ["dimensions", "key_finding"]
   }
