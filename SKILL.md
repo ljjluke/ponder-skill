@@ -37,13 +37,14 @@ license: MIT
 | 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行 |
 | 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | 每维度一个 agent，全部返回后汇总 |
 | 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
-| 收敛 | scripts/prompts/converge.json | 保留最优 | 主线程直行 |
-| 方案评分 | scripts/prompts/simulate.json | 8维度评方案 | 每方案用8维评分，全部返回后汇总 |
+| 方案评分 | scripts/prompts/simulate.json | 8维度评方案 | 每方案一个 agent，用8维度评分，全部返回后汇总 |
+| 收敛 | scripts/prompts/converge.json | 依据评分保留最优 | 主线程直行 |
+| 推演 | — | 模拟幸存方案 | 每方案一个 agent(mcts-simulator) |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名 |
-| 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
+| 综合 | scripts/prompts/synthesis.json | 最终结论+风险 | 主线程直行 |
 
 ### 用户确认
-辩论排名后、输出最终结论前，先用几句话说明推荐倾向，用 AskUserQuestion 询问用户是否有补充或想调整的方向。用户回应后再进入最终结论。
+辩论后、最终结论前，简要总结问题盲点，用 AskUserQuestion 询问用户是否有补充或想调整的方向。用户回应后再出最终结论。
 
 ### 呈现结论
 用自然语言串联各阶段推理，不要出现"第X步"、"现在进入XX阶段"等机械标签。
