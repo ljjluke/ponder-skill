@@ -27,14 +27,24 @@ license: MIT
 | 8 | 辩论 | 每方案一个 agent(debater)，全部返回后汇总 |
 | 9 | 综合 | 主线程自己思考，直接输出 |
 
-每步后 — 清晰度评分，展示分数和结论:
+每步后 — 清晰度评分:
+
 ```
-clarity-check.js → algoScore
-agent("评估质量...", schema) → llmScore
-综合 = algo×0.35 + llm×0.65
-展示: "清晰度 X.XX（算法 X.XX ×0.35 + LLM X.XX ×0.65）"
-≥0.55 → "✅ 通过" → orchestrate.js step + 继续
-<0.55 → "❌ 重试" → 追问 → 重做该步
+1. node scripts/clarity-check.js '<步骤产出的JSON>' <步骤名>
+   输出: { algoScore, fuzzyCount, densityScore, ... }
+
+2. agent("评估[步骤名]的产出质量: [步骤产出]", { is_clear, clarity_score, user_questions })
+
+3. finalScore = algoScore×0.35 + clarity_score×0.65
+
+4. 输出到对话: "清晰度评分: [finalScore]（算法分 [algoScore]×0.35 + LLM分 [clarity_score]×0.65）"
+
+5. if finalScore ≥ 0.55:
+     "✅ 通过 → 继续下一步"
+     调用 orchestrate.js step <步骤名> <问题类型> '<步骤产出JSON>'
+   else:
+     "❌ 清晰度不足，需要追问"
+     逐个 AskUserQuestion(user_questions) → 重做该步
 ```
 
 ### Step 10: 呈现
