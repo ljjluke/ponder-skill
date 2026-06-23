@@ -57,7 +57,7 @@ Before self-check, **display MCTS conclusion to user** with ranking + best path 
 ① **Find flaws** → "为人谋而不忠乎?": Is any judgment vague? Any assumption unverified? Any risk ignored?
    - Zhong=loyal to the problem itself, not own preferences. Check if biased by "I'm good at X"
    - Check each solution: does it rely on "probably fine" or "should work"?
-   - Check for wishful thinking: "the API will handle it" → really?
+   - Check for wishful thinking: "someone else will handle that" → really?
 
 ② **Reverse thinking**: If 2nd place > 1st place, why? How likely? Does it change selection?
    - Construct a scenario where 2nd place wins. Is it plausible?
@@ -128,7 +128,7 @@ Code: yan-yi-check --statements '<JSON>' --interpretations '<JSON>'
 
 1. List perspectives of all solutions
 2. Compare with Eight-Facet + Sub-Lens coverage → find missing dimensions
-3. For each blindspot: need supplement? (based on feature complexity / user-facing vs backend)
+3. For each blindspot: need supplement? (based on importance / direct vs indirect impact)
 4. Decision: all covered → pass | 1st place biased → supplement | 1st covers well → annotate
 
 ---

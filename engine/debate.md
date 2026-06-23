@@ -5,7 +5,7 @@
 ① **Find flaws** → "为人谋而不忠乎?": Is any judgment vague? Any assumption unverified? Any risk ignored?
    - Zhong=loyal to the problem itself, not own preferences. Check if biased by "I'm good at X"
    - Check each solution: does it rely on "probably fine" or "should work"?
-   - Check for wishful thinking: "the API will handle it" → really?
+   - Check for wishful thinking: "someone else will handle that" → really?
 
 ② **Reverse thinking**: If 2nd place > 1st place, why? How likely? Does it change selection?
    - Construct a scenario where 2nd place wins. Is it plausible?

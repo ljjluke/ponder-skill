@@ -33,7 +33,7 @@ Code: yan-yi-check --statements '<JSON>' --interpretations '<JSON>'
 
 1. List perspectives of all solutions
 2. Compare with Eight-Facet + Sub-Lens coverage → find missing dimensions
-3. For each blindspot: need supplement? (based on feature complexity / user-facing vs backend)
+3. For each blindspot: need supplement? (based on importance / direct vs indirect impact)
 4. Decision: all covered → pass | 1st place biased → supplement | 1st covers well → annotate
 
 ---
