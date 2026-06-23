@@ -20,7 +20,7 @@ license: MIT
 1. 前置: 查 top 3 历史 + 错误警告（后台执行）
 2. 读 prompt: 读 scripts/prompts/<步骤>.json 的 prompt+schema（后台读取）
 3. 加载引擎: 读 engine_ref 指向的 engine/*.md（后台读取）
-4. 执行: 主线程直行 或 起子 agent，内容输出到对话
+4. 执行: 主线程直行；或起子 agent（全部返回后，逐条把每个 agent 的内容完整输出到对话，再汇总对比）
 5. 后置: 清晰度评分（后台执行），结果输出到对话
 ```
 
