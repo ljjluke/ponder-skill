@@ -32,7 +32,7 @@ license: MIT
 | 方案 | scripts/prompts/plans.json | 5-8个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
 | 收敛 | scripts/prompts/converge.json | 保留最优 | 主线程直行 |
 | 推演 | scripts/prompts/simulate.json | 模拟各方案 | 每方案一个 agent(mcts-simulator)，全部返回后汇总 |
-| 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案一个 agent(debater)，全部返回后汇总 |
+| 辩论 | scripts/prompts/debate.json | 排名推荐 | 一轮立论→汇总展示→二轮反驳→汇总排名 |
 | 综合 | scripts/prompts/synthesis.json | 结论+风险 | 主线程直行 |
 
 ### ⛔ 清晰度检查（不做不能进入下一步）

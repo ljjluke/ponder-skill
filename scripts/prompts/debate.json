@@ -4,7 +4,7 @@
   "stepGoal": "各方案互相反驳，排名推荐",
   "engine_ref": "engine/debate.md",
   "agent_ref": "agents/debater.md",
-  "prompt": "公平对待每个方案。每个方案起一个 agent 构建立场，定义见 agents/debater.md。分别列出优点(3-5条)和缺点(2-4条),优点引用推演中的证据,缺点指出逻辑漏洞或风险。按论证强度和证据充分性排名,输出综合推荐。五步自检清单见 engine/mcts-converge.md",
+  "prompt": "进行两轮辩论:\n第一轮: 每方案起一个 agent(debater)做开场立论，全部返回后展示每个立论\n第二轮: 把各方案的立论论点汇集，再次每个方案起 agent(debater)做针对性反驳，全部返回后展示反驳内容\n\n两轮结束后，按论证强度排名，输出综合推荐。定义见 agents/debater.md（含两轮输入输出格式）。自检清单见 engine/mcts-converge.md",
   "args": ["simulations"],
   "schema": {
     "type": "object",
