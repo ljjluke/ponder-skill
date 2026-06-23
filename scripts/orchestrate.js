@@ -30,6 +30,20 @@ function getWeightRegistry() {
   return _WeightRegistry;
 }
 
+// ── History: 查步骤历史（top 3） ──
+function queryHistory(stepName, questionType) {
+  var result = { entries: [] };
+  try {
+    var knowledge = require('./knowledge');
+    var hist = knowledge.recallStepHistory(stepName, questionType, { query: '', limit: 20 });
+    if (hist && hist.length > 0) {
+      result.entries = hist.slice(0, 3).map(function(h) { return { content: (h.content || '').substring(0, 200), q: h.q, status: h.status }; });
+      result.count = hist.length;
+    }
+  } catch(e) { result.error = e.message; }
+  console.log(JSON.stringify(result));
+}
+
 // ── Step: 存一步产出 + 记一步指标 ──
 function storeStep(stepName, questionType, stepOutputJson, userRequest) {
   var output;
@@ -123,16 +137,17 @@ function main() {
   var args = process.argv.slice(2);
   var cmd = args[0];
 
-  if (cmd === 'step') {
+  if (cmd === 'history') {
+    queryHistory(args[1] || '', args[2] || '');
+  } else if (cmd === 'step') {
     storeStep(args[1] || '', args[2] || '', args[3] || '{}', args[4] || '');
   } else if (cmd === 'finalize') {
     finalize(args[1] || '', args[2] || '');
   } else {
     console.log('用法:');
+    console.log('  node scripts/orchestrate.js history <步骤名> <问题类型>          — 查top3历史');
     console.log('  node scripts/orchestrate.js step <步骤名> <问题类型> \'<JSON>\'   — 存一步产出+记指标');
     console.log('  node scripts/orchestrate.js finalize <问题类型> <问题描述>        — 保洁+学习');
-    console.log('');
-    console.log('（各步骤的历史查询由步骤自己完成，不在这里前置加载）');
   }
 }
 
