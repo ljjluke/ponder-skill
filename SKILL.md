@@ -33,15 +33,15 @@ license: MIT
 
 | 阶段 | 提示文件 | 目标 | 做法 |
 |-----|---------|------|------|
-| 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行 |
-| 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行 |
-| 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | 每维度一个 agent，全部返回后汇总 |
-| 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent(solution-generator)，全部返回后汇总 |
-| 方案评分 | scripts/prompts/simulate.json | 8维度评方案 | 每方案一个 agent，用8维度评分，全部返回后汇总 |
-| 收敛 | scripts/prompts/converge.json | 依据评分保留最优 | 主线程直行 |
-| 推演 | — | 模拟幸存方案 | 每方案一个 agent(mcts-simulator) |
-| 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名 |
-| 综合 | scripts/prompts/synthesis.json | 最终结论+风险 | 主线程直行 |
+| 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行，展示反直觉发现 |
+| 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行，展示6视角 |
+| 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | 每维度一个 agent，展示盲点表格 |
+| 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent，展示方案对比表格 |
+| 方案评分 | scripts/prompts/simulate.json | 8维度评方案 | 每方案一个 agent，**必须展示评分表格+总分最高者** |
+| 收敛 | scripts/prompts/converge.json | 依据评分保留最优 | 主线程直行，展示幸存方案及淘汰理由 |
+| 推演 | — | 模拟幸存方案 | 每方案一个 agent(mcts-simulator)，**必须展示推演结果表格+💡发现** |
+| 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名，**必须展示排名表格** |
+| 综合 | scripts/prompts/synthesis.json | 最终结论+风险 | 主线程直行，输出完整结论 |
 
 ### 用户确认
 辩论后、最终结论前，LLM 输出推荐方案及理由，然后检查方案是否还有**未解决的盲点、风险或不确定的假设**。如果有，把这些点提炼出来用 AskUserQuestion 让用户确认（如"这个方案依赖X条件，你这边能配合吗？"）。用户回应后调整并输出最终结论。如果方案没有遗留问题，直接出结论。
