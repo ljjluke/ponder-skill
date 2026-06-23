@@ -2,7 +2,7 @@
   "name": "converge",
   "label": "收敛",
   "stepGoal": "淘汰弱方案，保留3-5个最优",
-  "prompt": "淘汰弱方案,保留3-5个最优并评分(0-1)",
+  "prompt": "对所有方案进行对比淘汰。淘汰顺序: 边界违规→不可行→风险不可控→被其他方案全面压制。保留3-5个最优并评分(0-1),每个方案附保留理由。可调用 node scripts/mcts_guard.js diversity-challenge 检查多样性",
   "args": ["plans"],
   "schema": {
     "type": "object",
