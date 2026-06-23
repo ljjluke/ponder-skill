@@ -192,7 +192,7 @@ Concept: Two "identical" state features should share knowledge graph query
 In Claude Code, state "equality" is determined by state feature vector:
   State = {
       task_type: CORRECTIVE | CONSTRUCTIVE | OPTIMIZING | DIAGNOSTIC | VALIDATING
-      domain: FRONTEND | INTERFACE | OPERATION | STORAGE | GOVERNANCE | GENERAL
+      domain: TECHNOLOGY | FINANCE | HEALTH | EDUCATION | BUSINESS | LEGAL | GENERAL
       scope: UNIT | MODERATE | EXTENSIVE | COMPREHENSIVE
       risk_level: LOW | MED | HIGH | CRITICAL
       context_size: SMALL | MED | LARGE

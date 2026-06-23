@@ -1,183 +1,184 @@
 #!/usr/bin/env node
 /**
- * pipeline-metrics.js — 管道运行数据收集器
+ * pipeline-metrics.js — 增量式步骤指标收集器
  *
- * 每次管道跑完后调用，记录每步指标到日志。
- * 数据积累后用于自进化分析（检测瓶颈步骤、优化方向）。
- *
- * 验证状态: ✅ 已通过 4 次真实管道输出验证
+ * 每步结束后单独记录，不再等完整管道跑完才收集。
  *
  * 用法:
- *   echo '<pipeline_output_json>' | node scripts/pipeline-metrics.js pipe
- *   node scripts/pipeline-metrics.js log           — 查看日志
- *   node scripts/pipeline-metrics.js status        — 统计概览
- *
- * 不修改任何管道代码，纯日志收集。
+ *   node scripts/pipeline-metrics.js step <步骤名> '<步骤输出JSON>'  — 记录一步
+ *   node scripts/pipeline-metrics.js log                              — 查看日志
+ *   node scripts/pipeline-metrics.js status                           — 统计概览
  */
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// 日志存储在项目数据目录，不污染 /tmp
 const DATA_DIR = path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder', 'metrics');
-const LOG_FILE = path.join(DATA_DIR, 'pipeline-runs.ndjson');
+const STEP_LOG = path.join(DATA_DIR, 'step-runs.ndjson'); // 每步一条记录
+const OLD_LOG = path.join(DATA_DIR, 'pipeline-runs.ndjson'); // 旧管道格式（兼容读取）
 
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-function collect(pipelineOutput) {
-  const run = {
+/**
+ * 收集单步指标（增量式）
+ * @param {string} stepName — 步骤名: shensi|divergence|bagua|plans|converge|simulate|debate|synthesis
+ * @param {object} stepOutput — 该步骤的结构化输出（agent schema 返回的对象）
+ * @param {object} opts — 可选: { question_type, user_request }
+ * @returns {object} 记录的指标对象
+ */
+function collectStep(stepName, stepOutput, opts = {}) {
+  const record = {
     timestamp: new Date().toISOString(),
-    steps: {},
-    summary: {},
+    type: 'step',
+    step: stepName,
+    question_type: opts.question_type || '',
+    user_request: opts.user_request || '',
+    is_clear: stepOutput.is_clear !== undefined ? stepOutput.is_clear : true,
+    questions_count: Array.isArray(stepOutput.user_questions) ? stepOutput.user_questions.length : 0,
+    questions: stepOutput.user_questions || [],
   };
 
-  const stepNames = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification'];
-
-  for (const name of stepNames) {
-    const step = pipelineOutput[name];
-    if (!step) continue;
-
-    const record = { extracted: true };
-
-    if (name === 'simulations') {
-      record.count = Array.isArray(step) ? step.length : 0;
-    } else if (name === 'verification') {
-      record.verdict = step.verdict || 'UNKNOWN';
-      record.fake_clarity = step.fake_clarity || false;
-      record.issues_count = Array.isArray(step.issues) ? step.issues.length : 0;
-      record.issues_severity = (step.issues || []).map(i => i.severity);
-    } else {
-      record.is_clear = step.is_clear;
-      record.questions_count = Array.isArray(step.user_questions) ? step.user_questions.length : 0;
-      record.questions = step.user_questions || [];
-      // 客观字段完整性检查：LLM无法伪造，直接从输出结构计算
-      if (name === 'divergence' && step.perspectives) {
-        var filledSources = step.perspectives.filter(function(p) { return p.data_source && p.data_source.length > 0 }).length
-        record._field_fill_rate = filledSources / step.perspectives.length
-        record._item_count = step.perspectives.length
-      }
-      if (name === 'dimension' && step.dimensions) {
-        var filledEvidence = step.dimensions.filter(function(d) { return d.evidence && d.evidence.length > 0 }).length
-        record._field_fill_rate = filledEvidence / step.dimensions.length
-        record._item_count = step.dimensions.length
-      }
-    }
-
-    run.steps[name] = record;
+  // 按步骤类型提取结构化字段
+  if (stepName === 'divergence' && stepOutput.perspectives) {
+    var filledSources = stepOutput.perspectives.filter(function(p) { return p.data_source && p.data_source.length > 0 }).length;
+    record.field_fill_rate = filledSources / stepOutput.perspectives.length;
+    record.item_count = stepOutput.perspectives.length;
+  } else if (stepName === 'bagua' && stepOutput.dimensions) {
+    var filledEvidence = stepOutput.dimensions.filter(function(d) { return d.evidence && d.evidence.length > 0 }).length;
+    record.field_fill_rate = filledEvidence / stepOutput.dimensions.length;
+    record.item_count = stepOutput.dimensions.length;
+  } else if (stepName === 'plans' && stepOutput.plans) {
+    record.item_count = stepOutput.plans.length;
+  } else if (stepName === 'converge' && stepOutput.survivors) {
+    record.item_count = stepOutput.survivors.length;
+  } else if (stepName === 'simulate' && Array.isArray(stepOutput)) {
+    record.item_count = stepOutput.length;
+  } else if (stepName === 'debate' && stepOutput.ranked) {
+    record.item_count = stepOutput.ranked.length;
   }
 
-  const claritySteps = Object.entries(run.steps).filter(([k, v]) => v.is_clear !== undefined);
-  const clearCount = claritySteps.filter(([, v]) => v.is_clear).length;
-  const totalQuestions = Object.values(run.steps).reduce((s, v) => s + (v.questions_count || 0), 0);
-
-  run.summary = {
-    total_steps: Object.keys(run.steps).length,
-    clear_steps: clearCount,
-    unclear_steps: claritySteps.length - clearCount,
-    all_clear: clearCount === claritySteps.length && claritySteps.length > 0,
-    total_questions: totalQuestions,
-    verify_passed: run.steps.verification?.verdict === 'PASS',
-    verify_fake_clarity: run.steps.verification?.fake_clarity || false,
-    has_lessons: (pipelineOutput.synthesis?.pending_lessons?.length || 0) > 0,
-    lessons_count: pipelineOutput.synthesis?.pending_lessons?.length || 0,
-  };
-
-  return run;
+  return record;
 }
 
+/**
+ * 写入一步指标到日志（追加）
+ */
+function appendStepMetric(record) {
+  ensureDir();
+  fs.appendFileSync(STEP_LOG, JSON.stringify(record) + '\n', 'utf-8');
+}
+
+/**
+ * 全量统计（兼容新旧两种日志格式）
+ */
 function statusReport() {
-  if (!fs.existsSync(LOG_FILE)) { return { total: 0 }; }
-  const lines = fs.readFileSync(LOG_FILE, 'utf-8').trim().split('\n').filter(Boolean);
-  if (lines.length === 0) return { total: 0 };
+  const stepRecords = [];
+  const oldRecords = [];
 
-  const runs = lines.map(l => JSON.parse(l));
-  const total = runs.length;
+  // 读新格式
+  if (fs.existsSync(STEP_LOG)) {
+    var lines = fs.readFileSync(STEP_LOG, 'utf-8').trim().split('\n').filter(Boolean);
+    lines.forEach(function(l) {
+      try { stepRecords.push(JSON.parse(l)); } catch(e) {}
+    });
+  }
 
-  // 按步骤统计
-  const stepStats = {};
-  const stepNames = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification'];
-  for (const name of stepNames) {
-    const steps = runs.filter(r => r.steps[name]?.is_clear !== undefined);
-    if (steps.length === 0) continue;
-    const unclear = steps.filter(s => !s.steps[name].is_clear).length;
-    stepStats[name] = {
-      count: steps.length,
-      clear_rate: 1 - (unclear / steps.length),
+  // 读旧格式（兼容）
+  if (fs.existsSync(OLD_LOG)) {
+    var oldLines = fs.readFileSync(OLD_LOG, 'utf-8').trim().split('\n').filter(Boolean);
+    oldLines.forEach(function(l) {
+      try { oldRecords.push(JSON.parse(l)); } catch(e) {}
+    });
+  }
+
+  if (stepRecords.length === 0 && oldRecords.length === 0) return { total: 0 };
+
+  // 按步骤名分组（新格式）
+  var byStep = {};
+  stepRecords.forEach(function(r) {
+    if (!byStep[r.step]) byStep[r.step] = [];
+    byStep[r.step].push(r);
+  });
+
+  var stepStats = {};
+  for (var stepName in byStep) {
+    var recs = byStep[stepName];
+    var unclear = recs.filter(function(r) { return !r.is_clear }).length;
+    var totalQuestions = recs.reduce(function(s, r) { return s + (r.questions_count || 0) }, 0);
+    stepStats[stepName] = {
+      count: recs.length,
+      clear_rate: recs.length > 0 ? 1 - (unclear / recs.length) : 0,
+      avg_questions: recs.length > 0 ? (totalQuestions / recs.length) : 0,
     };
   }
 
-  const allClear = runs.filter(r => r.summary.all_clear).length;
-  const passVerify = runs.filter(r => r.summary.verify_passed).length;
-  const totalQ = runs.reduce((s, r) => s + r.summary.total_questions, 0);
+  // 旧格式兼容: 提取前两个步骤的清晰率
+  if (oldRecords.length > 0) {
+    var divSteps = oldRecords.filter(function(r) { return r.steps && r.steps.divergence && r.steps.divergence.is_clear !== undefined });
+    var dimSteps = oldRecords.filter(function(r) { return r.steps && r.steps.dimension && r.steps.dimension.is_clear !== undefined });
+    if (!stepStats.divergence && divSteps.length > 0) {
+      var unc = divSteps.filter(function(r) { return !r.steps.divergence.is_clear }).length;
+      stepStats.divergence = { count: divSteps.length, clear_rate: 1 - unc / divSteps.length, avg_questions: 0 };
+    }
+    if (!stepStats.dimension && dimSteps.length > 0) {
+      var unc2 = dimSteps.filter(function(r) { return !r.steps.dimension.is_clear }).length;
+      stepStats.dimension = { count: dimSteps.length, clear_rate: 1 - unc2 / dimSteps.length, avg_questions: 0 };
+    }
+  }
 
   return {
-    total,
-    all_clear_rate: allClear / total,
-    verify_pass_rate: passVerify / total,
-    avg_questions_per_run: (totalQ / total).toFixed(1),
+    total: stepRecords.length,
     step_stats: stepStats,
   };
 }
 
+// ── CLI ──
 function main() {
-  const args = process.argv.slice(2);
-  const cmd = args[0];
+  var args = process.argv.slice(2);
+  var cmd = args[0];
 
-  if (cmd === 'collect') {
-    const filePath = args[1];
-    if (!filePath) { console.error('Usage: collect <json_file>'); process.exit(1); }
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const output = JSON.parse(raw);
-    const run = collect(output);
-    ensureDir();
-    fs.appendFileSync(LOG_FILE, JSON.stringify(run) + '\n', 'utf-8');
-    console.log('✅ 已记录本次运行');
-    console.log(JSON.stringify(run.summary, null, 2));
-  } else if (cmd === 'pipe') {
-    let body = '';
-    process.stdin.on('data', d => body += d.toString());
-    process.stdin.on('end', () => {
-      try {
-        const output = JSON.parse(body);
-        const run = collect(output);
-        ensureDir();
-        fs.appendFileSync(LOG_FILE, JSON.stringify(run) + '\n', 'utf-8');
-        console.log('✅ 已记录本次运行');
-        console.log(JSON.stringify(run.summary, null, 2));
-      } catch (e) {
-        console.error('解析失败:', e.message);
-        process.exit(1);
-      }
-    });
+  if (cmd === 'step') {
+    var stepName = args[1];
+    var outputJson = args[2];
+    if (!stepName || !outputJson) { console.error('用法: node pipeline-metrics.js step <步骤名> \'<输出JSON>\''); process.exit(1); }
+    var output = JSON.parse(outputJson);
+    var record = collectStep(stepName, output);
+    appendStepMetric(record);
+    console.log(JSON.stringify({ recorded: stepName, is_clear: record.is_clear, questions: record.questions_count }));
+
   } else if (cmd === 'log') {
-    if (!fs.existsSync(LOG_FILE)) { console.log('暂无数据'); return; }
-    const lines = fs.readFileSync(LOG_FILE, 'utf-8').trim().split('\n').filter(Boolean);
-    console.log(`共 ${lines.length} 条记录\n`);
-    for (const line of lines.slice(-10)) {
-      const r = JSON.parse(line);
-      console.log(`[${r.timestamp.slice(0,19)}] 清晰:${r.summary.clear_steps}/${r.summary.total_steps} 问题:${r.summary.total_questions} 验证:${r.summary.verify_passed ? 'PASS' : 'REVISE'}`);
-    }
+    if (!fs.existsSync(STEP_LOG)) { console.log('暂无数据'); return; }
+    var lines = fs.readFileSync(STEP_LOG, 'utf-8').trim().split('\n').filter(Boolean);
+    console.log('共 ' + lines.length + ' 条记录\n');
+    var tail = lines.slice(-15);
+    tail.forEach(function(l) {
+      try {
+        var r = JSON.parse(l);
+        var icon = r.is_clear ? '✅' : '❌';
+        console.log(icon + ' [' + (r.step || '?').padEnd(10) + '] ' + r.question_type + ' 问题:' + (r.questions_count || 0));
+      } catch(e) {}
+    });
+
   } else if (cmd === 'status') {
-    const s = statusReport();
-    if (s.total === 0) { console.log('暂无数据。管道运行后会自动收集。'); return; }
-    console.log(`运行次数: ${s.total}`);
-    console.log(`全清晰率: ${(s.all_clear_rate * 100).toFixed(1)}%`);
-    console.log(`验证通过率: ${(s.verify_pass_rate * 100).toFixed(1)}%`);
-    console.log(`平均问题数: ${s.avg_questions_per_run}/次`);
-    console.log('\n步骤级清晰率:');
-    for (const [name, st] of Object.entries(s.step_stats || {})) {
-      console.log(`  ${name.padEnd(12)} ${(st.clear_rate * 100).toFixed(0)}% (${st.count}次)`);
+    var s = statusReport();
+    if (s.total === 0 && Object.keys(s.step_stats || {}).length === 0) { console.log('暂无数据'); return; }
+    console.log('按步骤统计:');
+    for (var stepName in (s.step_stats || {})) {
+      var st = s.step_stats[stepName];
+      var bar = '█'.repeat(Math.round(st.clear_rate * 20));
+      console.log('  ' + stepName.padEnd(12) + ' ' + (st.clear_rate * 100).toFixed(0) + '% |' + bar.padEnd(20) + '| (' + st.count + '次, 均' + st.avg_questions.toFixed(1) + '问题)');
     }
+
   } else {
     console.log('用法:');
-    console.log('  echo \'<json>\' | node scripts/pipeline-metrics.js pipe  — 管道输出 → 收集');
-    console.log('  node scripts/pipeline-metrics.js collect <file>         — 从文件收集');
-    console.log('  node scripts/pipeline-metrics.js log                    — 查看日志');
-    console.log('  node scripts/pipeline-metrics.js status                 — 统计概览');
+    console.log('  node scripts/pipeline-metrics.js step <步骤名> \'<JSON>\'   — 记录一步');
+    console.log('  node scripts/pipeline-metrics.js log                       — 查看日志');
+    console.log('  node scripts/pipeline-metrics.js status                    — 统计概览');
   }
 }
 
 if (require.main === module) main();
-module.exports = { collect, statusReport, LOG_FILE, DATA_DIR };
+
+module.exports = { collectStep, appendStepMetric, statusReport, STEP_LOG, OLD_LOG, DATA_DIR };

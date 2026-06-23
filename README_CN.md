@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/版本-1.17.33-blue?style=flat-square" alt="版本">
+  <img src="https://img.shields.io/badge/版本-1.18.0-blue?style=flat-square" alt="版本">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="许可">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="状态">
 </p>
@@ -199,6 +199,9 @@ V = Σ(各阶段达成度 × 天干权重) / Σ(权重)
 /luke:ponder 帮我分析一下A股
 /luke:ponder 规划一下Python学习路线
 /luke:ponder 分析这个创业项目的竞争格局
+/luke:ponder 比较三种营销策略的优劣
+/luke:ponder 帮我评估两种治疗方案
+/luke:ponder 分析这个农业项目的可行性
 ```
 
 ### 自定义存储目录

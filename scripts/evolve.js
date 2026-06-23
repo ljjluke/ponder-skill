@@ -22,7 +22,8 @@ const { WeightRegistry, DEFAULT_WEIGHTS } = require('./weights.js');
 
 // ── 数据源 ──
 const DATA_DIR = process.env.PONDER_DATA_DIR ? require("path").resolve(process.env.PONDER_DATA_DIR) : path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
-const METRICS_FILE = path.join(DATA_DIR, 'metrics', 'pipeline-runs.ndjson');
+const METRICS_FILE = path.join(DATA_DIR, 'metrics', 'pipeline-runs.ndjson');  // 旧格式（管道级别）
+const STEP_METRICS_FILE = path.join(DATA_DIR, 'metrics', 'step-runs.ndjson'); // 新格式（步骤级别）
 const RULES_FILE = path.join(__dirname, 'evolve-rules.json');
 
 // ── 获取匹配问题的规则（供 orchestration 层调用）──
@@ -197,9 +198,37 @@ function integrateWeightsFromAnalysis(result) {
 //  加载数据
 // ══════════════════════════════════════
 function loadRuns() {
-  if (!fs.existsSync(METRICS_FILE)) return [];
-  const lines = fs.readFileSync(METRICS_FILE, 'utf-8').trim().split('\n').filter(Boolean);
-  return lines.map(l => JSON.parse(l));
+  var runs = [];
+
+  // 读旧格式（管道级别，每行一个完整管道）
+  if (fs.existsSync(METRICS_FILE)) {
+    var lines = fs.readFileSync(METRICS_FILE, 'utf-8').trim().split('\n').filter(Boolean);
+    lines.forEach(function(l) { try { runs.push(JSON.parse(l)); } catch(e) {} });
+  }
+
+  // 读新格式（步骤级别，每行一步，聚合为虚拟管道记录）
+  if (fs.existsSync(STEP_METRICS_FILE)) {
+    var stepLines = fs.readFileSync(STEP_METRICS_FILE, 'utf-8').trim().split('\n').filter(Boolean);
+    // 按问题类型+步骤名聚合
+    var groups = {};
+    stepLines.forEach(function(l) {
+      try {
+        var r = JSON.parse(l);
+        if (r.type !== 'step') return;
+        var key = r.question_type || 'unknown';
+        if (!groups[key]) groups[key] = { _question_type: key, steps: {} };
+        groups[key].steps[r.step] = {
+          is_clear: r.is_clear !== undefined ? r.is_clear : true,
+          questions_count: r.questions_count || 0,
+          _field_fill_rate: r.field_fill_rate,
+          _item_count: r.item_count,
+        };
+      } catch(e) {}
+    });
+    Object.keys(groups).forEach(function(k) { runs.push(groups[k]); });
+  }
+
+  return runs;
 }
 
 // ══════════════════════════════════════
@@ -217,7 +246,7 @@ function analyze(runs) {
   for (const [type, typeRuns] of Object.entries(byType)) {
     if (typeRuns.length < THRESHOLDS.min_runs_per_type) continue;
 
-    const steps = ['divergence', 'dimension', 'plans', 'simulations', 'debate', 'synthesis', 'verification'];
+    const steps = ['shensi', 'divergence', 'bagua', 'plans', 'converge', 'simulate', 'debate', 'synthesis'];
     const stepStats = {};
 
     for (const step of steps) {
@@ -289,14 +318,14 @@ function analyze(runs) {
     // 信号3: 清晰稳定性 — is_clear 的一致率
     let qualityScore = null;
     const allDivQuestions = typeRuns.filter(r => r.steps.divergence?.questions_count !== undefined).map(r => r.steps.divergence.questions_count);
-    const allDimQuestions = typeRuns.filter(r => r.steps.dimension?.questions_count !== undefined).map(r => r.steps.dimension.questions_count);
+    const allDimQuestions = typeRuns.filter(r => r.steps.bagua?.questions_count !== undefined).map(r => r.steps.bagua.questions_count);
 
     if (typeRuns.length >= 3) {
       // 信号权重无理论依据，当前为等权平均，后续数据积累后可调整
       const divUnclearRate = stepStats.divergence ? (1 - stepStats.divergence.verifiedClarity) : 0;
-      const dimUnclearRate = stepStats.dimension ? (1 - stepStats.dimension.verifiedClarity) : 0;
-      const avgQ = (stepStats.divergence?.avgQuestions || 0) + (stepStats.dimension?.avgQuestions || 0);
-      const unclearPenalty = (divUnclearRate + dimUnclearRate) / 2;  // 0-1, 越高越差
+      const baguaUnclearRate = stepStats.bagua ? (1 - stepStats.bagua.verifiedClarity) : 0;
+      const avgQ = (stepStats.divergence?.avgQuestions || 0) + (stepStats.bagua?.avgQuestions || 0);
+      const unclearPenalty = (divUnclearRate + baguaUnclearRate) / 2;  // 0-1, 越高越差
       const questionPenalty = Math.min(avgQ / 6, 1);  // 均>6问题=满分惩罚
       qualityScore = Math.max(0, Math.min(1, 1 - unclearPenalty * 0.6 - questionPenalty * 0.4));
 
@@ -324,7 +353,7 @@ function analyze(runs) {
   const total = runs.length;
   const allClear = runs.filter(r => r.summary?.all_clear).length;
   const stepClarity = {};
-  for (const step of ['divergence', 'dimension']) {
+  for (const step of ['shensi', 'divergence', 'bagua']) {
     const withData = runs.filter(r => r.steps[step]?.is_clear !== undefined);
     if (withData.length > 0) {
       const unclear = withData.filter(r => !r.steps[step].is_clear).length;

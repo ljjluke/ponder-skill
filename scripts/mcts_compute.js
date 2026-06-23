@@ -288,7 +288,7 @@ function mutationTiebreak(nodes) {
 
 // ===== Trigger & Lambda =====
 function quickTriggerCheck(message) {
-    const triggers = ["做", "实现", "开发", "写", "改", "优化", "重构", "设计", "build", "implement", "develop", "create", "fix", "refactor", "design", "help", "how", "what", "which", "best", "帮我", "怎么", "如何"];
+    const triggers = ["做", "实现", "开发", "写", "改", "优化", "重构", "设计", "build", "implement", "develop", "create", "fix", "refactor", "design", "help", "how", "what", "which", "best", "分析", "评估", "规划", "决策", "选择", "比较", "方案", "策略", "帮我", "怎么", "如何"];
     for (const kw of triggers) if (message.includes(kw)) return { likely_trigger: true, reason: `keyword: ${kw}` };
     return { likely_trigger: false, reason: "no trigger keyword" };
 }
@@ -497,7 +497,17 @@ function main() {
             }
             case "identify-domain": {
                 const task = (o.task || "").toLowerCase();
-                const domainMap = { frontend: "FRONTEND", interface: "INTERFACE", operation: "OPERATION", storage: "STORAGE", governance: "GOVERNANCE", validation: "VALIDATION", web: "FRONTEND", api: "INTERFACE", cli: "OPERATION", db: "STORAGE", config: "GOVERNANCE", test: "VALIDATION" };
+                const domainMap = {
+                    technology: "TECHNOLOGY", software: "TECHNOLOGY", code: "TECHNOLOGY", programming: "TECHNOLOGY",
+                    finance: "FINANCE", invest: "FINANCE", market: "FINANCE", trading: "FINANCE",
+                    health: "HEALTH", medical: "HEALTH", clinical: "HEALTH", treatment: "HEALTH",
+                    education: "EDUCATION", teaching: "EDUCATION", learning: "EDUCATION", training: "EDUCATION",
+                    business: "BUSINESS", strategy: "BUSINESS", management: "BUSINESS",
+                    legal: "LEGAL", law: "LEGAL", compliance: "LEGAL", regulation: "LEGAL",
+                    manufacturing: "MANUFACTURING", production: "MANUFACTURING", supply: "MANUFACTURING",
+                    agriculture: "AGRICULTURE", farming: "AGRICULTURE", food: "AGRICULTURE",
+                    creative: "CREATIVE", design: "CREATIVE", art: "CREATIVE", writing: "CREATIVE",
+                };
                 let domain = "GENERAL";
                 for (const [kw, d] of Object.entries(domainMap)) { if (task.includes(kw)) { domain = d; break; } }
                 output({ domain, hint: "Only as reference signal, LLM makes final judgment" });

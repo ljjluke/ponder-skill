@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.17.33-blue?style=flat-square" alt="version">
+  <img src="https://img.shields.io/badge/version-1.18.0-blue?style=flat-square" alt="version">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="status">
 </p>
@@ -214,6 +214,9 @@ V = Σ(achievement × weight) / Σ(weight)
 /luke:ponder Analyze the current market situation
 /luke:ponder Help me plan my Python learning path
 /luke:ponder 帮我分析这个项目的技术选型
+/luke:ponder Evaluate which marketing strategy to pursue
+/luke:ponder Help me decide between treatment options for a patient
+/luke:ponder Compare investment portfolio strategies
 ```
 
 ### Custom Data Directory
