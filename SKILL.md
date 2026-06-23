@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: 8-step sequential cognitive pipeline with code-enforced depth loop. Domain-agnostic.
-version: 1.18.0
+version: 1.18.1
 license: MIT
 ---
 
