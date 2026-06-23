@@ -2,9 +2,13 @@
   "name": "simulate",
   "label": "推演",
   "stepGoal": "模拟各方案的执行过程",
-  "engine_ref": "engine/mcts-simulate.md",
+  "engine_ref": [
+    "engine/mcts-simulate.md",
+    "engine/td-learner.md"
+  ],
   "agent_ref": "agents/mcts-simulator.md",
-  "prompt": "对每个幸存方案单独进行模拟。每方案起一个 agent，定义见 agents/mcts-simulator.md。输入方案描述、假设、约束条件。各方案模拟相互隔离。完整推演框架（UCB选择、回溯、收敛判断）见 engine/mcts-simulate.md。收集所有模拟结果后汇总对比",
+  "tool_ref": ["scripts/mcts_tree.js"],
+  "prompt": "对每个幸存方案单独进行模拟。每方案起一个 agent，定义见 agents/mcts-simulator.md。输入方案描述、假设、约束条件。各方案模拟相互隔离。完整推演框架（UCB选择、回溯、收敛判断）见 engine/mcts-simulate.md。模拟结果的价值更新和知识生命周期见 engine/td-learner.md。MCTS树结构操作见 scripts/mcts_tree.js。收集所有模拟结果后汇总对比",
   "args": ["survivors"],
   "schema": {
     "type": "array",
