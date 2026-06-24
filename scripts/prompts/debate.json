@@ -1,11 +1,11 @@
 {
   "name": "debate",
   "label": "辩论",
-  "stepGoal": "各方案互相反驳，排名推荐",
+  "stepGoal": "结合用户需求，各方案互相反驳，排名推荐",
   "engine_ref": "engine/debate.md",
   "agent_ref": "agents/debater.md",
-  "prompt": "辩论规则:\n1. 每方案起一个 agent 做立论（并行），全部返回后展示每个立论\n2. 第二轮回合: 每方案起一个 agent 用其他所有方案的论点**攻击**该方案，评估它扛住攻击后还能得多少分。每个 agent 独立运行，标注为'攻击:方案名'\n3. 按抗压评分排名，输出综合推荐\n\n定义见 agents/debater.md。自检清单见 engine/mcts-converge.md",
-  "args": ["simulations"],
+  "prompt": "辩论规则:\n1. 每方案起一个 agent 做立论（并行），全部返回后展示每个立论\n   **立论时必须结合用户需求和画像**，说明方案为什么适合这个具体用户场景\n2. 第二轮回合: 每方案起一个 agent 用其他所有方案的论点**攻击**该方案，评估它扛住攻击后还能得多少分。\n   **攻击时可用用户需求校验对方方案的假设是否成立**，例如推演时假设的团队/预算/条件是否与用户实际匹配\n3. 按抗压评分排名，输出综合推荐\n\n用户画像（五诊 + 约束 + 假设）: {{userProfile}}\n\n定义见 agents/debater.md。自检清单见 engine/mcts-converge.md",
+  "args": ["simulations", "userProfile"],
   "schema": {
     "type": "object",
     "properties": {
