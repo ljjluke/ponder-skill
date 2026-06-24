@@ -7,8 +7,8 @@
 <h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
-  <b>A thinking engine for Claude Code — not a prompt, a cognitive framework.</b><br>
-  <i>Domain-agnostic · Self-learning · Code-structured</i>
+  <b>LLMs answer. Ponder thinks. Then answers.</b><br>
+  <i>Code-structured reasoning · Gets smarter with every use · Domain-agnostic</i>
 </p>
 
 <p align="center">
@@ -21,9 +21,39 @@
 
 ---
 
-## ✨ Why Ponder
+## ✨ Every time you ask an AI, you take a gamble.
 
-Most LLM tools answer the moment you ask. Ponder **thinks before it speaks** — through a structured sequence of analysis phases, each with its own thinking framework, independent evaluators, and user checkpoints. The result isn't faster answers. It's **answers worth waiting for**.
+Will it nail it this time? Miss something obvious? Give you the same confident-sounding surface take it gave last time — and was wrong?
+
+**That's not a model problem. It's a process problem.**
+
+LLMs answer the moment you ask. Ponder doesn't. It runs every question through 9 structured phases: requirement refinement → frame-breaking → multi-perspective scan → blindspot discovery → solution generation → scoring → simulation → debate → user confirmation. Each phase has its own thinking framework, independent evaluators, and code-enforced quality gates.
+
+The result isn't faster answers. It's **answers you can trust**.
+
+And every answer makes the next one better — because every run stores structured knowledge. The system remembers what worked, what didn't, and what you corrected.
+
+---
+
+### One glance tells the story
+
+```
+You ask a question
+         ↓
+┌──────────────────────────────────────────────────┐
+│           Interview (5-dimension profile)         │
+├──────────────────────────────────────────────────┤
+│    Frame-breaking  —→  6-perspective scan        │
+│         ↓                    ↓                    │
+│    8-dim blindspot   →  5-10 solutions           │
+│         ↓                    ↓                    │
+│    8-dim scoring     →  Simulation + debate      │
+│         ↓                    ↓                    │
+│           User confirmation → Final               │
+└──────────────────────────────────────────────────┘
+         ↓
+Every phase verified, every result accumulated. Next time is sharper.
+```
 
 ```
 You ask → Requirement refinement → Frame-breaking → Multi-perspective scan
