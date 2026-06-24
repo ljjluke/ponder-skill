@@ -55,6 +55,14 @@ You ask a question
 Every phase verified, every result accumulated. Next time is sharper.
 ```
 
+<br>
+
+### See the difference
+
+[![asciicast](https://asciinema.org/a/5YS4bC1M6LaNFtBn.svg)](https://asciinema.org/a/5YS4bC1M6LaNFtBn)
+
+*Left: direct LLM answer. Right: same question through Ponder's 9-phase pipeline. Click to watch.*
+
 ```
 You ask → Requirement refinement → Frame-breaking → Multi-perspective scan
        → Blindspot discovery → Solution generation → 8-dimension scoring

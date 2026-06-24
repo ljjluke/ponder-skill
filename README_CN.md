@@ -55,6 +55,14 @@
 每步代码检查，每步产出积累。下一次更准。
 ```
 
+<br>
+
+### 看对比
+
+[![asciicast](https://asciinema.org/a/5YS4bC1M6LaNFtBn.svg)](https://asciinema.org/a/5YS4bC1M6LaNFtBn)
+
+*左侧: 直接问 LLM。右侧: 同一问题通过 Ponder 9 道管线。点击播放。*
+
 ```
 
 你提问 → 需求打磨 → 神思破框 → 多视角发散 → 盲点发现
