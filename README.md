@@ -59,9 +59,41 @@ Every phase verified, every result accumulated. Next time is sharper.
 
 ### See the difference
 
+<details>
+<summary>📺 Click to watch terminal demo (asciinema)</summary>
+
 [![asciicast](https://asciinema.org/a/5YS4bC1M6LaNFtBn.svg)](https://asciinema.org/a/5YS4bC1M6LaNFtBn)
 
-*Left: direct LLM answer. Right: same question through Ponder's 9-phase pipeline. Click to watch.*
+</details>
+
+Or read the side-by-side directly:
+
+```
+❌ 直接问 LLM                              │  ✅ Ponder 跑完 9 道工序
+───────────────────────────────────────────┼───────────────────────────────────────────
+独立开发者SaaS工具市场竞争激烈。           │  ① 采访 → 五诊画像
+主要竞争对手包括Notion、Canva、Vercel。    │   天: 2026年SaaS成熟期,垂直领域仍有窗口
+成功的关键是找到细分垂直领域。             │   地: 单人团队,预算有限
+建议做差异化竞争。                         │   人: 需快速验证想法
+                                           │   法: 支付渠道受限
+⚠️ 泛泛而谈，没有数据支撑。               │   物: 不是做产品,是验证商业模式
+                                           │
+                                           │  ② 神思 → 反直觉发现
+                                           │    最大的竞争者不是竞品——是用户用Excel
+                                           │    自己解决问题
+                                           │
+                                           │  ③ 发散 → 6视角扫描
+                                           │    宏观/微观/时间/空间/自然/无我
+                                           │    → 6个具体洞察
+                                           │
+                                           │  ④ 八卦镜 → 3个盲点暴露
+                                           │    付费意愿、开源替代品、渠道能力
+                                           │
+                                           │  ⑤ 方案 → 5个差异化策略
+                                           │  ⑥ 推演 → 3个方案模拟+V值
+                                           │  ⑦ 辩论 → 方案攻防
+                                           │  ⑧ 用户确认 → 风险验收
+```
 
 ```
 You ask → Requirement refinement → Frame-breaking → Multi-perspective scan
