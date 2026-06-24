@@ -59,9 +59,9 @@ Every phase verified, every result accumulated. Next time is sharper.
 
 ### See the difference
 
-![Ponder demo](scripts/ponder-demo.gif)
+![Ponder demo](scripts/ponder-demo-en.gif)
 
-*Side-by-side: direct LLM answer vs same question through Ponder's 9-phase pipeline.*
+*Direct LLM answer vs same question through Ponder's 9-phase pipeline.*
 
 ```
 You ask → Requirement refinement → Frame-breaking → Multi-perspective scan
