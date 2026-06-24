@@ -59,9 +59,9 @@
 
 ### 看对比
 
-[![asciicast](https://asciinema.org/a/5YS4bC1M6LaNFtBn.svg)](https://asciinema.org/a/5YS4bC1M6LaNFtBn)
+![Ponder demo](scripts/ponder-demo.gif)
 
-*左侧: 直接问 LLM。右侧: 同一问题通过 Ponder 9 道管线。点击播放。*
+*左侧: 直接问 LLM。右侧: 同一问题通过 Ponder 9 道管线。*
 
 ```
 
