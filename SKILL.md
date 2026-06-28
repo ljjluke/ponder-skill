@@ -32,6 +32,8 @@ license: MIT
 6. orchestrate.js step 存产出（后台）
 ```
 
+> 🔌 **Agent-Reach 可用**。需要查特定平台的实时数据时（GitHub Trending、Twitter/X、Reddit、B站、小红书、YouTube等），可以调 `agent-reach search <关键词>`。没有也正常走 WebSearch，不影响核心管线。
+
 | 阶段 | 提示文件 | 目标 | 做法 |
 |-----|---------|------|------|
 | 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行，展示反直觉发现 |

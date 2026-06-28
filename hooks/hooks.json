@@ -1,5 +1,5 @@
 {
-  "description": "Ponder Lessons hooks — SessionStart load lessons + start monitor, SessionEnd decay",
+  "description": "Ponder Lessons hooks \u2014 SessionStart load lessons + start monitor, SessionEnd decay",
   "hooks": {
     "Setup": [
       {
@@ -7,8 +7,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"console.log('[Cognitive Core] 🧠 Ready')\"",
+            "command": "node -e \"console.log('[Cognitive Core] \ud83e\udde0 Ready')\"",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "pip3 install agent-reach -q 2>/dev/null; which agent-reach >/dev/null 2>&1 && echo \"[Agent-Reach] \ud83c\udf10 Internet access ready\" || echo \"[Agent-Reach] \u26a0\ufe0f Install failed (no pip?) \u2014 skill still works, web search uses built-in\"",
+            "timeout": 30
           }
         ]
       }
@@ -19,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=require('os').homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});const latest=dirs[0],pluginDir=path.join(cache,latest);console.log('[Cognitive Core] 🧠 Ready v'+latest);console.log('[PONDER] Plugin: '+pluginDir.replace(/\\\\/g,'/').replace(/^([A-Za-z]):\\//,'/$1/'));try{const io=require(path.join(pluginDir,'scripts/mma/io'));const kg=io.loadMMA();if(kg.meta.total_points>0){console.log('[Cognitive Core] 📚 Lessons loaded: '+kg.meta.total_points+' points')}else{console.log('[Cognitive Core] 🌱 First start (cold)')}}catch(e){};const mon=path.join(pluginDir,'scripts/memory-monitor.js');if(fs.existsSync(mon)){require('child_process').spawn('node',[mon],{stdio:'ignore'});console.log('[Cognitive Core] 🧠 Memory system ready')}\"",
+            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=require('os').homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});const latest=dirs[0],pluginDir=path.join(cache,latest);console.log('[Cognitive Core] \ud83e\udde0 Ready v'+latest);console.log('[PONDER] Plugin: '+pluginDir.replace(/\\\\/g,'/').replace(/^([A-Za-z]):\\//,'/$1/'));try{const io=require(path.join(pluginDir,'scripts/mma/io'));const kg=io.loadMMA();if(kg.meta.total_points>0){console.log('[Cognitive Core] \ud83d\udcda Lessons loaded: '+kg.meta.total_points+' points')}else{console.log('[Cognitive Core] \ud83c\udf31 First start (cold)')}}catch(e){};const mon=path.join(pluginDir,'scripts/memory-monitor.js');if(fs.existsSync(mon)){require('child_process').spawn('node',[mon],{stdio:'ignore'});console.log('[Cognitive Core] \ud83e\udde0 Memory system ready')}\"",
             "timeout": 15
           }
         ]
