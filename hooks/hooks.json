@@ -1,5 +1,5 @@
 {
-  "description": "Ponder Lessons hooks \u2014 SessionStart load lessons + start monitor, SessionEnd decay",
+  "description": "Ponder hooks — Setup/SessionStart/SessionEnd via bootstrap-hook.js. agent-reach checked every start, installed on Setup.",
   "hooks": {
     "Setup": [
       {
@@ -7,13 +7,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"console.log('[Cognitive Core] \ud83e\udde0 Ready')\"",
-            "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "pip3 install agent-reach -q 2>/dev/null; which agent-reach >/dev/null 2>&1 && echo \"[Agent-Reach] \ud83c\udf10 Internet access ready\" || echo \"[Agent-Reach] \u26a0\ufe0f Install failed (no pip?) \u2014 skill still works, web search uses built-in\"",
-            "timeout": 30
+            "command": "node -e \"const fs=require('fs'),path=require('path'),os=require('os');const b=os.homedir()+'/.claude/plugins/cache';let c=null;for(const n of['luke','mcts','mcts-td-planner']){const d=path.join(b,n,n);if(fs.existsSync(d)){c=d;break}}if(c){let v;try{v=fs.readdirSync(c).filter(x=>{try{return fs.statSync(path.join(c,x)).isDirectory()&&/^\\d+\\.\\d+\\.\\d+$/.test(x)}catch(e){return false}}).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number),[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3})[0]}catch(e){}if(v){const p=path.join(c,v,'scripts/bootstrap-hook.js');if(fs.existsSync(p)){try{require('child_process').spawnSync('node',[p,'setup'],{stdio:'inherit',timeout:180000})}catch(e){}}}}\"",
+            "timeout": 180
           }
         ]
       }
@@ -24,8 +19,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=require('os').homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});const latest=dirs[0],pluginDir=path.join(cache,latest);console.log('[Cognitive Core] \ud83e\udde0 Ready v'+latest);console.log('[PONDER] Plugin: '+pluginDir.replace(/\\\\/g,'/').replace(/^([A-Za-z]):\\//,'/$1/'));try{const io=require(path.join(pluginDir,'scripts/mma/io'));const kg=io.loadMMA();if(kg.meta.total_points>0){console.log('[Cognitive Core] \ud83d\udcda Lessons loaded: '+kg.meta.total_points+' points')}else{console.log('[Cognitive Core] \ud83c\udf31 First start (cold)')}}catch(e){};const mon=path.join(pluginDir,'scripts/memory-monitor.js');if(fs.existsSync(mon)){require('child_process').spawn('node',[mon],{stdio:'ignore'});console.log('[Cognitive Core] \ud83e\udde0 Memory system ready')}\"",
-            "timeout": 15
+            "command": "node -e \"const fs=require('fs'),path=require('path'),os=require('os');const b=os.homedir()+'/.claude/plugins/cache';let c=null;for(const n of['luke','mcts','mcts-td-planner']){const d=path.join(b,n,n);if(fs.existsSync(d)){c=d;break}}if(c){let v;try{v=fs.readdirSync(c).filter(x=>{try{return fs.statSync(path.join(c,x)).isDirectory()&&/^\\d+\\.\\d+\\.\\d+$/.test(x)}catch(e){return false}}).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number),[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3})[0]}catch(e){}if(v){const p=path.join(c,v,'scripts/bootstrap-hook.js');if(fs.existsSync(p)){try{require('child_process').spawnSync('node',[p,'session-start'],{stdio:'inherit',timeout:15000})}catch(e){}}}}\"",
+            "timeout": 20
           }
         ]
       }
@@ -36,8 +31,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const base=os.homedir()+'/.claude/plugins/cache';const names=['luke','mcts','mcts-td-planner'];let cache=null;for(const n of names){const d=path.join(base,n,n);if(fs.existsSync(d)){cache=d;break}}if(!cache){process.exit(0)}const dirs=fs.readdirSync(cache).filter(d=>/^\\d+\\.\\d+\\.\\d+$/.test(d)).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number);const[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3});if(dirs.length===0)return;const mma=path.join(cache,dirs[0],'scripts/mcts.js');if(fs.existsSync(mma)){require('child_process').spawnSync('node',[mma,'mma','decay'],{timeout:8000});require('child_process').spawnSync('node',[mma,'mma','finalize',JSON.stringify({points:[],emotions:[]})],{timeout:8000})};const os=require('os');const pidf=path.join(os.tmpdir(),'ponder-monitor.pid');if(fs.existsSync(pidf)){try{process.kill(Number(fs.readFileSync(pidf,'utf-8')))}catch(e){}}\"",
-            "timeout": 10
+            "command": "node -e \"const fs=require('fs'),path=require('path'),os=require('os');const b=os.homedir()+'/.claude/plugins/cache';let c=null;for(const n of['luke','mcts','mcts-td-planner']){const d=path.join(b,n,n);if(fs.existsSync(d)){c=d;break}}if(c){let v;try{v=fs.readdirSync(c).filter(x=>{try{return fs.statSync(path.join(c,x)).isDirectory()&&/^\\d+\\.\\d+\\.\\d+$/.test(x)}catch(e){return false}}).sort((a,b)=>{const[a1,a2,a3]=a.split('.').map(Number),[b1,b2,b3]=b.split('.').map(Number);return b1-a1||b2-a2||b3-a3})[0]}catch(e){}if(v){const p=path.join(c,v,'scripts/bootstrap-hook.js');if(fs.existsSync(p)){try{require('child_process').spawnSync('node',[p,'session-end'],{stdio:'inherit',timeout:10000})}catch(e){}}}}\"",
+            "timeout": 15
           }
         ]
       }

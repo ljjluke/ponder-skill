@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.18
+version: 1.18.19
 license: MIT
 ---
 
@@ -19,6 +19,7 @@ license: MIT
 ⛔ 所有输出中不允许出现框架内部术语，用自然语言表达。
 ⛔ 不允许输出"正在等待"、"让我检查"、"等待中"等无关状态消息。只输出结论和评分。
 ⛔ 子 agent 全部返回后，必须先把各 agent 的产出内容展示到对话，再汇总或进入下一步。禁止跳过展示。
+⛔ **神思 → 发散 → 八卦镜 三步严格串行**：发散必须吃神思的产出，八卦镜必须吃发散的产出。禁止把这三步当成三个并行 agent 一起起。八卦镜内部的 8 维度 agent 才是并行的。
 ⛔ 每步必须按以下顺序完整执行。读文件用 Read 工具，禁止 bash echo:
 
 ```
@@ -32,13 +33,13 @@ license: MIT
 6. orchestrate.js step 存产出（后台）
 ```
 
-> 🔌 **Agent-Reach 可用**。需要查特定平台的实时数据时（GitHub Trending、Twitter/X、Reddit、B站、小红书、YouTube等），可以调 `agent-reach search <关键词>`。没有也正常走 WebSearch，不影响核心管线。
+> 🔌 **Agent-Reach 可用**。需要查特定平台的实时数据时（GitHub、YouTube、B站、RSS、任意网页等），优先用 agent-reach 暴露的平台能力（它通过自身注册的 skill 提供各平台读取接口，**不是** `agent-reach search` 子命令——v1.5+ 已无此命令）。装好后可用 `agent-reach doctor` 查哪些平台可用。没有 agent-reach 也正常走 WebSearch，不影响核心管线。
 
 | 阶段 | 提示文件 | 目标 | 做法 |
 |-----|---------|------|------|
 | 神思 | scripts/prompts/shensi.json | 跳出常规思维 | 主线程直行，展示反直觉发现 |
-| 发散 | scripts/prompts/divergence.json | 多角度审视 | 主线程直行，展示6视角 |
-| 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | 每维度一个 agent，展示盲点表格 |
+| 发散 | scripts/prompts/divergence.json | 多角度审视 | **必须等神思产出后**主线程直行（吃神思结论），展示6视角 |
+| 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | **必须等发散产出后**再起子 agent（吃发散共识）；每维度一个 agent，展示盲点表格；全部返回后主线程汇总为 key_finding 交给方案 |
 | 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent，展示方案对比表格 |
 | 方案评分 | scripts/prompts/simulate.json | 8维度评方案 | 每方案一个 agent，**必须展示各维度单项分和总分** |
 | 收敛 | scripts/prompts/converge.json | 依据评分保留最优 | 主线程直行，展示幸存方案及淘汰理由 |
