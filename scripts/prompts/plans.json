@@ -3,7 +3,7 @@
   "label": "方案",
   "stepGoal": "根据问题复杂度生成5-10个可选方案",
   "agent_ref": "agents/solution-generator.md",
-  "prompt": "根据问题复杂度生成5-10个方案,每个:名称+依据+条件。简单问题5-6个,复杂问题8-10个。方案之间要有本质差异,不能只是微调。方案的可行性假设必须标注（不能把未经证实的假设当事实）。\n\n每个方案必须经过辩证运动:生成方案(正题)后,强制写出它的反题(这个方案在什么条件下是错的/对立立场是什么)和合题(吸收反题后如何修正方案或划清边界)。没有经过反题的方案不完整。反题合题用自然语言,不出现辩证法等术语。每方案起一个 agent，定义见 agents/solution-generator.md",
+  "prompt": "根据问题复杂度生成5-10个方案,每个:名称+依据+条件。简单问题5-6个,复杂问题8-10个。方案之间要有本质差异,不能只是微调。方案的可行性假设必须标注（不能把未经证实的假设当事实）。\n\n每个方案做辩证运动(正题→反题→合题),但有赌注门控:可逆小事(取名/调参)跳过辩证,antithesis/synthesis填\"无需(可逆小事)\";高赌注/复杂问题(投资/方向/不可逆)必须做——生成方案(正题)后,写出它具体在什么条件下失效(反题,⛔必须写\"当X时该方案不成立\",不接受\"成本较高/需注意边界\"这类软否定),再写吸收反题后如何修正方案或划清边界(合题)。反题只谈本方案自身失效,不上升到整体结论层(那是综合阶段的活)。没有经过反题的高赌注方案不完整。反题合题用自然语言,不出现辩证法等术语。每方案起一个 agent，定义见 agents/solution-generator.md",
   "args": ["key_finding"],
   "schema": {
     "type": "object",
@@ -16,8 +16,8 @@
             "name": { "type": "string", "description": "方案名称" },
             "rationale": { "type": "string", "description": "依据" },
             "condition": { "type": "string", "description": "适用条件" },
-            "antithesis": { "type": "string", "description": "反题:此方案在什么条件下是错的/对立立场是什么" },
-            "synthesis": { "type": "string", "description": "合题:吸收反题后如何修正方案或划清边界" }
+            "antithesis": { "type": "string", "description": "反题:此方案具体在什么条件下失效(必须写\"当X时不成立\",不接受软否定;可逆小事填\"无需(可逆小事)\")" },
+            "synthesis": { "type": "string", "description": "合题:吸收反题后如何修正方案或划清边界(可逆小事填\"无需(可逆小事)\")" }
           },
           "required": ["name", "rationale", "condition", "antithesis", "synthesis"]
         },
