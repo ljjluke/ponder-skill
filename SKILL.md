@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.22
+version: 1.18.23
 license: MIT
 ---
 
@@ -41,11 +41,11 @@ license: MIT
 | 发散 | scripts/prompts/divergence.json | 多角度审视 | **必须等神思产出后**主线程直行（吃神思结论），展示6视角 |
 | 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | **必须等发散产出后**再起子 agent（吃发散共识）；每维度一个 agent，展示盲点表格；全部返回后主线程汇总为 key_finding 交给方案 |
 | 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent，展示方案对比表格 |
-| 方案评分 | scripts/prompts/simulate.json | 8维度评方案 | 每方案一个 agent，**必须展示各维度单项分和总分** |
-| 收敛 | scripts/prompts/converge.json | 依据评分保留最优 | 主线程直行，展示幸存方案及淘汰理由 |
-| 推演 | — | 模拟幸存方案 | 每方案一个 agent(mcts-simulator)，**必须展示推演结果表格+💡发现** |
+| 收敛 | scripts/prompts/converge.json | 淘汰弱方案保留最优 | 主线程直行（吃 plans），展示幸存方案及淘汰理由 |
+| 方案评分 | scripts/prompts/simulate.json | 8维度评幸存方案 | **必须等收敛产出 survivors 后**每方案一个 agent（吃 survivors），**必须展示各维度单项分和总分** |
+| 推演 | — | 模拟幸存方案 | **必须等方案评分后**每方案一个 agent(mcts-simulator，吃 survivors)，**必须展示推演结果表格+💡发现** |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名，**必须展示排名表格** |
-| 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反 | 主线程直行，高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提），可逆小事只出结论 |
+| 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反 | 主线程直行（吃辩论 debate_summary+ranked），高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提），可逆小事只出结论 |
 
 ### 用户确认
 各步的画像刷新已覆盖大部分用户确认。综合后仍需要用户本人拍板的**核心方向选择**（而非信息确认），用 AskUserQuestion 带选项提问。用户回应后输出最终结论。没有遗留则直接出结论。
@@ -68,6 +68,7 @@ license: MIT
 各阶段格式:
 - **八卦镜**: 盲点表格 + 最关键的盲点一句话总结
 - **方案**: 对比表格（名称/方向/核心逻辑），配上各方案的差异化点评
+- **收敛**: 幸存方案表格（名称/保留理由），附一句"淘汰N个，保留M个，主要因X被淘汰"
 - **方案评分**: 评分表格必须包含**各维度单项分**和总分，**总分最高者加粗突出**，附一句"方案X在Y维度上表现最优"
 - **推演**: 推演结果表格，**关键发现用💡单独写一段**，不塞在表格里
 - **辩论**: 排名表格，**🏆 第一名加粗**，附各方案抗压能力一句话点评

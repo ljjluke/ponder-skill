@@ -6,7 +6,7 @@
   "agent_ref": "agents/memory-agent.md",
   "tool_ref": ["scripts/language_guard.js"],
   "prompt": "整合辩论结果和推演数据,输出:\n1. 最终结论 — 推荐哪个方案及理由(需回扣用户画像,说明为什么适合这个具体用户)\n2. 推理链 — 从发散→八卦镜→方案→推演→辩论的决策路径摘要\n3. 主要风险 — 推荐方案面临的最大风险及应对\n4. 待确认事项 — 需要用户自己判断的问题清单\n5. 结论自反(高赌注问题才做,可逆小事跳过) — 见下方\n\n**结论自反(门控:复用神思赌注判断,可逆小事跳过本段直接出结论)**:\n  a. 质疑账本收敛: 汇总本管线4处质疑(神思前提审视的伪前提/八卦镜key_finding/辩论攻击薄弱点/推演失效条件),收敛到top3最关键质疑,不全量罗列\n  b. 逐条回应: 这3个质疑如何影响了最终结论(某质疑未影响则说明为何可忽略)\n  c. 共享前提: 所有幸存方案共享了哪个未被质疑的前提——⛔必须给出至少一个,不允许回答\"没有\",即使看似无害也要写出,并说明为何在当前决策中可接受\n  对外输出用自然语言,不出现辩证法/悬置等哲学术语\n\n用户画像（五诊+约束+假设）: {{userProfile}}\n\n结论自反方法见 engine/synthesis.md。言意差距检查见 engine/mcts-converge.md。记忆存储和检查点见 agents/memory-agent.md。输出语言可用 scripts/language_guard.js 检测是否与用户语言一致",
-  "args": ["synthesis", "ranked", "userProfile"],
+  "args": ["debate_summary", "ranked", "userProfile"],
   "schema": {
     "type": "object",
     "properties": {

@@ -23,8 +23,8 @@
         },
         "minItems": 2
       },
-      "synthesis": { "type": "string", "description": "综合评述" }
+      "debate_summary": { "type": "string", "description": "综合评述" }
     },
-    "required": ["ranked", "synthesis"]
+    "required": ["ranked", "debate_summary"]
   }
 }

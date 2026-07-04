@@ -188,8 +188,8 @@ function streamFlow() { return `
 Streaming output order:
   Banner → immediate
   Divergence engine → key findings immediate
-  Simulation engine → comparison when ready
-  Convergence engine → final recommendation
+  Convergence engine → survivors when ready
+  Simulation engine → 8-dimension scoring of survivors
   No waiting, user sees analysis building.
 `.trim(); }
 
@@ -198,8 +198,8 @@ Test case — user says "hello":
   Step 1(decompose): "You said hello — testing me? Ready to start? Formal or casual?"
   Step 2(diverge): 6-scale analysis of what "hello" implies
   Step 3(examine): 8-perspective on hidden expectations
-  Step 4(simulate): ≥2 response types, 3 scenarios each
-  Step 5(converge): best response
+  Step 4(converge): cull weak responses, keep best
+  Step 5(simulate): ≥2 response types, 3 scenarios each
 
   Even "hello" goes through full flow. No exceptions.
 `.trim(); }
