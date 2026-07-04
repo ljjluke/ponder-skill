@@ -7,11 +7,24 @@
     "engine/shensi.md",
     "engine/mcts-predictive.md"
   ],
-  "prompt": "按五步法思考（内部使用，不输出过程标签）:\n1. 虚静: 放下问题本身\n2. 神凝: 找出核心矛盾\n3. 神游: 自由联想\n4. 意象: 留意浮现的画面\n5. 言意: 连接回问题\n\n产出至少1个跳出常规的新视角。**只输出结论，不输出思考过程标签（虚静/神凝等）**，直接用自然语言表达发现。\n\n**查资料时必须覆盖以下五个维度**:\n① 中国古文化思想 — 相关古典哲学/文化视角\n② 每日最新信息 — 最新的技术发布、行业动态\n③ 学术论文 — 对应领域的论文、研究\n④ 专家观点 — 领域公认专家的意见\n⑤ 领域最新动态 — 该领域当下的最新进展\n查实时平台数据（GitHub、YouTube、B站、RSS、任意网页）优先用 agent-reach 暴露的平台能力；通用搜索用 WebSearch。反直觉发现至少引用2个以上维度的来源。需求画像见 engine/mcts-constraint.md",
+  "prompt": "按六步法思考（内部使用，不输出过程标签）:\n0. 前提审视: 先判断赌注——可逆小事跳过本步直接进虚静；高赌注/复杂问题才审视。审视时列出需求隐含的3个核心前提（不说\"你陷入了X偏误\"，只说\"你的需求假设了X\"），对照常见陷阱（沉没成本/确认偏误/锚定/框架效应/可得性启发/幸存者偏差）。涉及用户需求/真实情况的前提用 AskUserQuestion 让用户确认，用户否认的标为伪前提注入画像，用户坚持的标注存疑不强行推翻。系统只提示不判定。\n1. 虚静: 放下问题本身\n2. 神凝: 找出核心矛盾\n3. 神游: 自由联想\n4. 意象: 留意浮现的画面\n5. 言意: 连接回问题\n\n产出至少1个跳出常规的新视角。**只输出结论，不输出思考过程标签（前提审视/虚静/神凝等）**，直接用自然语言表达发现。\n\n**查资料时必须覆盖以下五个维度**:\n① 中国古文化思想 — 相关古典哲学/文化视角\n② 每日最新信息 — 最新的技术发布、行业动态\n③ 学术论文 — 对应领域的论文、研究\n④ 专家观点 — 领域公认专家的意见\n⑤ 领域最新动态 — 该领域当下的最新进展\n查实时平台数据（GitHub、YouTube、B站、RSS、任意网页）优先用 agent-reach 暴露的平台能力；通用搜索用 WebSearch。反直觉发现至少引用2个以上维度的来源。前提审视方法见 engine/shensi.md 第零步，需求画像见 engine/mcts-constraint.md",
   "args": ["userRequest", "userProfile"],
   "schema": {
     "type": "object",
     "properties": {
+      "premises": {
+        "type": "array",
+        "description": "前提审视产出（高赌注问题才有；可逆小事留空数组）",
+        "items": {
+          "type": "object",
+          "properties": {
+            "premise": { "type": "string", "description": "需求隐含的前提" },
+            "trap_type": { "type": "string", "description": "对应陷阱类型（沉没成本/确认偏误/锚定/框架效应/可得性启发/幸存者偏差/无）" },
+            "status": { "type": "string", "enum": ["confirmed", "rejected", "doubted"], "description": "confirmed=用户确认成立, rejected=用户否认(伪前提), doubted=用户坚持但存疑" }
+          },
+          "required": ["premise", "trap_type", "status"]
+        }
+      },
       "counter_intuitive": { "type": "string", "description": "跳出常规的视角" },
       "insight": { "type": "string", "description": "洞察" }
     },
