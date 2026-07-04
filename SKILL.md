@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.32
+version: 1.18.33
 license: MIT
 ---
 
@@ -45,7 +45,7 @@ license: MIT
 | 方案评分 | scripts/prompts/simulate.json | 8维度评幸存方案 | **必须等收敛产出 survivors 后**每方案一个 agent（吃 survivors），**必须展示各维度单项分和总分**，**高赌注问题对总分最高方案做归因**（它凭什么拿这个分：3个最可能原因+若原因不成立反事实排名，可逆小事跳过） |
 | 推演 | — | 模拟幸存方案 | **必须等方案评分后**每方案一个 agent(mcts-simulator，吃 survivors)，**必须展示推演结果表格+💡发现** |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名，**必须展示排名表格** |
-| 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反+可谬标注+不可同化项 | 主线程直行（吃辩论 debate_summary+ranked），高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提）+可谬标注（结论最可能错在哪+备选）+不可同化项（合题消化不掉的他者，极严门控多数问题留空），可逆小事只出结论 |
+| 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反+可谬标注+不可同化项 | 主线程直行（吃辩论 debate_summary+ranked），高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提）+可谬标注（结论最可能错在哪+备选）+不可同化项（合题消化不掉的他者，极严门控多数问题留空），三动作互斥约束有代码兜底（synthesis_guard.js 拦可谬↔自反/可谬↔他者撞对象+他者字段齐全），可逆小事只出结论 |
 
 ### 用户确认
 各步的画像刷新已覆盖大部分用户确认。综合后仍需要用户本人拍板的**核心方向选择**（而非信息确认），用 AskUserQuestion 带选项提问。用户回应后输出最终结论。没有遗留则直接出结论。
