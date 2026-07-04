@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.21
+version: 1.18.22
 license: MIT
 ---
 
@@ -45,7 +45,7 @@ license: MIT
 | 收敛 | scripts/prompts/converge.json | 依据评分保留最优 | 主线程直行，展示幸存方案及淘汰理由 |
 | 推演 | — | 模拟幸存方案 | 每方案一个 agent(mcts-simulator)，**必须展示推演结果表格+💡发现** |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名，**必须展示排名表格** |
-| 综合 | scripts/prompts/synthesis.json | 最终结论+风险 | 主线程直行，输出完整结论 |
+| 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反 | 主线程直行，高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提），可逆小事只出结论 |
 
 ### 用户确认
 各步的画像刷新已覆盖大部分用户确认。综合后仍需要用户本人拍板的**核心方向选择**（而非信息确认），用 AskUserQuestion 带选项提问。用户回应后输出最终结论。没有遗留则直接出结论。
@@ -71,7 +71,7 @@ license: MIT
 - **方案评分**: 评分表格必须包含**各维度单项分**和总分，**总分最高者加粗突出**，附一句"方案X在Y维度上表现最优"
 - **推演**: 推演结果表格，**关键发现用💡单独写一段**，不塞在表格里
 - **辩论**: 排名表格，**🏆 第一名加粗**，附各方案抗压能力一句话点评
-- **最终结论**: 🏆 **推荐方案（加粗）** → 核心判断 → 风险与应对 → 待确认事项
+- **最终结论**: 🏆 **推荐方案（加粗）** → 核心判断 → 风险与应对 → 待确认事项 → 结论自反（高赌注问题才有：top3质疑回应 + 共享前提）
 
 ### 流程结束后
 ```
