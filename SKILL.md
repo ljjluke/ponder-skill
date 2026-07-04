@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.24
+version: 1.18.25
 license: MIT
 ---
 
@@ -40,7 +40,7 @@ license: MIT
 | 神思 | scripts/prompts/shensi.json | 前提审视+跳出常规思维 | 主线程直行，高赌注问题先审视前提（涉及用户真实情况的前提用 AskUserQuestion 确认），再展示反直觉发现 |
 | 发散 | scripts/prompts/divergence.json | 多角度审视 | **必须等神思产出后**主线程直行（吃神思结论），展示6视角 |
 | 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | **必须等发散产出后**再起子 agent（吃发散共识）；每维度一个 agent，展示盲点表格；全部返回后主线程汇总为 key_finding 交给方案 |
-| 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent，展示方案对比表格 |
+| 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent，**每个方案必须经辩证运动(正题→反题→合题)**：生成方案后写出它在什么条件下是错的(反题)、吸收反题后如何修正或划界(合题)，展示方案对比表格+每方案的反题合题 |
 | 收敛 | scripts/prompts/converge.json | 淘汰弱方案保留最优 | 主线程直行（吃 plans），展示幸存方案及淘汰理由 |
 | 方案评分 | scripts/prompts/simulate.json | 8维度评幸存方案 | **必须等收敛产出 survivors 后**每方案一个 agent（吃 survivors），**必须展示各维度单项分和总分** |
 | 推演 | — | 模拟幸存方案 | **必须等方案评分后**每方案一个 agent(mcts-simulator，吃 survivors)，**必须展示推演结果表格+💡发现** |
@@ -67,7 +67,7 @@ license: MIT
 
 各阶段格式:
 - **八卦镜**: 盲点表格 + 最关键的盲点一句话总结
-- **方案**: 对比表格（名称/方向/核心逻辑），配上各方案的差异化点评
+- **方案**: 对比表格（名称/方向/核心逻辑），配上各方案的差异化点评；**每个方案附一句"它在什么情况下不成立"**（反题）和"因此如何修正或限定"（合题）
 - **收敛**: 幸存方案表格（名称/保留理由），附一句"淘汰N个，保留M个，主要因X被淘汰"
 - **方案评分**: 评分表格必须包含**各维度单项分**和总分，**总分最高者加粗突出**，附一句"方案X在Y维度上表现最优"
 - **推演**: 推演结果表格，**关键发现用💡单独写一段**，不塞在表格里
