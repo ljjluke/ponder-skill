@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.25
+version: 1.18.26
 license: MIT
 ---
 
@@ -38,7 +38,7 @@ license: MIT
 | 阶段 | 提示文件 | 目标 | 做法 |
 |-----|---------|------|------|
 | 神思 | scripts/prompts/shensi.json | 前提审视+跳出常规思维 | 主线程直行，高赌注问题先审视前提（涉及用户真实情况的前提用 AskUserQuestion 确认），再展示反直觉发现 |
-| 发散 | scripts/prompts/divergence.json | 多角度审视 | **必须等神思产出后**主线程直行（吃神思结论），展示6视角 |
+| 发散 | scripts/prompts/divergence.json | 多角度审视 | **必须等神思产出后**主线程直行（吃神思结论），展示6视角，**六视产出后做视角互否**（找对立视角对互相质疑再合题），共识须是互否后存活判断非简单汇总 |
 | 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | **必须等发散产出后**再起子 agent（吃发散共识）；每维度一个 agent，展示盲点表格；全部返回后主线程汇总为 key_finding 交给方案 |
 | 方案 | scripts/prompts/plans.json | 5-10个可选方案 | 每方案一个 agent，**每个方案必须经辩证运动(正题→反题→合题)**：生成方案后写出它在什么条件下是错的(反题)、吸收反题后如何修正或划界(合题)，展示方案对比表格+每方案的反题合题 |
 | 收敛 | scripts/prompts/converge.json | 淘汰弱方案保留最优 | 主线程直行（吃 plans），展示幸存方案及淘汰理由 |
