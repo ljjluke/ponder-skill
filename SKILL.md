@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.34
+version: 1.18.35
 license: MIT
 ---
 
@@ -42,7 +42,7 @@ license: MIT
 | 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | **必须等发散产出后**再起子 agent（吃发散共识）；每维度一个 agent，展示盲点表格；全部返回后主线程汇总为 key_finding 交给方案 |
 | 方案 | scripts/prompts/plans.json | 5-10个可选方案 | **高赌注问题起agent前先做终态画像**（先描述"成了的具体样子"须可判定像验收标准，再反向链拆解到今天第一步，可逆小事跳过），把终态注入每个agent让方案朝终态收敛；每方案一个 agent，**高赌注问题每个方案必须经辩证运动(正题→反题→合题)，可逆小事跳过**：生成方案后写出它具体在什么条件下失效(反题，须写"当X时不成立")、吸收反题后如何修正或划界(合题)，展示方案对比表格+每方案的反题合题 |
 | 收敛 | scripts/prompts/converge.json | 淘汰弱方案保留最优 | 主线程直行（吃 plans），展示幸存方案及淘汰理由 |
-| 方案评分 | scripts/prompts/simulate.json | 8维度评幸存方案 | **必须等收敛产出 survivors 后**每方案一个 agent（吃 survivors），**必须展示各维度单项分和总分**，**高赌注问题对总分最高方案做归因**（它凭什么拿这个分：3个最可能原因+若原因不成立反事实排名，可逆小事跳过） |
+| 方案评分 | scripts/prompts/simulate.json | 8维度评幸存方案 | **必须等收敛产出 survivors 后**每方案一个 agent（吃 survivors），**必须展示各维度单项分和总分**，**高赌注问题对总分最高方案做归因**（它凭什么拿这个分：3个最可能原因+若原因不成立反事实排名，可逆小事跳过）；若评分合法性可疑（分数接近排名敏感权重/与直觉背离/某维度无经验锚点/权重来源case类型不匹配）触发先验自检（质疑评分工具的先验框架而非继续用结果，多数case不触发留空） |
 | 推演 | — | 模拟幸存方案 | **必须等方案评分后**每方案一个 agent(mcts-simulator，吃 survivors)，**必须展示推演结果表格+💡发现** |
 | 辩论 | scripts/prompts/debate.json | 排名推荐 | 每方案立论→汇总→攻击评估→抗压排名，**必须展示排名表格** |
 | 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反+可谬标注+不可同化项 | 主线程直行（吃辩论 debate_summary+ranked），高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提）+可谬标注（结论最可能错在哪+备选）+不可同化项（合题消化不掉的他者，极严门控多数问题留空），三动作互斥约束有代码兜底（synthesis_guard.js 拦可谬↔自反/可谬↔他者撞对象+他者字段齐全），可逆小事只出结论 |
