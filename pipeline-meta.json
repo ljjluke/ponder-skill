@@ -992,7 +992,7 @@
       "verification"
     ],
     "parallel_groups": [],
-    "mutation_count": 24
+    "mutation_count": 25
   },
   "free_energy": {
     "current": 0.6696777777777777,
@@ -1037,7 +1037,7 @@
     "last_mutation_cycle": 0
   },
   "evolution": {
-    "generation": 3,
+    "generation": 4,
     "last_mutation": {
       "type": "weight_adjust",
       "log": [
