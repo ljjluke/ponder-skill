@@ -1,5 +1,5 @@
 {
-  "version": "1.18.33",
+  "version": "1.18.34",
   "description": "自进化认知管道元配置 — 每次分析后可能被修改",
   "meta_rules": {
     "不变": "最小化自由能（预测误差）",
@@ -992,7 +992,7 @@
       "verification"
     ],
     "parallel_groups": [],
-    "mutation_count": 23
+    "mutation_count": 24
   },
   "free_energy": {
     "current": 0.6696777777777777,
@@ -1037,7 +1037,7 @@
     "last_mutation_cycle": 0
   },
   "evolution": {
-    "generation": 2,
+    "generation": 3,
     "last_mutation": {
       "type": "weight_adjust",
       "log": [
