@@ -2,7 +2,7 @@
 name: ponder
 alwaysApply: true
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
-version: 1.18.37
+version: 1.18.38
 license: MIT
 ---
 
@@ -13,6 +13,8 @@ license: MIT
 ### 需求打磨
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
 完成后用一两句话总结用户需求。
+
+**无知自检（门控:复用神思赌注判断,可逆小事跳过,高赌注问题必做）**: 五诊画像完成后,框架基于当前画像做一次无知自检——列出2-5个"我知道我不知道"的专业事项。⛔不能写"不确定用户预算"(那是五诊低分维度),必须写**领域敏感事项**(如"不确定账户类型——这影响税负结构,黄金ETF和实物黄金的税负不同,但画像里没讨论税负结构这个维度")。每个无知条目须含:(a)该领域为什么需要知道这件事;(b)当前画像缺少它为什么是风险。能自己查的先查(公开信息),查不到的用 AskUserQuestion 追问用户——追问时**先给上下文说明为什么重要,不预设选项**,让用户用自己的话回答。追问结果注入画像的领域专业维度,后续步骤可引用。若当前画像已足够专业无显著无知,可诚实留空(不凑假无知)。方法见 engine/socratic-ignorance.md。
 
 ### 分析阶段
 

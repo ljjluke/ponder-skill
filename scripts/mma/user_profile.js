@@ -47,6 +47,9 @@ function defaultProfile(userId) {
             interrupts_verbose: 0,         // 计数器: 嫌啰嗦
             corrects_assumptions: 0,       // 计数器: 纠正假设
         },
+        // 领域专业维度 — 由苏格拉底无知自检补上的、五诊探不到的专业事项
+        // 格式: [{ dimension: "税负结构", value: "A股账户,ETF收益计入个税", source: "无知自检追问", session: "..." }]
+        domain_professional_dimensions: [],
         // 交互历史摘要 (最近10条)
         recent_interactions: [],
     };
