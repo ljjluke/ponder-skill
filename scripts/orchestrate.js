@@ -12,6 +12,9 @@
  *
  *   node scripts/orchestrate.js finalize <问题类型> <问题描述>
  *     知识保洁 + 权重学习 + 进化分析
+ *
+ *   node scripts/orchestrate.js rules <步骤名> <问题类型>
+ *     查本步命中的自适应进化规则（供管线起跑前注入prompt参考）
  */
 const fs = require('fs');
 const path = require('path');
@@ -39,6 +42,28 @@ function queryHistory(stepName, questionType) {
     if (hist && hist.length > 0) {
       result.entries = hist.slice(0, 3).map(function(h) { return { content: (h.content || '').substring(0, 200), q: h.q, status: h.status }; });
       result.count = hist.length;
+    }
+  } catch(e) { result.error = e.message; }
+  console.log(JSON.stringify(result));
+}
+
+// ── Rules: 查本步命中的自适应进化规则（薄包装 evolve.getMatchingRules） ──
+function queryRules(stepName, questionType) {
+  var result = { matched: [] };
+  try {
+    var evolve = require('./evolve');
+    var rules = evolve.getMatchingRules(questionType, stepName);
+    if (rules && rules.length > 0) {
+      result.matched = rules.map(function(r) {
+        return {
+          id: r.id,
+          step: r.condition && r.condition.step,
+          action: r.action && r.action.type,
+          description: r.action && r.action.description,
+          details: r.action && r.action.details
+        };
+      });
+      result.count = rules.length;
     }
   } catch(e) { result.error = e.message; }
   console.log(JSON.stringify(result));
@@ -139,6 +164,8 @@ function main() {
 
   if (cmd === 'history') {
     queryHistory(args[1] || '', args[2] || '');
+  } else if (cmd === 'rules') {
+    queryRules(args[1] || '', args[2] || '');
   } else if (cmd === 'step') {
     storeStep(args[1] || '', args[2] || '', args[3] || '{}', args[4] || '');
   } else if (cmd === 'finalize') {
@@ -146,10 +173,11 @@ function main() {
   } else {
     console.log('用法:');
     console.log('  node scripts/orchestrate.js history <步骤名> <问题类型>          — 查top3历史');
+    console.log('  node scripts/orchestrate.js rules <步骤名> <问题类型>            — 查本步命中的进化规则');
     console.log('  node scripts/orchestrate.js step <步骤名> <问题类型> \'<JSON>\'   — 存一步产出+记指标');
     console.log('  node scripts/orchestrate.js finalize <问题类型> <问题描述>        — 保洁+学习');
   }
 }
 
 if (require.main === module) main();
-module.exports = { storeStep, finalize };
+module.exports = { storeStep, finalize, queryRules };

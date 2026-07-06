@@ -4,7 +4,7 @@
   "stepGoal": "淘汰弱方案，保留3-5个最优",
   "engine_ref": "engine/converge.md",
   "tool_ref": ["scripts/mcts_guard.js diversity-challenge"],
-  "prompt": "对所有方案进行对比淘汰。淘汰顺序: 边界违规→不可行→风险不可控→被其他方案全面压制。保留3-5个最优并评分(0-1),每个方案附保留理由。自检和盲点审计见 engine/mcts-converge.md。可调用 scripts/mcts_guard.js diversity-challenge 检查方案多样性",
+  "prompt": "对所有方案进行对比淘汰。淘汰顺序: 边界违规→不可行→风险不可控→被其他方案全面压制。保留3-5个最优并评分(0-1),每个方案附保留理由。自检和盲点审计见 engine/mcts-converge.md。可调用 scripts/mcts_guard.js diversity-challenge 检查方案多样性\n\n**工作立场(门控:复用神思赌注判断,可逆小事留空对象;高赌注问题必填)**: 收敛是框架第一次下场选择而非罗列——在幸存方案里明确表态此刻倾向哪个,凭什么倾向它(引用本步及之前步骤的具体产出),以及出现什么新证据会改倾向。⛔有倾向是硬约束:一旦填就不许骑墙(不许\"各有优劣\"——骑墙=没立场=等同没填,不如留空)。方法见 engine/working-stance.md。",
   "args": ["plans"],
   "schema": {
     "type": "object",
@@ -21,6 +21,15 @@
           "required": ["name", "score", "reason"]
         },
         "minItems": 3
+      },
+      "working_stance": {
+        "type": "object",
+        "description": "框架此刻的工作立场（高赌注问题必填；可逆小事留空对象）",
+        "properties": {
+          "current_lean": { "type": "string", "description": "框架此刻倾向的方向/方案（一句话，不许\"各有优劣\"骑墙，骑墙等同没填不如留空）" },
+          "grounds": { "type": "string", "description": "凭什么倾向它——引用本步及之前步骤的具体产出（哪个发现支撑了倾向），不接受\"综合考虑\"无来源话" },
+          "would_change_mind": { "type": "string", "description": "出现什么新证据框架会改倾向（可被质疑的锚点，喂给综合fallibilism）" }
+        }
       }
     },
     "required": ["survivors"]

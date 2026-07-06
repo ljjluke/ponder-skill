@@ -52,6 +52,10 @@ const DEFAULT_WEIGHTS = {
   free_energy_prederror: 0.3,
 
   // ── V_final 排名权重 (converge engine) ──
+  // ⚠️ 孤儿键（v1.18.36 核实）：全库无任何代码读取 vfinal_* 用于排名加权。
+  // learn() 可写入、get() 可读取，但无调用方。设计意图是给 converge 阶段加权幸存方案排名，
+  // 但 converge 逻辑当前不读它，"可学习"是装饰性的。待 converge 引擎接入加权排名后启用，
+  // 在此之前不要误以为这三项权重正在影响评分。见 engine/working-stance.md 的进化回路诊断。
   vfinal_feas: 0.5,
   vfinal_robust: 0.3,
   vfinal_persp: 0.2,

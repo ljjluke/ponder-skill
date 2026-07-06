@@ -618,4 +618,4 @@ function cli() {
 }
 
 if (require.main === module) cli();
-module.exports = { analyze, report, loadRuns, THRESHOLDS };
+module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules };
