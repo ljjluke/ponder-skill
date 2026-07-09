@@ -11,6 +11,27 @@ license: MIT
 ⛔ 禁止做任何环境检查、配置验证、文件扫描等与用户问题无关的操作。直接开始。
 ⛔ **子 agent 必须全部返回才能进入下一步**：八卦镜的8个维度 agent、方案的每方案 agent、方案评分的每方案 agent、推演的每方案 agent、辩论的立论 agent——必须等所有并行的子 agent 返回并展示结果后，才能进入下一步。不允许在部分 agent 还在运行时跳到后续步骤。
 
+### 信号过滤（大脑感知层）
+
+⛔ 门控：有传感器持续推送信号流时启用；无信号流（用户直接提问）跳过，直接进入需求打磨。
+
+当传感器推送信号流（如股票数据、新闻舆情、价格异动）时，在启动9步管线前先判断"这个信号值不值得想"：
+
+**① 信号分类**：把信号分为异常/机会/矛盾/噪音四类。
+**② 摄入判断**：对非噪音信号做三问评估——
+- 这个信号是否与已有的"关心事项"相关？（画像里的约束/偏好/风险维度）
+- 这个信号是否暗示上次判断的前提被改变了？（查 `framework_self` 的 stance_memory）
+- 这个信号是否在已知盲点的方向上？（查 `framework_self` 的 pattern_memory）
+- 三个问题全否 → 低优先级，标记但暂不触发
+**③ 触发决策**：满足任一条件启动管线——
+- 异常信号+高赌注 → 必启动
+- 矛盾信号+与上次立场直接冲突 → 必启动
+- 机会信号+时间敏感 → 必启动
+- 异常+低赌注 → 标记，累计三次同类型再启动
+- 噪音 → 忽略
+
+方法见 engine/signal-filter.md。自我状态读写见 scripts/mma/framework_self.js。
+
 ### 需求打磨
 
 启动时展示：
@@ -66,6 +87,28 @@ license: MIT
 | ⚔️ 辩论 | scripts/prompts/debate.json | 排名推荐 | ⛔**无论赌注高低必做，不受可逆小事门控影响**。**必须等推演全部返回后**，对每个幸存方案各起一个 agent 做立论（并行），**全部立论返回并展示后**再汇总做攻击评估→抗压排名，**必须展示排名表格**；**高赌注问题额外输出立场演化**（辩论攻防有没有改变收敛阶段的倾向：变了记从X到Y+哪个攻击动摇的，没变记为何不动，可逆小事跳过）；反向思维段内部升级为系统反事实排查（双向反事实/因果链排查/可控不可控区分，不展示方法论标签，见 engine/counterfactual-thinking.md） |
 | 🏆 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反+可谬标注+不可同化项+立场谱系+偏好自省 | 主线程直行（吃辩论 debate_summary+ranked），高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提）+可谬标注（**基于立场**：框架最终倾向A，A最可能因X错+备选，可逆小事跳过）+不可同化项+立场谱系+偏好自省（跨期偏好/动机取向/偏好稳定性，不展示标签，见 engine/preference-structure.md），三动作互斥约束有代码兜底（synthesis_guard.js 拦可谬↔自反/可谬↔他者撞对象+他者字段齐全）。⛔可逆小事只跳过这四个深度动作，但**推演辩论的结论必须正常展示**，不允许"只出结论"把前面步骤的产出吞掉 |
 
+### 行动翻译（大脑行动层）
+
+⛔ 门控：高赌注问题必做；可逆小事跳过（结论已可直接执行）。
+
+综合产出结论后，在最终呈现前，把"推荐方案X"翻译成具体可执行动作：
+
+**① 行动生成(action_plan)**：翻译为具体步骤序列——
+- 第一步是什么？（谁做什么、用什么工具、花多少资源）
+- 第二步依赖第一步的什么结果？（"如果第一步得到A则做Y，得到B则做Z"）
+- 每步的完成判据是什么？（"X指标从A变成B"，不是"做完了"）
+⛔ 不是方案阶段终态画像的复读——终态画像是方向性的，行动翻译是操作性的。
+
+**② 回退条件(kill_conditions)**：什么信号/结果出现时必须中止——
+- 基于推演的翻车点 + 基于可谬标注的失效点
+⛔ 必须给出至少一条可观测的中止条件，不接受"视情况而定"。
+
+**③ 结果预期(expected_results)**：执行完成后什么算"做对了"——
+- 预期结果必须可被传感器验证（传感器能检测到才算有效预期）
+- 直接喂给结果学习层做 outcome_gap 对比
+
+产出格式在综合结论的 action_translation 字段中。方法见 engine/phronesis.md。
+
 ### 用户确认
 各步的画像刷新已覆盖大部分用户确认。综合后仍需要用户本人拍板的**核心方向选择**（而非信息确认），用 AskUserQuestion 带选项提问。用户回应后输出最终结论。没有遗留则直接出结论。
 
@@ -98,3 +141,37 @@ license: MIT
 node scripts/orchestrate.js finalize <类型> <问题>
 ```
 保洁 + 学习。
+
+### 结果学习（大脑学习层）
+
+⛔ 门控：有执行结果回流（传感器检测到 action_translation 的 expected_results 有了实际值）时启用；无回流传执行结果则跳过。
+
+执行结果回流后，对比预期和实际，修正立场和推理模式：
+
+**① 结果对比(outcome_gap)**：实际 vs expected_results——
+- 符合预期 → 记录 validated → 调用 `framework_self.recordOutcome(sessionId, 'validated')`
+- 偏离预期 → 记录 falsified → 调用 `framework_self.recordOutcome(sessionId, 'falsified', '证伪证据描述')`
+- 无法判定 → 记录 pending
+
+**② 立场修正**：若被证伪——
+- 更新 framework_self 的 stance_memory（立场被真实行动后果修正）
+- 更新用户画像的约束/假设（执行暴露了画像里没有的真实约束）
+
+**③ 推理模式修正**：若同类型问题反复翻车在同一类判断上——
+- pattern_blindspot 从单次觉察升级为持续约束 → `framework_self.recordPattern(...)`
+- 写入 evolve-rules.json（`evolve.recordOutcome` 自动处理）
+
+方法见 engine/outcome-learning.md。进化数据写回见 scripts/evolve.js 的 recordOutcome 函数。
+
+### 自我连续性刷新（大脑记忆层）
+
+每次推理的立场、二阶观察、回溯标记通过 `framework_self` 跨会话持续存在：
+
+**立场记忆(stance_memory)**：本次推理的立场+依据+结果 → `framework_self.recordStance(...)`
+**模式记忆(pattern_memory)**：推理惯性/盲点积累 → `framework_self.recordPattern(...)`
+**触发记忆(trigger_memory)**：信号模式→证伪记录 → 由 `framework_self.recordOutcome` 自动维护
+**自我叙事(self_narrative)**：每次结果学习后自动更新——"我在[领域]从倾向X→被Y证伪→改Z→确认Z更可靠"
+
+四个调用点贯穿大脑四层：信号过滤层读 trigger_memory/pattern_memory → 神思读 stance_memory → 结果学习层更新全部 → 二阶观察读 pattern_memory。
+
+方法见 engine/self-continuity.md。模块见 scripts/mma/framework_self.js。

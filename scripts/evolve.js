@@ -869,5 +869,71 @@ function cli() {
   }
 }
 
+// ══════════════════════════════════════
+//  recordOutcome — 执行结果回流后更新进化数据
+//
+//  这是大脑架构的结果学习层入口：
+//    执行结果回流 → 对比 expected_results vs 实际 →
+//    validated → 强化立场 → framework_self
+//    falsified  → 修正立场 → framework_self + pattern_learning
+//
+//  用法:
+//    const evolve = require('./evolve');
+//    evolve.recordOutcome('session-123', 'falsified', '北向资金流向与判断背离');
+//
+//  参数:
+//    sessionId    — 与 framework_self.recordStance 相同的 session ID
+//    outcome      — "validated" | "falsified" | "pending"
+//    falsifiedBy  — 若被证伪，什么证据证伪的（可选）
+// ══════════════════════════════════════
+function recordOutcome(sessionId, outcome, falsifiedBy) {
+  const frameworkSelf = require('./mma/framework_self');
+  const result = frameworkSelf.recordOutcome(sessionId, outcome, falsifiedBy || null);
+
+  // 若被证伪，触发推理模式修正检查
+  if (outcome === 'falsified') {
+    const state = frameworkSelf.load();
+    // 检查同类问题是否反复翻车在同一类判断上
+    const falsifiedSameType = state.stance_memory.filter(
+      s => s.outcome === 'falsified' && s.falsified_by === falsifiedBy
+    );
+
+    if (falsifiedSameType.length >= 3) {
+      // 同类型判断被同一证据反复证伪 → 升级为 pattern
+      const patternType = '反复被同类型证据证伪';
+      frameworkSelf.recordPattern(
+        patternType,
+        `下次同类问题在综合阶段加检查点：结论是否依赖${falsifiedBy}的前提`,
+        'recurring'
+      );
+
+      // 写入 evolve-rules.json（持久化规则）
+      const rulesPath = path.join(__dirname, 'evolve-rules.json');
+      let rules = { rules: [] };
+      if (fs.existsSync(rulesPath)) {
+        try { rules = JSON.parse(fs.readFileSync(rulesPath, 'utf-8')); } catch (e) {}
+      }
+      rules.rules.push({
+        id: `outcome-falsify-${Date.now().toString(36)}`,
+        status: 'active',
+        source: 'outcome_learning',
+        verified: new Date().toISOString().substring(0, 10),
+        condition: {
+          question_type: [falsifiedSameType[0].question_type || 'unknown'],
+          step: 'synthesis',
+        },
+        action: {
+          type: 'add_checkpoint',
+          description: `检查结论是否依赖${falsifiedBy}的前提（历史${falsifiedSameType.length}次被证伪）`,
+          details: `在综合阶段结论自反中加检查:结论是否假定${falsifiedBy}成立`,
+        },
+      });
+      fs.writeFileSync(rulesPath, JSON.stringify(rules, null, 2));
+    }
+  }
+
+  return result;
+}
+
 if (require.main === module) cli();
-module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules, classifyErrorPattern, prune, recallErrors, integrateWeightsFromAnalysis };
+module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules, classifyErrorPattern, prune, recallErrors, integrateWeightsFromAnalysis, recordOutcome };
