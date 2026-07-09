@@ -143,7 +143,17 @@ function main() {
     var stepName = args[1];
     var outputJson = args[2];
     if (!stepName || !outputJson) { console.error('用法: node pipeline-metrics.js step <步骤名> \'<输出JSON>\''); process.exit(1); }
-    var output = JSON.parse(outputJson);
+    var output;
+    try { output = JSON.parse(outputJson); } catch(e) {
+      // 宽松解析:尝试从自然语言中抠 JSON,再失败则降级空对象不崩
+      var m = String(outputJson).match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (m) { try { output = JSON.parse(m[1]); } catch(e2) {} }
+      if (!output) {
+        var s = String(outputJson).indexOf('{'), e3 = String(outputJson).lastIndexOf('}');
+        if (s !== -1 && e3 > s) { try { output = JSON.parse(String(outputJson).slice(s, e3+1)); } catch(e4) {} }
+      }
+      if (!output) { console.error('⚠️ 指标采集:输出非合法JSON,降级空对象(step=' + stepName + ')'); output = {}; }
+    }
     var record = collectStep(stepName, output);
     appendStepMetric(record);
     console.log(JSON.stringify({ recorded: stepName, is_clear: record.is_clear, questions: record.questions_count }));

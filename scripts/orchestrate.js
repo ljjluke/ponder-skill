@@ -72,7 +72,24 @@ function queryRules(stepName, questionType) {
 // ── Step: 存一步产出 + 记一步指标 ──
 function storeStep(stepName, questionType, stepOutputJson, userRequest) {
   var output;
-  try { output = JSON.parse(stepOutputJson); } catch(e) { console.error('无法解析步骤输出'); process.exit(1); }
+  // 宽松解析:先试直接 parse,失败则尝试从自然语言中抠出 JSON 块,再失败则降级存原始文本不崩
+  function extractJson(str) {
+    if (!str || typeof str !== 'string') return null;
+    try { return JSON.parse(str); } catch(e) {}
+    // 尝试 ```json ... ``` 代码块
+    var m = str.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (m) { try { return JSON.parse(m[1]); } catch(e) {} }
+    // 尝试第一个 { 到最后一个 } 之间
+    var s = str.indexOf('{'), e2 = str.lastIndexOf('}');
+    if (s !== -1 && e2 > s) { try { return JSON.parse(str.slice(s, e2+1)); } catch(e) {} }
+    return null;
+  }
+  output = extractJson(stepOutputJson);
+  if (!output) {
+    // 降级:不崩,存原始文本,记 warning,指标用空对象
+    console.error('⚠️ 步骤输出非合法JSON,降级存原始文本(step=' + stepName + ')');
+    output = { _fallback_raw: true, _raw_text: String(stepOutputJson).slice(0, 2000) };
+  }
 
   var result = { stored: false, metric_recorded: false };
 
