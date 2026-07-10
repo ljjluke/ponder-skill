@@ -183,6 +183,7 @@ Old data decays → unused knowledge sleeps → low quality archived
 # Or use skill-installer directly:
 #   python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
 #     --repo ljjluke/mcts-skill --path / --name ponder
+# After install: restart Codex or start a new session to see /ponder
 
 # Update (Claude Code)
 /plugin update luke
