@@ -19,6 +19,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { WeightRegistry, DEFAULT_WEIGHTS } = require('./weights.js');
+// 步骤命名单一真源 + 历史别名兼容层
+const { STEPS, normalizeStep, allStepNamesFor } = require('./step-names');
 
 // ── 数据源 ──
 const DATA_DIR = process.env.PONDER_DATA_DIR ? require("path").resolve(process.env.PONDER_DATA_DIR) : path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
@@ -235,6 +237,19 @@ function loadRuns() {
 //  按类型分组统计
 // ══════════════════════════════════════
 function analyze(runs) {
+  // 取一条 run 里某步的数据,兼容历史旧名(dimension/simulations/verification)
+  // 提到顶层:byType 循环内和全量统计都能用
+  function getStepData(run, stdStep) {
+    if (!run || !run.steps) return undefined;
+    if (run.steps[stdStep]) return run.steps[stdStep];
+    // 查别名:旧名存的历史数据归一化到标准名后取
+    var names = allStepNamesFor(stdStep);
+    for (var i = 0; i < names.length; i++) {
+      if (run.steps[names[i]]) return run.steps[names[i]];
+    }
+    return undefined;
+  }
+
   const byType = {};
   for (const r of runs) {
     const t = r._question_type || 'unknown';
@@ -246,16 +261,16 @@ function analyze(runs) {
   for (const [type, typeRuns] of Object.entries(byType)) {
     if (typeRuns.length < THRESHOLDS.min_runs_per_type) continue;
 
-    const steps = ['shensi', 'divergence', 'bagua', 'plans', 'converge', 'simulate', 'debate', 'synthesis'];
+    const steps = STEPS;  // 单一真源(SKILL.md八步),替代散落硬编码
     const stepStats = {};
 
     for (const step of steps) {
-      const withData = typeRuns.filter(r => r.steps[step]?.is_clear !== undefined);
+      const withData = typeRuns.filter(r => getStepData(r, step) && getStepData(r, step).is_clear !== undefined);
       if (withData.length < 2) continue;
 
-      // --- 原始 is_clear 统计 ---
-      const unclear = withData.filter(r => !r.steps[step].is_clear).length;
-      const avgQ = withData.reduce((s, r) => s + (r.steps[step]?.questions_count || 0), 0) / withData.length;
+      // --- 原始 is_clear 统计(走 getStepData 兼容历史旧名) ---
+      const unclear = withData.filter(r => !getStepData(r, step).is_clear).length;
+      const avgQ = withData.reduce((s, r) => s + (getStepData(r, step).questions_count || 0), 0) / withData.length;
       const rawClarityRate = 1 - (unclear / withData.length);
 
       // --- 多信号清晰度可信分（不是LLM自评，是行为数据综合）---
@@ -271,9 +286,12 @@ function analyze(runs) {
       var stepClearAndPassed = 0
       var stepClearTotal = 0
       if (typeRuns.length >= 2) {
-        stepClearTotal = withData.filter(function(r) { return r.steps[step].is_clear }).length
+        stepClearTotal = withData.filter(function(r) { return getStepData(r, step).is_clear }).length
         stepClearAndPassed = withData.filter(function(r) {
-          return r.steps[step].is_clear && r.steps.verification && r.steps.verification.verdict === 'PASS'
+          var sd = getStepData(r, step);
+          // 兼容历史 verification 步骤(八步外旧名,归一化为 null → 用旧名直取)
+          var vStep = r.steps.verification;
+          return sd.is_clear && vStep && vStep.verdict === 'PASS'
         }).length
         if (stepClearTotal >= 2) {
           sigVerify = (stepClearAndPassed / stepClearTotal) * 0.3
@@ -297,7 +315,7 @@ function analyze(runs) {
           rate: (1 - st.verifiedClarity),
           detail: `${type}/${step} 验证清晰度 ${(st.verifiedClarity*100).toFixed(0)}% < ${(1-THRESHOLDS.unclear_warn)*100}%(原始${(st.clarityRate*100).toFixed(0)}%)`,
           action: step === 'divergence' ? 'add_research' :
-                  step === 'dimension' ? 'add_criteria' :
+                  step === 'bagua' ? 'add_criteria' :
                   step === 'synthesis' ? 'structured_output' : 'review',
         });
       }
@@ -317,8 +335,9 @@ function analyze(runs) {
     // 信号2: 问题密度 — 步骤中LLM问了多少问题（问题越多=不确定性越高）
     // 信号3: 清晰稳定性 — is_clear 的一致率
     let qualityScore = null;
-    const allDivQuestions = typeRuns.filter(r => r.steps.divergence?.questions_count !== undefined).map(r => r.steps.divergence.questions_count);
-    const allDimQuestions = typeRuns.filter(r => r.steps.bagua?.questions_count !== undefined).map(r => r.steps.bagua.questions_count);
+    // 历史旧名数据走 getStepData 归一化取(divergence/bagua 在旧 run 里可能没存)
+    const allDivQuestions = typeRuns.filter(r => getStepData(r, 'divergence') && getStepData(r, 'divergence').questions_count !== undefined).map(r => getStepData(r, 'divergence').questions_count);
+    const allDimQuestions = typeRuns.filter(r => getStepData(r, 'bagua') && getStepData(r, 'bagua').questions_count !== undefined).map(r => getStepData(r, 'bagua').questions_count);
 
     if (typeRuns.length >= 3) {
       // 信号权重无理论依据，当前为等权平均，后续数据积累后可调整
@@ -334,7 +353,7 @@ function analyze(runs) {
           step: 'overall',
           issue: 'quality',
           score: qualityScore,
-          detail: `${type} 行为质量分 ${(qualityScore*100).toFixed(0)}%，不清晰率 ${(divUnclearRate*100).toFixed(0)}%/${(dimUnclearRate*100).toFixed(0)}%`,
+          detail: `${type} 行为质量分 ${(qualityScore*100).toFixed(0)}%，不清晰率 ${(divUnclearRate*100).toFixed(0)}%/${(baguaUnclearRate*100).toFixed(0)}%`,
           action: 'review_pipeline',
         });
       }
@@ -353,10 +372,10 @@ function analyze(runs) {
   const total = runs.length;
   const allClear = runs.filter(r => r.summary?.all_clear).length;
   const stepClarity = {};
-  for (const step of ['shensi', 'divergence', 'bagua']) {
-    const withData = runs.filter(r => r.steps[step]?.is_clear !== undefined);
+  for (const step of STEPS.slice(0, 3)) {  // 前三步:shensi/divergence/bagua(单一真源)
+    const withData = runs.filter(r => getStepData(r, step) && getStepData(r, step).is_clear !== undefined);
     if (withData.length > 0) {
-      const unclear = withData.filter(r => !r.steps[step].is_clear).length;
+      const unclear = withData.filter(r => !getStepData(r, step).is_clear).length;
       stepClarity[step] = { count: withData.length, clarity_rate: 1 - (unclear / withData.length) };
     }
   }

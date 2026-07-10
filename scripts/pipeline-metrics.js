@@ -40,6 +40,13 @@ function collectStep(stepName, stepOutput, opts = {}) {
     questions: stepOutput.user_questions || [],
   };
 
+  // 神思步骤: 收集赌注判定(全链门控的单一真源,立场层空转根因的落盘点)
+  if (stepName === 'shensi') {
+    record.has_stake = !!stepOutput.stake;
+    record.stake_level = (stepOutput.stake && stepOutput.stake.level) || 'missing';
+    if (stepOutput.stake && stepOutput.stake.criteria) record.stake_criteria = stepOutput.stake.criteria;
+  }
+
   // 按步骤类型提取结构化字段
   if (stepName === 'divergence' && stepOutput.perspectives) {
     var filledSources = stepOutput.perspectives.filter(function(p) { return p.data_source && p.data_source.length > 0 }).length;
@@ -112,6 +119,13 @@ function statusReport() {
       clear_rate: recs.length > 0 ? 1 - (unclear / recs.length) : 0,
       avg_questions: recs.length > 0 ? (totalQuestions / recs.length) : 0,
     };
+    // 神思步骤额外统计赌注判定覆盖率(验证stake落盘是否生效,修复前=0%)
+    if (stepName === 'shensi') {
+      var withStake = recs.filter(function(r) { return r.has_stake }).length;
+      var highStake = recs.filter(function(r) { return r.stake_level === 'high' }).length;
+      stepStats[stepName].stake_coverage_rate = recs.length > 0 ? withStake / recs.length : 0;
+      stepStats[stepName].high_stake_rate = withStake > 0 ? highStake / withStake : 0;
+    }
   }
 
   // 旧格式兼容: 提取前两个步骤的清晰率
@@ -178,7 +192,11 @@ function main() {
     for (var stepName in (s.step_stats || {})) {
       var st = s.step_stats[stepName];
       var bar = '█'.repeat(Math.round(st.clear_rate * 20));
-      console.log('  ' + stepName.padEnd(12) + ' ' + (st.clear_rate * 100).toFixed(0) + '% |' + bar.padEnd(20) + '| (' + st.count + '次, 均' + st.avg_questions.toFixed(1) + '问题)');
+      var line = '  ' + stepName.padEnd(12) + ' ' + (st.clear_rate * 100).toFixed(0) + '% |' + bar.padEnd(20) + '| (' + st.count + '次, 均' + st.avg_questions.toFixed(1) + '问题)';
+      if (stepName === 'shensi' && st.stake_coverage_rate !== undefined) {
+        line += '\n               赌注判定覆盖率: ' + (st.stake_coverage_rate * 100).toFixed(0) + '% | 高赌注占比: ' + (st.high_stake_rate * 100).toFixed(0) + '%';
+      }
+      console.log(line);
     }
 
   } else {

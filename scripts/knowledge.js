@@ -20,6 +20,12 @@ const path = require('path');
 const os = require('os');
 const { spawnSync } = require('child_process');
 
+// 步骤命名单一真源 + 历史别名兼容层(避免新旧名混杂导致召回断链)
+const { normalizeStep, categoryFor, matchStepPrefix } = require('./step-names');
+
+// 分词:中英文混合切词(acquire 和 recallStepHistory 共用,提到顶层避免作用域断裂)
+function _seg(s){if(!s)return[];var r=[];var buf='';for(var i=0;i<s.length;i++){var c=s[i];if(/[a-zA-Z0-9À-ɏ]/.test(c)){buf+=c}else{if(buf.length>0){r.push(buf);buf=''}if(c.trim()&&!c.match(/[\s,，。、]/))r.push(c)}}if(buf.length>0)r.push(buf);return r}
+
 const MMA_SCRIPT = findMmaScript();
 
 function findMmaScript() {
@@ -93,8 +99,7 @@ function acquire(query, options = {}, stepName = '') {
   // 在标签匹配基础上，计算查询与每条候选经验的语义重叠度
   if (result.entries.length > 0 && query.tags) {
     const queryText = (Array.isArray(query.tags) ? query.tags.join(' ') : '') + ' ' + (query.query || '');
-    function _seg(s){if(!s)return[];var r=[];var buf='';for(var i=0;i<s.length;i++){var c=s[i];if(/[a-zA-Z0-9\u00C0-\u024F]/.test(c)){buf+=c}else{if(buf.length>0){r.push(buf);buf=''}if(c.trim()&&!c.match(/[\s,，。、]/))r.push(c)}}if(buf.length>0)r.push(buf);return r}
-const queryWords = _seg(queryText);
+    const queryWords = _seg(queryText);
     const queryTopics = new Set(queryWords);
 
     for (const entry of result.entries) {
@@ -188,7 +193,7 @@ function store(entry) {
   if (entry._reasoning) {
     const r = entry._reasoning
     if (r.divergence_consensus) reasoningParts.push(r.divergence_consensus)
-    if (r.dimension_finding) reasoningParts.push(r.dimension_finding)
+    if (r.dimension_finding || r.bagua_finding) reasoningParts.push(r.dimension_finding || r.bagua_finding)
     if (r.synthesis_conclusion) reasoningParts.push(r.synthesis_conclusion)
     if (r.verification_verdict) reasoningParts.push('验证:' + r.verification_verdict)
   }
@@ -200,7 +205,7 @@ function store(entry) {
   const payload = JSON.stringify({
     description: desc,
     tags: entry.tags || [],
-    category: 'tools_and_means',
+    category: entry.category || 'tools_and_means',
     emotion,
     source: entry.source || 'web_search',
     q: entry.q || 0.5,
@@ -222,7 +227,8 @@ function store(entry) {
 /**
  * 存储步骤输出 — 每个管道步骤的结果存进MMA，供后续同类问题参考
  *
- * @param {string} stepName — 步骤名: divergence|dimension|plans|simulate|debate|synthesis|verify
+ * @param {string} stepName — 步骤名(标准八步): shensi|divergence|bagua|plans|converge|simulate|debate|synthesis
+ *                  历史旧名(dimension/simulations/verification)/中文名会自动归一化,见 scripts/step-names.js
  * @param {string} questionType — 问题类型: 市场分析|技术选型|...
  * @param {object|string} output — 该步骤的结构化输出
  * @param {object} opts — 可选: tags, user_request
@@ -230,6 +236,8 @@ function store(entry) {
  */
 function storeStepOutput(stepName, questionType, output, opts = {}) {
   if (!MMA_SCRIPT || !stepName || !questionType) return null;
+  // 归一化到标准八步名(单一真源),旧名/中文名写入前统一为标准名
+  stepName = normalizeStep(stepName) || stepName;
   // 从输出中提取自然语言文本,而非存JSON(保证语义匹配能命中)
   var summary = ''
   if (typeof output === 'string') {
@@ -251,13 +259,7 @@ function storeStepOutput(stepName, questionType, output, opts = {}) {
   const entry = {
     description: entryDesc,
     tags: ['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])],
-    category: stepName === 'divergence' ? 'judgment_and_strategy' :
-              stepName === 'dimension' ? 'core_decision' :
-              stepName === 'plans' ? 'input_and_output' :
-              stepName === 'simulate' ? 'dependencies_and_coordination' :
-              stepName === 'debate' ? 'structure_and_framework' :
-              stepName === 'synthesis' ? 'efficiency_and_resources' :
-              stepName === 'verification' ? 'verification_and_validation' : 'tools_and_means',
+    category: categoryFor(stepName),
     emotion: 'xi',
     q: 0.7,
     source: 'step_history',
@@ -292,8 +294,14 @@ function storeStepOutput(stepName, questionType, output, opts = {}) {
  * @returns {Array} 排序后的历史条目
  */
 function recallStepHistory(stepName, questionType, opts = {}) {
+  // 归一化:即便查旧名/中文名,也能召回到用标准名或别名存的历史数据
+  var normStep = normalizeStep(stepName) || stepName;
+  stepName = normStep;
   const limit = opts.limit || 20;
   const searchTags = new Set(['step_history', 'step_' + stepName, questionType, ...(opts.tags || [])]);
+  // 同时把别名也纳入标签候选(历史数据可能用旧名打 tag)
+  const { allStepNamesFor } = require('./step-names');
+  allStepNamesFor(stepName).forEach(function(n) { searchTags.add('step_' + n); });
   const candidates = [];
 
   // 直接加载MMA全量搜索（不经过deqi的时间激活限制）
@@ -307,7 +315,8 @@ function recallStepHistory(stepName, questionType, opts = {}) {
       for (const p of m.points) {
         if (p.hidden) continue;
         if (!p.tags || !p.tags.some(t => searchTags.has(t))) continue;
-        if (!p.description || !p.description.startsWith('[step:' + stepName + ']')) continue;
+        // 扩展前缀匹配:命中 stepName 的任一别名前缀都算(防历史旧名存的数据召不回)
+        if (!p.description || !matchStepPrefix(p.description, stepName)) continue;
 
         // 计算语义重叠度
         const queryWords = _seg(opts.query || questionType || '');
@@ -342,7 +351,7 @@ function recallStepHistory(stepName, questionType, opts = {}) {
     });
     if (result.entries && result.entries.length > 0) {
       for (const e of result.entries) {
-        if (e.content && e.content.startsWith('[step:' + stepName + ']')) candidates.push(e);
+        if (e.content && matchStepPrefix(e.content, stepName)) candidates.push(e);
       }
     }
   }
