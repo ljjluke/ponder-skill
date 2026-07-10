@@ -1,6 +1,6 @@
 ---
 name: ponder
-alwaysApply: true
+alwaysApply: false
 description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
 version: 1.18.49
 license: MIT
@@ -10,6 +10,7 @@ license: MIT
 
 ⛔ 禁止做任何环境检查、配置验证、文件扫描等与用户问题无关的操作。直接开始。
 
+⛔ Codex环境: 用 request_user_input 替代 AskUserQuestion。每次只提一个问题(questions数组只含1项)，每个问题带2-3个互斥选项(options)。用户回答后继续下一个问题，直到覆盖天时/地利/人和/法/本质。必须在回应中展示选项标签(如A/B/C)，方便用户通过选项标签回答或直接通过UI点击回答。Claude环境: 继续用 AskUserQuestion，行为不变。
 ### 需求打磨
 用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
 完成后用一两句话总结用户需求。⛔ 采访完成立即进入分析阶段，禁止停下来等待用户确认或问"还有什么补充"。
