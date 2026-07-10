@@ -23,15 +23,18 @@
   "interface": {
     "displayName": "Ponder",
     "shortDescription": "8-step structured reasoning pipeline with self-evolving memory",
-    "longDescription": "Ponder is a self-evolving cognitive framework that implements an 8-step structured reasoning pipeline: 神思 (divergent thinking) → 发散 (multi-perspective) → 八卦镜 (blind spot scanning) → 方案 (solution generation) → 收敛 (convergence) → 评分 (scoring) → 推演 (simulation) → 辩论 (debate). It includes MMA (Meridian Memory Architecture) for persistent knowledge, automatic rule evolution, and code-enforced depth loops. Domain-agnostic — works for any problem type.",
+    "longDescription": "Ponder is a self-evolving cognitive framework with an 8-step structured reasoning pipeline: divergent thinking -> multi-perspective scan -> blind spot discovery -> solution generation -> convergence -> scoring -> simulation -> debate. Includes MMA (Meridian Memory Architecture) for persistent knowledge, automatic rule evolution, and code-enforced depth loops. Domain-agnostic.",
     "developerName": "ljjluke",
     "category": "Productivity",
-    "capabilities": ["Interactive", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
     "websiteURL": "https://github.com/ljjluke/mcts-skill",
     "defaultPrompt": [
-      "帮我分析一下这个问题，深度思考",
-      "Analyze this problem with structured reasoning",
-      "对这个决策做一次全面的推理分析"
+      "Help me analyze this problem with deep structured reasoning",
+      "Evaluate this decision from multiple perspectives",
+      "Compare these options with thorough analysis"
     ],
     "brandColor": "#6366F1"
   }
