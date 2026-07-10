@@ -1,5 +1,5 @@
 {
-  "name": "ponder",
+  "name": "luke",
   "version": "1.18.49",
   "description": "Self-evolving cognitive framework. 8-step structured reasoning pipeline + MMA knowledge system + automatic evolution. Code-enforced depth loop. Domain-agnostic.",
   "author": {
@@ -21,7 +21,7 @@
   ],
   "skills": "./SKILL.md",
   "interface": {
-    "displayName": "Ponder",
+    "displayName": "Luke",
     "shortDescription": "8-step structured reasoning pipeline with self-evolving memory",
     "longDescription": "Ponder is a self-evolving cognitive framework with an 8-step structured reasoning pipeline: divergent thinking -> multi-perspective scan -> blind spot discovery -> solution generation -> convergence -> scoring -> simulation -> debate. Includes MMA (Meridian Memory Architecture) for persistent knowledge, automatic rule evolution, and code-enforced depth loops. Domain-agnostic.",
     "developerName": "ljjluke",
