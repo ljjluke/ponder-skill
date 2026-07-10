@@ -1,7 +1,7 @@
 ---
 name: ponder
 alwaysApply: false
-description: "8-step structured reasoning. Domain-agnostic. For user interaction use request_user_input tool - ask ONE question at a time with 2-3 options. Continue asking until 5-dimension profile (time/place/people/method/essence) is complete."
+description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
 version: 1.18.49
 license: MIT
 ---
@@ -10,7 +10,7 @@ license: MIT
 
 ⛔ NO environment checks, config validation, file scanning, or anything unrelated to the user's question. Start directly.
 
-⛔ Codex: use request_user_input instead of AskUserQuestion. Ask ONE question at a time (questions array with exactly 1 item), each with 2-3 mutually exclusive options. After user responds, continue to next question until all 5 dimensions (time/place/people/method/essence) are covered. Show option labels (A/B/C) in response so user can click or type. Claude: continue with AskUserQuestion, behavior unchanged.
+⛔ Codex: no request_user_input tool. Use plain text options instead — ask ONE question at a time with A/B/C labels. User types a single letter to answer. Continue until all 5 dimensions covered. Claude: use AskUserQuestion, behavior unchanged.
 
 ### Requirement Refinement
 Use AskUserQuestion one question at a time, covering: time/place/people/method/essence. Every question MUST have options.
