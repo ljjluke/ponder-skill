@@ -1,7 +1,7 @@
 {
-  "name": "personal",
+  "name": "luke",
   "interface": {
-    "displayName": "Personal"
+    "displayName": "luke"
   },
   "plugins": [
     {
