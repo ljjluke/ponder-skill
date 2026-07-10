@@ -178,11 +178,7 @@ Old data decays → unused knowledge sleeps → low quality archived
 /plugin marketplace add https://github.com/ljjluke/ponder-skill
 /plugin install luke
 
-# Install (Codex — full plugin with parallel agents)
-git clone https://github.com/ljjluke/mcts-skill.git ~/.codex/plugins/ponder
-# Then restart Codex. Use /ponder to invoke.
-
-# Or quick use (no install, no parallel agents):
+# Use (Codex)
 #   Analyze this using the Ponder framework from github.com/ljjluke/mcts-skill
 
 # Use — any domain
@@ -190,8 +186,8 @@ git clone https://github.com/ljjluke/mcts-skill.git ~/.codex/plugins/ponder
 /luke:ponder Analyze the current market situation
 /luke:ponder Help me plan my Python learning path
 /luke:ponder 帮我分析这个项目的技术选型
-# Codex: use /ponder prefix to invoke
-/ponder Analyze the current market situation
+# Codex:
+Analyze the current market situation using ponder framework
 ```
 
 ### Custom Data Directory
