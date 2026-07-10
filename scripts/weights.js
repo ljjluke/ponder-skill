@@ -60,6 +60,18 @@ const DEFAULT_WEIGHTS = {
   vfinal_robust: 0.3,
   vfinal_persp: 0.2,
 
+  // ── 清晰度评分权重 (evolve.js 多信号清晰度可信分, v1.18.42 从硬编码改为可学习) ──
+  // 之前 evolve.js 第278行 isClearWeight=0.25/0.35 等硬编码三元运算, 学了也不读.
+  // 现注册成可学习权重, evolve.js 评分逻辑读 registry.get(), learn() 能调整它们.
+  // 信号1: is_clear 本身权重 (发散步骤可信度低用低权重, 其他步骤用默认)
+  clarity_weight_divergence: 0.25,   // 发散步骤 is_clear 信号权重 (发散不可信77%)
+  clarity_weight_default: 0.35,     // 其他步骤 is_clear 信号权重 (维度可信96%)
+  // 信号2: 问题数惩罚权重
+  clarity_question_divergence: 0.45, // 发散步骤问题数信号权重
+  clarity_question_default: 0.35,    // 其他步骤问题数信号权重
+  // 信号3: 验证交叉验证权重 (后续验证步骤独立判断)
+  clarity_verify: 0.3,
+
   // ── 元数据 ──
   _learning_rate: 0.08,
   _version: 1,

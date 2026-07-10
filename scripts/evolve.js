@@ -22,6 +22,56 @@ const { WeightRegistry, DEFAULT_WEIGHTS } = require('./weights.js');
 // 步骤命名单一真源 + 历史别名兼容层
 const { STEPS, normalizeStep, allStepNamesFor } = require('./step-names');
 
+// ══════════════════════════════════════
+//  classifyErrorPattern — 错误归类(贝特森L2: 把行为信号归类成推理偏差类型+检查项)
+//  落地 engine/error-pattern.md 的归类映射。让学习从"调数值(L0)"升级到"记认知模式(L2)"。
+//  输入: step + 信号(questions多/clarity低/被驳) → 输出: {bias_type, check_item}
+// ══════════════════════════════════════
+function classifyErrorPattern(step, signals) {
+  // signals: { manyQuestions, lowClarity, refuted }
+  var stdStep = normalizeStep(step) || step;
+  // 归类映射(基于真实翻车数据集中divergence/bagua, 学科底座见engine/error-pattern.md)
+  var map = {
+    'divergence': {
+      bias: signals.manyQuestions && signals.lowClarity ? '视角覆盖不全(漏看关键视角靠追问补)'
+            : signals.refuted ? '过早收敛(六视没互否就汇共识)' : '视角覆盖不全',
+      check: signals.refuted ? '共识前强制找1-2对对立视角互质疑'
+             : '起跑前列必覆盖6视角清单逐个打勾再产出'
+    },
+    'bagua': {
+      bias: signals.manyQuestions && signals.lowClarity ? '盲点扫描失焦(维度agent各自为政没汇总)'
+            : signals.refuted ? '盲点误判(把非盲点当盲点)' : '盲点扫描失焦',
+      check: signals.refuted ? 'key_finding产出前先问"这个真的是别人看不到的吗"'
+             : '每维度agent产出后必须交叉引用其他维度'
+    },
+    'plans': {
+      bias: '可行性锚定(只从约束内推方案没反向链终态)',
+      check: '方案起前先做终态画像反向链'
+    },
+    'converge': {
+      bias: '骑墙不淘汰(没立场留太多方案)',
+      check: '收敛必须明确倾向+凭什么'
+    },
+    'simulate': {
+      bias: '评分先验错位(权重来源与case类型不匹配)',
+      check: '评分前先验自检权重是否适用本case类型'
+    },
+    'synthesis': {
+      bias: signals.refuted ? '结论自反缺失(没质疑共享前提)' : '综合深度动作缺失',
+      check: '综合强制做结论自反+可谬标注(读stake门控)'
+    },
+    'shensi': {
+      bias: '前提审视不足(没识别伪前提)',
+      check: '前提审视列3核心前提对照常见陷阱+损失态度自检'
+    }
+  };
+  var entry = map[stdStep] || {
+    bias: signals.refuted ? '结论被驳(具体偏差待归类)' : '清晰度不足(具体偏差待归类)',
+    check: '该步产出前自检依据是否充分'
+  };
+  return { bias_type: entry.bias, check_item: entry.check, learning_level: 'L2' };
+}
+
 // ── 数据源 ──
 const DATA_DIR = process.env.PONDER_DATA_DIR ? require("path").resolve(process.env.PONDER_DATA_DIR) : path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
 const METRICS_FILE = path.join(DATA_DIR, 'metrics', 'pipeline-runs.ndjson');  // 旧格式（管道级别）
@@ -33,12 +83,84 @@ function getMatchingRules(questionType, stepName) {
   if (!fs.existsSync(RULES_FILE)) return [];
   try {
     const rules = JSON.parse(fs.readFileSync(RULES_FILE, 'utf-8'));
-    return rules.rules.filter(r =>
+    const matched = rules.rules.filter(r =>
       r.status === 'active' &&
       r.condition.question_type.some(t => questionType.includes(t)) &&
       r.condition.step === stepName
     );
+    // v1.18.42 道家日损: 记命中时间(为日损提供"哪些规则长期没用"依据). 纯加法学习必退化为噪音.
+    if (matched.length > 0) {
+      const now = new Date().toISOString();
+      let changed = false;
+      matched.forEach(r => {
+        if (r.lastHit !== now) { r.lastHit = now; r.hitCount = (r.hitCount || 0) + 1; changed = true; }
+      });
+      if (changed) {
+        try { fs.writeFileSync(RULES_FILE, JSON.stringify(rules, null, 2), 'utf-8'); } catch (e) {}
+      }
+    }
+    return matched;
   } catch (e) { return []; }
+}
+
+// ══════════════════════════════════════
+//  prune — 道家日损机制(为道日损 + 反者道之动 + 坐忘)
+//  纯加法学习(只增不删)必然退化为噪音。日损定期清理:
+//    ① testing 候选fix 长期(>STALE_DAYS天)未通过验证 → 删除(候选堆积成噪音)
+//    ② active 规则长期(>STALE_DAYS天)未命中(lastHit) → 标记 stale(供人工审查是否删)
+//    ③ 权重饱和反转预警(反者道之动): 某系数>=SATURATION_THRESH → 标记可疑过拟合
+//  用法: node scripts/evolve.js prune
+// ══════════════════════════════════════
+function prune() {
+  const STALE_DAYS = 14;
+  const SATURATION_THRESH = 0.8;
+  const now = Date.now();
+  const staleMs = STALE_DAYS * 24 * 60 * 60 * 1000;
+  const report = { pruned_fixes: 0, stale_rules: 0, saturated_weights: [], kept_fixes: 0 };
+
+  // ① 删除长期 testing 的候选fix
+  const fixesDir = path.join(DATA_DIR, 'auto-fixes');
+  if (fs.existsSync(fixesDir)) {
+    for (const fp of fs.readdirSync(fixesDir).filter(f => f.endsWith('.json'))) {
+      const full = path.join(fixesDir, fp);
+      try {
+        const fix = JSON.parse(fs.readFileSync(full, 'utf-8'));
+        if (fix.status === 'testing' && fix.generated) {
+          const age = now - new Date(fix.generated).getTime();
+          if (age > staleMs) { fs.unlinkSync(full); report.pruned_fixes++; continue; }
+        }
+        report.kept_fixes++;
+      } catch (e) { report.kept_fixes++; }
+    }
+  }
+
+  // ② 标记长期未命中的 active 规则为 stale
+  if (fs.existsSync(RULES_FILE)) {
+    try {
+      const rules = JSON.parse(fs.readFileSync(RULES_FILE, 'utf-8'));
+      let changed = false;
+      for (const r of rules.rules) {
+        if (r.status === 'active' && r.lastHit) {
+          const sinceHit = now - new Date(r.lastHit).getTime();
+          if (sinceHit > staleMs && !r.stale) { r.stale = true; r.stale_reason = '长期未命中(' + STALE_DAYS + '天)'; changed = true; report.stale_rules++; }
+        }
+      }
+      if (changed) fs.writeFileSync(RULES_FILE, JSON.stringify(rules, null, 2), 'utf-8');
+    } catch (e) {}
+  }
+
+  // ③ 权重饱和反转预警(反者道之动: 物极必反, 被反复强化到极点的系数将失效)
+  try {
+    const { WeightRegistry } = require('./weights.js');
+    const reg = new WeightRegistry();
+    for (const [k, v] of Object.entries(reg.getAll())) {
+      if (typeof v === 'number' && v >= SATURATION_THRESH && !k.startsWith('_')) {
+        report.saturated_weights.push({ key: k, value: v, warn: '可疑过拟合, 停止继续强化, 触发反向校验' });
+      }
+    }
+  } catch (e) {}
+
+  return report;
 }
 
 // ── CLI 模式: 输出匹配规则 ──
@@ -257,6 +379,9 @@ function analyze(runs) {
     byType[t].push(r);
   }
 
+  // v1.18.42: 清晰度评分权重改为读 WeightRegistry (可学习), 替代散落硬编码
+  const registry = new WeightRegistry();
+
   const results = [];
   for (const [type, typeRuns] of Object.entries(byType)) {
     if (typeRuns.length < THRESHOLDS.min_runs_per_type) continue;
@@ -274,15 +399,15 @@ function analyze(runs) {
       const rawClarityRate = 1 - (unclear / withData.length);
 
       // --- 多信号清晰度可信分（不是LLM自评，是行为数据综合）---
-      // 信号1: is_clear 本身 — 不同步骤可信度不同
-      var isClearWeight = step === 'divergence' ? 0.25 : 0.35  // 发散不可信(77%),维度可信(96%)
+      // 信号1: is_clear 本身 — 不同步骤可信度不同 (v1.18.42: 权重从硬编码改为读 WeightRegistry, 可学习)
+      var isClearWeight = step === 'divergence' ? registry.get('clarity_weight_divergence') : registry.get('clarity_weight_default')
       var sigClear = rawClarityRate * isClearWeight
       // 信号2: 问题数惩罚 — 问题越多越不清晰,但>4个后不再加重(区分高质量追问vs泛泛疑问)
-      var questionWeight = step === 'divergence' ? 0.45 : 0.35
+      var questionWeight = step === 'divergence' ? registry.get('clarity_question_divergence') : registry.get('clarity_question_default')
       var qPenalty = avgQ <= 1 ? 0 : avgQ <= 3 ? (avgQ - 1) / 5 : 0.4
       var sigQuestions = (1 - qPenalty) * questionWeight
-      // 信号3: 验证交叉验证 (30%) — 后续验证步骤独立判断
-      var sigVerify = 0.3
+      // 信号3: 验证交叉验证 — 后续验证步骤独立判断 (v1.18.42: 权重可学习)
+      var sigVerify = registry.get('clarity_verify')
       var stepClearAndPassed = 0
       var stepClearTotal = 0
       if (typeRuns.length >= 2) {
@@ -294,7 +419,7 @@ function analyze(runs) {
           return sd.is_clear && vStep && vStep.verdict === 'PASS'
         }).length
         if (stepClearTotal >= 2) {
-          sigVerify = (stepClearAndPassed / stepClearTotal) * 0.3
+          sigVerify = (stepClearAndPassed / stepClearTotal) * registry.get('clarity_verify')
         } else {
           sigVerify = 0.05  // 无验证数据时取低基线
         }
@@ -525,6 +650,14 @@ function cli() {
           fix.action = { type: 'review', description: tr.type + '/' + step + ' 验证清晰度' + (st.verifiedClarity*100).toFixed(0) + '% 需人工审查' }
         }
 
+        // v1.18.42 错误归类(贝特森L2): 把"清晰度低→加步骤"升级为"记哪类推理偏差+触发哪个检查项"
+        // 落地 engine/error-pattern.md, 让学习从调数值(L0)升级到记认知模式(L2)
+        fix.error_pattern = classifyErrorPattern(step, {
+          manyQuestions: st.avgQuestions > 2,
+          lowClarity: st.verifiedClarity < 0.6,
+          refuted: false  // auto-fix 来自清晰度信号不含被驳; recallErrors 路径另记
+        });
+
         // 写入修复文件
         var fixesDir = path.join(DATA_DIR, 'auto-fixes')
         if (!fs.existsSync(fixesDir)) fs.mkdirSync(fixesDir, { recursive: true })
@@ -610,6 +743,22 @@ function cli() {
     return;
   }
 
+  // v1.18.42 道家日损: 清理长期未验证候选fix + 标记长期未命中规则 + 权重饱和反转预警
+  if (cmd === 'prune') {
+    const r = prune();
+    console.log('道家日损 — 为道日损(只增不删的学习退化为噪音):');
+    console.log('  删除长期(>14天)testing候选fix: ' + r.pruned_fixes + ' 个');
+    console.log('  保留候选fix: ' + r.kept_fixes + ' 个');
+    console.log('  标记长期未命中active规则: ' + r.stale_rules + ' 条');
+    if (r.saturated_weights.length > 0) {
+      console.log('  ⚠️反者道之动 — 权重饱和反转预警(可疑过拟合):');
+      r.saturated_weights.forEach(w => console.log('    ' + w.key + '=' + w.value + ' ' + w.warn));
+    } else {
+      console.log('  反者道之动 — 无饱和权重(无可疑过拟合)');
+    }
+    return;
+  }
+
   // 默认: 完整分析
   const runs = loadRuns();
   if (runs.length === 0) {
@@ -637,4 +786,4 @@ function cli() {
 }
 
 if (require.main === module) cli();
-module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules };
+module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules, classifyErrorPattern, prune };
