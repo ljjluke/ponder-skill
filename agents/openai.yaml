@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ponder"
+  short_description: "8-step structured reasoning with self-evolving memory"
+  default_prompt: "Use $ponder for deep structured reasoning on complex problems"

@@ -1,0 +1,38 @@
+{
+  "name": "ponder",
+  "version": "1.18.49",
+  "description": "Self-evolving cognitive framework. 8-step structured reasoning pipeline + MMA knowledge system + automatic evolution. Code-enforced depth loop. Domain-agnostic.",
+  "author": {
+    "name": "ljjluke",
+    "url": "https://github.com/ljjluke/mcts-skill"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ljjluke/mcts-skill",
+  "repository": "https://github.com/ljjluke/mcts-skill",
+  "keywords": [
+    "cognitive-architecture",
+    "self-evolving",
+    "reasoning",
+    "memory",
+    "knowledge-management",
+    "structured-thinking",
+    "multi-step-reasoning",
+    "meta-cognition"
+  ],
+  "skills": "./SKILL.md",
+  "interface": {
+    "displayName": "Ponder",
+    "shortDescription": "8-step structured reasoning pipeline with self-evolving memory",
+    "longDescription": "Ponder is a self-evolving cognitive framework that implements an 8-step structured reasoning pipeline: 神思 (divergent thinking) → 发散 (multi-perspective) → 八卦镜 (blind spot scanning) → 方案 (solution generation) → 收敛 (convergence) → 评分 (scoring) → 推演 (simulation) → 辩论 (debate). It includes MMA (Meridian Memory Architecture) for persistent knowledge, automatic rule evolution, and code-enforced depth loops. Domain-agnostic — works for any problem type.",
+    "developerName": "ljjluke",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "websiteURL": "https://github.com/ljjluke/mcts-skill",
+    "defaultPrompt": [
+      "帮我分析一下这个问题，深度思考",
+      "Analyze this problem with structured reasoning",
+      "对这个决策做一次全面的推理分析"
+    ],
+    "brandColor": "#6366F1"
+  }
+}

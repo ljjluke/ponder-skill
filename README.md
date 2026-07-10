@@ -16,11 +16,11 @@
   &nbsp;·&nbsp;
   <code>/luke:ponder &lt;your question&gt;</code>
 </p>
-
+```
 <br>
 
 ---
-
+```bash
 ## ✨ Every time you ask an AI, you take a gamble.
 
 Will it nail it this time? Miss something obvious? Give you the same confident-sounding surface take it gave last time — and was wrong?
@@ -174,17 +174,21 @@ Old data decays → unused knowledge sleeps → low quality archived
 ## 🚀 Quick Start
 
 ```bash
-# Install
+# Install (Claude Code)
 /plugin marketplace add https://github.com/ljjluke/ponder-skill
 /plugin install luke
 
+# Install (Codex)
+# Ask Codex: "Install the ponder skill from https://github.com/ljjluke/mcts-skill"
+# Or use skill-installer directly:
+#   python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+#     --repo ljjluke/mcts-skill --path / --name ponder
+
 # Use — any domain
+# Claude Code:
 /luke:ponder Analyze the current market situation
 /luke:ponder Help me plan my Python learning path
 /luke:ponder 帮我分析这个项目的技术选型
-/luke:ponder Evaluate which marketing strategy to pursue
-/luke:ponder Help me decide between treatment options for a patient
-/luke:ponder Compare investment portfolio strategies
 ```
 
 ### Custom Data Directory
@@ -192,51 +196,20 @@ Old data decays → unused knowledge sleeps → low quality archived
 ```bash
 # Linux / macOS
 export PONDER_DATA_DIR=/mnt/nas/my-knowledge
+
+# Claude Code
 PONDER_DATA_DIR=/mnt/nas/my-knowledge claude
+
+# Codex
+PONDER_DATA_DIR=/mnt/nas/my-knowledge codex
 
 # Windows (PowerShell)
 $env:PONDER_DATA_DIR = "D:\my-knowledge"
 claude
 ```
 
-Default: `~/.claude/data/skills/ponder/`
-
----
-
-## 📁 Project Structure
-
-```
-ponder-skill/
-├── SKILL.md                        # Single orchestrator — no pipeline, no workflow
-├── agents/                         # Sub-agent definitions (each = one role)
-│   ├── dimension-evaluator.md      # Blindspot finder per dimension
-│   ├── solution-generator.md       # Independent plan generator
-│   ├── debater.md                  # Solution advocate (opening stance)
-│   └── mcts-simulator.md           # Scenario simulator
-├── engine/                         # Thinking frameworks (one per phase)
-│   ├── shensi.md / divergence.md / bagua.md
-│   ├── converge.md / debate.md / synthesis.md
-│   └── mcts-constraint.md / mcts-predictive.md / td-learner.md
-├── scripts/
-│   ├── orchestrate.js             # Step persistence, history query, finalize
-│   ├── mcts_compute.js            # Math engine (80+ commands)
-│   ├── mcts_guard.js              # Compliance guards (15 checkers)
-│   ├── mcts_tree.js               # Tree data structure (optional)
-│   ├── knowledge.js               # MMA memory interface
-│   ├── prompts/                   # Phase prompt templates + schemas
-│   │   ├── shensi.json / divergence.json / bagua.json
-│   │   ├── plans.json / simulate.json / converge.json
-│   │   ├── debate.json / synthesis.json
-│   └── mma/                       # Meridian Memory Algorithm (12 modules)
-│       ├── io.js / deqi.js / ashi.js / reinforce.js / decay.js
-│       ├── constants.js / state_machine.js / ziwu.js
-│       ├── diagnosis.js / cluster.js / audit.js / user_profile.js
-├── hooks/hooks.json               # Session lifecycle
-└── pipeline-meta.json             # Evolutionary metadata
-```
-
----
-
+Default (Claude Code): `~/.claude/data/skills/ponder/`  
+Default (Codex): `~/.codex/data/ponder/`
 ## 🧘 Design Philosophy
 
 | Principle | Meaning |
