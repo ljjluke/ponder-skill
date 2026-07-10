@@ -199,6 +199,8 @@ Old data decays → unused knowledge sleeps → low quality archived
 /luke:ponder Analyze the current market situation
 /luke:ponder Help me plan my Python learning path
 /luke:ponder 帮我分析这个项目的技术选型
+# Codex: use /ponder prefix to invoke
+/ponder Analyze the current market situation
 ```
 
 ### Custom Data Directory
