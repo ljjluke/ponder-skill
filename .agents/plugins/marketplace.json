@@ -8,7 +8,7 @@
       "name": "ponder",
       "source": {
         "source": "local",
-        "path": "./plugins/ponder"
+        "path": "."
       },
       "policy": {
         "installation": "AVAILABLE",
