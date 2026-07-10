@@ -1,6 +1,6 @@
 ---
 name: ponder
-alwaysApply: false
+alwaysApply: true
 description: "Deep structured reasoning and decision analysis. Use when user needs thorough multi-perspective thinking, blind-spot discovery, solution scoring, scenario simulation, or debate-style evaluation. Triggers on: analyze, evaluate, decide, compare, deep thinking, 分析, 决策, 深度思考, 推理."
 version: 1.18.49
 license: MIT
