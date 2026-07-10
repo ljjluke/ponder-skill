@@ -1,188 +1,184 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.18.49-blue?style=flat-square" alt="version">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license">
-  <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="status">
+  <img src="https://img.shields.io/badge/版本-1.18.49-blue?style=flat-square" alt="版本">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="许可">
+  <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="状态">
 </p>
 
 <h1 align="center">🧠 Ponder</h1>
 
 <p align="center">
-  <b>LLMs answer. Ponder thinks. Then answers.</b><br>
-  <i>Code-structured reasoning · Gets smarter with every use · Domain-agnostic</i>
+  <b>让 AI 先想清楚，再开口。</b><br>
+  <i>代码强制的推理管线 · 越用越准 · 跨领域通用</i>
 </p>
 
 <p align="center">
-  <a href="README_CN.md">🇨🇳 中文</a>
+  <a href="README.md">🌐 English</a>
   &nbsp;·&nbsp;
-  <code>/luke:ponder &lt;your question&gt;</code>
+  <code>/luke:ponder &lt;你的问题&gt;</code>
 </p>
-```
-<br>
-
----
-```bash
-## ✨ Every time you ask an AI, you take a gamble.
-
-Will it nail it this time? Miss something obvious? Give you the same confident-sounding surface take it gave last time — and was wrong?
-
-**That's not a model problem. It's a process problem.**
-
-LLMs answer the moment you ask. Ponder doesn't. It runs every question through 9 structured phases: requirement refinement → frame-breaking → multi-perspective scan → blindspot discovery → solution generation → scoring → simulation → debate → user confirmation. Each phase has its own thinking framework, independent evaluators, and code-enforced quality gates.
-
-The result isn't faster answers. It's **answers you can trust**.
-
-And every answer makes the next one better — because every run stores structured knowledge. The system remembers what worked, what didn't, and what you corrected.
-
----
-
-### One glance tells the story
-
-```
-You ask a question
-         ↓
-┌──────────────────────────────────────────────────┐
-│           Interview (5-dimension profile)         │
-├──────────────────────────────────────────────────┤
-│    Frame-breaking  —→  6-perspective scan        │
-│         ↓                    ↓                    │
-│    8-dim blindspot   →  5-10 solutions           │
-│         ↓                    ↓                    │
-│    8-dim scoring     →  Simulation + debate      │
-│         ↓                    ↓                    │
-│           User confirmation → Final               │
-└──────────────────────────────────────────────────┘
-         ↓
-Every phase verified, every result accumulated. Next time is sharper.
-```
 
 <br>
 
-### See the difference
+---
 
-![Ponder demo](scripts/ponder-demo-en.gif)
+## ✨ 每次用 AI，你都在赌。
 
-*Direct LLM answer vs same question through Ponder's 9-phase pipeline.*
+赌它这次答得对。赌它不会漏掉关键信息。赌它不会跟上次一样自信满满地说一个错误答案。
+
+**问题不在模型，在想的过程。**
+
+大多数 LLM 有问必答。Ponder 不——它把每个问题跑完 9 道工序：需求打磨 → 神思破框 → 多视角扫描 → 盲点发现 → 方案生成 → 8 维评分 → 推演 → 辩论攻防 → 用户确认。每道工序有独立的检查、代码质量门禁、和存储机制。
+
+结果不是"答得更快"，是**"答得更可信"**。
+
+而且每一次回答，都在让自己变强——因为每次分析的结论都会积累到记忆系统里。系统记得什么对了、什么错了、你纠正过什么。下一次直接用。
+
+---
+
+### 一眼看清
 
 ```
-You ask → Requirement refinement → Frame-breaking → Multi-perspective scan
-       → Blindspot discovery → Solution generation → 8-dimension scoring
-       → Simulation → Debate under fire → User confirmation → Final output
-
-Every step feeds back into memory. Every run makes the next one sharper.
+你提问
+    ↓
+┌───────────────────────────────────────────┐
+│      采访（五诊画像：天/地/人/法/物）        │
+├───────────────────────────────────────────┤
+│   神思破框  ──→  6视角发散                 │
+│      ↓                ↓                   │
+│   八卦镜找盲点 →  5-10个方案               │
+│      ↓                ↓                   │
+│   8维评分      →  推演 + 辩论              │
+│      ↓                ↓                   │
+│       用户确认 →  最终结论                  │
+└───────────────────────────────────────────┘
+    ↓
+每步代码检查，每步产出积累。下一次更准。
 ```
 
-### What makes it different
+<br>
 
-| Capability | Why It Matters |
+### 看对比
+
+![Ponder demo](scripts/ponder-demo-zh.gif)
+
+*左侧: 直接问 LLM。右侧: 同一问题通过 Ponder 9 道管线。*
+
+```
+
+你提问 → 需求打磨 → 神思破框 → 多视角发散 → 盲点发现
+       → 方案生成 → 8维评分 → 收敛 → 推演 → 辩论攻防
+       → 用户确认 → 最终结论
+
+每次分析的结果自动积累到记忆系统。下一次比上一次更准。
+```
+
+### 核心亮点
+
+| 能力 | 为什么重要 |
 |---|---|
-| 🎯 **Requirement Refinement** | The first phase isn't analysis — it's making sure you're solving the right problem. Iterative, option-based questioning until the picture is clear. |
-| 🌪️ **Frame-breaking** | Not "think harder." A structured 5-step cognitive process (empty the mind → focus → wander → image → connect) to force genuinely unexpected insights. |
-| 👁️ **Blindspot Discovery** | 8 dimensions × independent agents systematically scan for what you didn't know you were missing. Surfaces the hidden assumptions before they become blindspots in your decision. |
-| 📊 **8-Dimension Scoring** | Every proposed solution is scored across 8 orthogonal dimensions (feasibility, resilience, risk, penetration...) by independent agents. No single-point rating. |
-| ⚔️ **Debate Under Fire** | Solutions don't just get compared — they get attacked. Each solution faces combined criticism from all others. The winner is the one that survives, not the one that sounds best. |
-| 🧠 **Persistent Memory** | Every analysis is stored as structured knowledge. Future runs automatically recall top-3 most relevant past experiences per phase. The system gets smarter with use. |
-| 🔄 **Self-Learning** | Weight registry adjusts coefficients based on real outcomes. Knowledge grooming decays unused data, promotes valuable patterns, sleeps low-quality entries. |
-| 🎯 **User Confirmation** | The system doesn't push conclusions. It presents recommendations, surfaces remaining blindspots and assumptions, and asks you to confirm before finalizing. |
+| 🎯 **需求打磨** | 第一步不是分析，是确保你在解决对的问题。带选项的追问，直到画像清晰。 |
+| 🌪️ **神思破框** | 不是"换个角度想想"。五步认知工序（虚静→神凝→神游→意象→言意），产出真正的反直觉发现。 |
+| 👁️ **八卦镜找盲点** | 8个维度 × 独立 agent 同步扫描，找出你没意识到的盲区和隐藏假设。 |
+| 📊 **8维方案评分** | 每个方案在可行性、应变力、穿透力、风险等8个维度由独立 agent 打分，不做单一维度评价。 |
+| ⚔️ **辩论攻防** | 方案不是被比较——是被攻击。每个方案承受其他所有方案的联合批判，活下来的才是真强者。 |
+| 🧠 **记忆永不丢** | 每次分析产出自动存入 MMA。下次同类问题，系统自动调取 top 3 最相关的历史经验做参考。 |
+| 🔄 **自我进化** | 权重注册表根据实际结果自动调整系数。知识有生命周期——新生→验证→确认→沉睡→归档。 |
+| 🎯 **用户确认** | 不硬推结论。出推荐方案后检查遗留盲点和假设，让用户确认"这些风险你接受吗？"后再出最终结论。 |
 
 ---
 
-## 🏗 Architecture at a Glance
+## 🏗 架构一览
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                    ORCHESTRATOR (SKILL.md)                        │
-│  The only orchestrator. No pipeline, no workflow engine.          │
-│  LLM reads SKILL.md → executes phases in order → done.           │
+│                        编排器 (SKILL.md)                          │
+│  唯一的编排者。没有管道引擎、没有 workflow、没有调度层。           │
+│  LLM 读到 SKILL.md → 按顺序执行各阶段 → 完成。                   │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│  ┌─ Requirement Refinement ──────────────────────────────────┐   │
-│  │  AskUserQuestion (one at a time) → Tian/Di/Ren/Fa/Wu      │   │
+│  ┌─ 需求打磨 ────────────────────────────────────────────────┐   │
+│  │  AskUserQuestion 一次一问 → 天时/地利/人和/法/本质          │   │
 │  └───────────────────────────────────────────────────────────┘   │
 │                              │                                    │
 │                              ▼                                    │
-│  ┌─ Analysis Sequence ───────────────────────────────────────┐   │
+│  ┌─ 分析序列 ───────────────────────────────────────────────┐   │
 │  │                                                           │   │
-│  │  神思 Frame-breaking      → 主线程，反直觉发现             │   │
-│  │  发散 6-Perspective Scan  → 主线程，多角度审视             │   │
-│  │  八卦镜 Blindspot Hunt    → 8 agents × 1 dimension        │   │
-│  │  方案 Solution Generation → N agents × 1 plan             │   │
-│  │  方案评分 8-D Scoring     → N agents × 8 dimensions       │   │
-│  │  收敛 Convergence         → 主线程，依据评分淘汰           │   │
-│  │  推演 Simulation          → N agents (mcts-simulator)     │   │
-│  │  辩论 Debate/Attack       → 立论 + 围攻 + 抗压排名         │   │
-│  │  用户确认 User Confirm    → LLM推荐 + 检查遗留盲点         │   │
-│  │  综合 Final Conclusion    → 完整结论+风险+建议             │   │
+│  │  神思 (破框)      → 主线程，五步认知工序                │   │
+│  │  发散 (6视角)     → 主线程，多角度审视                  │   │
+│  │  八卦镜 (盲点)    → 8 agent × 1 维度                    │   │
+│  │  方案 (生成)      → N agent × 1 方案                    │   │
+│  │  方案评分 (8维)   → N agent × 8 维度评分                │   │
+│  │  收敛 (淘汰)      → 主线程，依评分保留最优              │   │
+│  │  推演 (模拟)      → N agent × mcts-simulator            │   │
+│  │  辩论 (攻防)      → 立论 + 围攻 + 抗压排名              │   │
+│  │  用户确认         → LLM推荐 + 检查遗留盲点              │   │
+│  │  综合结论         → 完整结论+风险+建议                   │   │
 │  │                                                           │   │
-│  │  Each phase: load top-3 history → read prompt JSON        │   │
-│  │              → read engine doc → execute → display → store│   │
+│  │  每步: 查top3历史 → 读prompt JSON → 读引擎文档            │   │
+│  │       → 执行 → 展示 → 存产出                              │   │
 │  └───────────────────────────────────────────────────────────┘   │
 │                              │                                    │
 │                              ▼                                    │
-│  ┌─ MMA MEMORY (Meridian Memory Algorithm) ──────────────────┐   │
-│  │  12 primary meridians × knowledge points                  │   │
-│  │  Semantic matching (CJK/EN) · Natural language storage    │   │
-│  │  Knowledge grooming: decay/promote/sleep/archival         │   │
-│  │  Emotional modulation · Reconsolidation window(30min)     │   │
-│  │  WAL + shard locking + atomic writes                     │   │
+│  ┌─ MMA 记忆系统 ────────────────────────────────────────────┐   │
+│  │  12条正经 × 知识点                                       │   │
+│  │  语义匹配(中/英/日/韩) · 自然语言存储                     │   │
+│  │  知识保洁: 衰减/促进/沉睡/归档                            │   │
+│  │  情绪调制 · 再巩固窗口(30分钟)                            │   │
+│  │  写前日志 + 分片锁 + 原子写入                             │   │
 │  └───────────────────────────────────────────────────────────┘   │
 │                              │                                    │
 │                              ▼                                    │
-│  ┌─ UTILITY SCRIPTS (called when needed) ───────────────────┐   │
-│  │  orchestrate.js  — store output, query history, finalize │   │
-│  │  mcts_compute.js — math engine (UCB, hexagrams, gates)   │   │
-│  │  mcts_guard.js   — compliance checkers                    │   │
-│  │  clarity-check.js — quality scoring (currently disabled)  │   │
-│  │  evolve.js       — offline evolution analysis            │   │
+│  ┌─ 辅助工具 (按需调用) ────────────────────────────────────┐   │
+│  │  orchestrate.js — 存产出、查历史、收尾                    │   │
+│  │  mcts_compute.js — 数学引擎(80+命令)                     │   │
+│  │  mcts_guard.js   — 合规守卫                              │   │
+│  │  evolve.js       — 离线进化分析                           │   │
 │  └───────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💡 The Core Insight
+## 💡 核心理念
 
-**Most bad decisions come from blindspots, not bad reasoning.**
+**大多数糟糕决策来自盲点，而不是推理能力不足。**
 
-Ponder doesn't just think harder — it thinks **from different positions**. Each phase changes the observer's vantage point:
+Ponder 不是在"更努力地思考"——它是在从不同位置思考。每个阶段改变观察者的立脚点：
 
-- **神思** changes your mental state (empty → focused → wandering)
-- **发散** changes your scale (cosmic → microscopic → time-compressed → time-expanded)
-- **八卦镜** changes your dimension (force → foundation → risk → boundary → balance)
-- **方案评分** changes your criteria (feasibility → resilience → penetration → value)
-- **辩论** changes your loyalty (defend → attack → survive)
+- **神思** 改变你的精神状态（清空 → 凝聚 → 漫游 → 浮现 → 连接）
+- **发散** 改变你的观察尺度（宏观 → 微观 → 时间压缩 → 时间扩展 → 无我）
+- **八卦镜** 改变你的评估维度（驱动力 → 基础 → 变化 → 风险 → 边界 → 平衡）
+- **方案评分** 改变你的评价标准（可行性 → 应变力 → 穿透力 → 价值）
+- **辩论** 改变你的立场（辩护 → 攻击 → 幸存）
 
-By the end, you've seen the problem from 20+ distinct vantage points. The blindspots that survive that many angles are few.
-
----
-
-## 🔄 How Memory Works
-
-```
-Each step executes → orchestrate.js step saves output to MMA
-  (natural language, not JSON — semantic matching ready)
-
-Next similar question → node scripts/orchestrate.js history <phase> <type>
-  → returns top-3 most relevant historical matches
-  → injected into phase prompt as reference
-
-Old data decays → unused knowledge sleeps → low quality archived
-  → frequently used auto-promotes to CONFIRMED status
-```
+一轮分析下来，你已经从 20+ 个不同角度审视过问题。能从这个密度下逃掉的盲点，很少。
 
 ---
 
-## 🚀 Quick Start
+## 🔄 记忆怎么工作
+
+```
+每步执行完 → orchestrate.js step 存产出到 MMA
+  （自然语言，不是 JSON → 语义匹配可用）
+
+下次同类问题 → node scripts/orchestrate.js history <阶段> <类型>
+  → 返回 top 3 最相关的历史记录
+  → 注入当前阶段的 prompt 作为参考
+
+旧数据衰减 → 未用知识沉睡 → 低质归档 → 高频自动升级
+```
+
+---
+
+## 🚀 快速开始
 
 ```bash
-# Install (Claude Code)
+# 安装 (Claude Code)
 /plugin marketplace add https://github.com/ljjluke/ponder-skill
 /plugin install luke
 
 # Install (Codex)
-git clone https://github.com/ljjluke/mcts-skill.git ~/.codex/plugins/ponder
-codex plugin marketplace add ~/.codex/plugins/ponder/.agents/plugins
-codex plugin add ponder@personal
-# Restart Codex, then use /ponder
+git clone https://github.com/ljjluke/mcts-skill.git ~/.codex/plugins/ponder && codex plugin marketplace add ~/.codex/plugins/ponder/.agents/plugins && codex plugin add ponder@personal
 
 # Use — any domain
 # Claude Code:
@@ -190,10 +186,10 @@ codex plugin add ponder@personal
 /luke:ponder Help me plan my Python learning path
 /luke:ponder 帮我分析这个项目的技术选型
 # Codex:
-Analyze the current market situation using ponder framework
+/ponder Analyze the current market situation
 ```
 
-### Custom Data Directory
+### 自定义存储目录
 
 ```bash
 # Linux / macOS
@@ -210,56 +206,55 @@ $env:PONDER_DATA_DIR = "D:\my-knowledge"
 claude
 ```
 
-Default (Claude Code): `~/.claude/data/skills/ponder/`  
-Default (Codex): `~/.codex/data/ponder/`
-
-## 📁 Project Structure
+默认 (Claude Code): `~/.claude/data/skills/ponder/`  
+默认 (Codex): `~/.codex/data/ponder/`
+## 📁 项目结构
 
 ```
 ponder-skill/
-├── SKILL.md                        # Single orchestrator — no pipeline, no workflow
-├── agents/                         # Sub-agent definitions (each = one role)
-│   ├── dimension-evaluator.md      # Blindspot finder per dimension
-│   ├── solution-generator.md       # Independent plan generator
-│   ├── debater.md                  # Solution advocate (opening stance)
-│   └── mcts-simulator.md           # Scenario simulator
-├── engine/                         # Thinking frameworks (one per phase)
+├── SKILL.md                        # 唯一编排器——无管道、无workflow
+├── agents/                         # 子agent定义（一个文件一个角色）
+│   ├── dimension-evaluator.md      # 维度盲点发现
+│   ├── solution-generator.md       # 独立方案生成
+│   ├── debater.md                  # 方案辩护
+│   └── mcts-simulator.md           # 情景模拟推演
+├── engine/                         # 思考框架文档（每阶段一个）
 │   ├── shensi.md / divergence.md / bagua.md
 │   ├── converge.md / debate.md / synthesis.md
 │   └── mcts-constraint.md / mcts-predictive.md / td-learner.md
 ├── scripts/
-│   ├── orchestrate.js             # Step persistence, history query, finalize
-│   ├── mcts_compute.js            # Math engine (80+ commands)
-│   ├── mcts_guard.js              # Compliance guards (15 checkers)
-│   ├── mcts_tree.js               # Tree data structure (optional)
-│   ├── knowledge.js               # MMA memory interface
-│   ├── prompts/                   # Phase prompt templates + schemas
+│   ├── orchestrate.js             # 存产出、查历史、收尾
+│   ├── mcts_compute.js            # 数学引擎（80+命令）
+│   ├── mcts_guard.js              # 合规守卫（15个检查器）
+│   ├── mcts_tree.js               # 树数据结构（可选）
+│   ├── knowledge.js               # MMA记忆接口
+│   ├── prompts/                   # 阶段prompt模板 + schema
 │   │   ├── shensi.json / divergence.json / bagua.json
 │   │   ├── plans.json / simulate.json / converge.json
 │   │   ├── debate.json / synthesis.json
-│   └── mma/                       # Meridian Memory Algorithm (12 modules)
+│   └── mma/                       # MMA记忆算法（12模块）
 │       ├── io.js / deqi.js / ashi.js / reinforce.js / decay.js
 │       ├── constants.js / state_machine.js / ziwu.js
 │       ├── diagnosis.js / cluster.js / audit.js / user_profile.js
-├── hooks/hooks.json               # Session lifecycle
-└── pipeline-meta.json             # Evolutionary metadata
+├── hooks/hooks.json               # 会话生命周期
+└── pipeline-meta.json             # 进化元数据
 ```
 
 ---
 
-## 🧘 Design Philosophy
+## 🧘 设计哲学
 
-| Principle | Meaning |
-|-----------|---------|
-| **No hidden orchestration** | SKILL.md is the only orchestrator. What you read is what executes. |
-| **Isolate only when necessary** | Sub-agents only for truly parallel, independent work (dimensions, plans, simulations). Everything else runs in the main thread. |
-| **Code structure, not code enforcement** | Prompts guide, schemas constrain, agents specialize. No workflow engine, no pipeline runner. |
-| **Domain-agnostic by design** | All dimensions, frameworks, and prompts use domain-neutral language. No assumptions about software, finance, or any vertical. |
-| **Memory as a first-class citizen** | Every output persists. Every run enriches the next. Knowledge has a lifecycle: born as HYPOTHESIS, matures to CONFIRMED, decays to SLEEPING, or dies as REFUTED. |
-| **Output fit for human consumption** | No JSON, no bash commands, no framework jargon in user-facing output. Tables where appropriate, narrative where better. |
+| 原则 | 含义 |
+|------|------|
+| **无隐藏编排** | SKILL.md 是唯一的编排者。你读到什么，LLM 就执行什么。 |
+| **仅在必要时隔离** | 子 agent 只用于真正需要并行和隔离的工作（多维评分、方案生成、模拟推演）。其余全在主线程执行。 |
+| **代码结构，非代码强制** | prompt 做引导，schema 做约束，agent 做专业化。没有 workflow 引擎。 |
+| **跨领域设计** | 所有维度和框架使用领域中性语言。不假设用户是搞技术、金融还是医疗。 |
+| **记忆是一等公民** | 每次产出自持存储。每次运行丰富下次。知识有生命周期：HYPOTHESIS → CONFIRMED → SLEEPING → ARCHIVED。 |
+| **输出为人类阅读** | 不出 JSON、不出路径、不出框架术语。表格用于对比，段落用于叙事。 |
 
 ---
 
 <p align="center">
-  <sub>Cognitive framework for Claude Code · Built with ❤️ · Not a prompt, a brain</sub>
+  <sub>Claude Code 认知框架 · 用 ❤️ 构建 · 不是提示词，是一个大脑</sub>
 </p>
