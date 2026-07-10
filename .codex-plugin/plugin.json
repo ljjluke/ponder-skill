@@ -19,7 +19,7 @@
     "multi-step-reasoning",
     "meta-cognition"
   ],
-  "skills": "./SKILL.md",
+  "skills": "./SKILL.codex.md",
   "interface": {
     "displayName": "Ponder",
     "shortDescription": "8-step structured reasoning pipeline with self-evolving memory",
