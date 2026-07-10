@@ -4,11 +4,11 @@
   "description": "Self-evolving cognitive framework. 8-step reasoning pipeline + MMA knowledge system + automatic evolution. Code-enforced depth loop. Data-driven optimization.",
   "author": {
     "name": "ljjluke",
-    "url": "https://github.com/ljjluke/mcts-skill"
+    "url": "https://github.com/ljjluke/ponder-skill"
   },
   "license": "MIT",
-  "homepage": "https://github.com/ljjluke/mcts-skill",
-  "repository": "https://github.com/ljjluke/mcts-skill",
+  "homepage": "https://github.com/ljjluke/ponder-skill",
+  "repository": "https://github.com/ljjluke/ponder-skill",
   "keywords": [
     "cognitive-architecture",
     "self-evolving",
