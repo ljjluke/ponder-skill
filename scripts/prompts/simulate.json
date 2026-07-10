@@ -106,6 +106,12 @@
         "scores",
         "total"
       ]
-    }
-  }
+    },
+    "required": [],
+    "minItems": 3
+  },
+  "engine_ref": [
+    "engine/transcendental-audit.md",
+    "engine/mcts-simulate.md"
+  ]
 }

@@ -72,6 +72,46 @@ function classifyErrorPattern(step, signals) {
   return { bias_type: entry.bias, check_item: entry.check, learning_level: 'L2' };
 }
 
+
+// ══════════════════════════════════════
+//  recallErrors — 从 MMA 知识库召回被驳斥(REFUTED/DISPUTED)步骤并归类
+//  补上 auto-fix 只覆盖清晰度信号、缺 refuted 信号的路径。
+//  v1.18.42 注释 "recallErrors 路径另记" — 现在补上。
+// ══════════════════════════════════════
+function recallErrors(questionType) {
+  var results = [];
+  try {
+    var knowledge = require('./knowledge');
+    var refuted = knowledge.listRefuted ? knowledge.listRefuted() : [];
+    if (!refuted || refuted.length === 0) {
+      if (fs.existsSync(STEP_METRICS_FILE)) {
+        var lines = fs.readFileSync(STEP_METRICS_FILE, 'utf-8').trim().split('\n').filter(Boolean);
+        for (var i = 0; i < lines.length; i++) {
+          try {
+            var r = JSON.parse(lines[i]);
+            if (r.outcome === 'refuted' || r.disputed) {
+              refuted.push({ step: r.step, tags: r.tags || [], description: r.outcome_detail || '被驳斥' });
+            }
+          } catch(e) {}
+        }
+      }
+    }
+    for (var j = 0; j < refuted.length; j++) {
+      var ref = refuted[j];
+      var step = ref.step;
+      if (!step && ref.tags && ref.tags.length > 0) {
+        for (var t = 0; t < ref.tags.length; t++) {
+          if (STEPS.indexOf(ref.tags[t]) !== -1) { step = ref.tags[t]; break; }
+        }
+      }
+      if (!step) step = 'synthesis';
+      var pattern = classifyErrorPattern(step, { manyQuestions: false, lowClarity: false, refuted: true });
+      results.push({ step: step, refuted_desc: (ref.description || '').substring(0, 120), error_pattern: pattern });
+    }
+  } catch(e) { /* 非关键路径, 静默失败 */ }
+  return results;
+}
+
 // ── 数据源 ──
 const DATA_DIR = process.env.PONDER_DATA_DIR ? require("path").resolve(process.env.PONDER_DATA_DIR) : path.join(os.homedir(), '.claude', 'data', 'skills', 'ponder');
 const METRICS_FILE = path.join(DATA_DIR, 'metrics', 'pipeline-runs.ndjson');  // 旧格式（管道级别）
@@ -134,15 +174,23 @@ function prune() {
     }
   }
 
-  // ② 标记长期未命中的 active 规则为 stale
+  // ② 标记长期未命中的 active 规则为 stale + 间隔效应复习候选
+  report.review_candidates = [];
   if (fs.existsSync(RULES_FILE)) {
     try {
+      const REVIEW_WINDOW_DAYS = 7;  // 间隔效应: 7-14天为最优复习窗口
+      const reviewWindowMs = REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
       const rules = JSON.parse(fs.readFileSync(RULES_FILE, 'utf-8'));
       let changed = false;
       for (const r of rules.rules) {
         if (r.status === 'active' && r.lastHit) {
           const sinceHit = now - new Date(r.lastHit).getTime();
-          if (sinceHit > staleMs && !r.stale) { r.stale = true; r.stale_reason = '长期未命中(' + STALE_DAYS + '天)'; changed = true; report.stale_rules++; }
+          if (sinceHit > staleMs && !r.stale) {
+            r.stale = true; r.stale_reason = '长期未命中(' + STALE_DAYS + '天)'; changed = true; report.stale_rules++;
+          } else if (sinceHit > reviewWindowMs && sinceHit <= staleMs && !r.stale) {
+            // 间隔效应: 7-14天未命中的规则标记为"该复习了"
+            report.review_candidates.push({ id: r.id, days_since_hit: Math.round(sinceHit / 86400000), action: 'review' });
+          }
         }
       }
       if (changed) fs.writeFileSync(RULES_FILE, JSON.stringify(rules, null, 2), 'utf-8');
@@ -620,6 +668,36 @@ function cli() {
       console.log('   偏离默认值的权重数: ' + deviated);
     }
 
+    // ── 被驳斥信号归类(补 v1.18.42 "recallErrors 路径另记" 缺失) ──
+    var recalled = recallErrors('');
+    if (recalled.length > 0) {
+      console.log('\n● 被驳斥错误归类(REFUTED/DISPUTED):');
+      for (var ri = 0; ri < recalled.length; ri++) {
+        var rr = recalled[ri];
+        console.log('   ' + rr.step + ': ' + rr.error_pattern.bias_type + ' → ' + rr.error_pattern.check_item);
+      }
+      var fixesDir = path.join(DATA_DIR, 'auto-fixes');
+      if (!fs.existsSync(fixesDir)) fs.mkdirSync(fixesDir, { recursive: true });
+      for (var rj = 0; rj < recalled.length; rj++) {
+        var re = recalled[rj];
+        var fixId = 'refuted_' + re.step + '_' + new Date().toISOString().substring(0, 10);
+        var fixFile = path.join(fixesDir, fixId + '.json');
+        if (!fs.existsSync(fixFile)) {
+          var fix = {
+            id: fixId,
+            status: 'testing',
+            generated: new Date().toISOString(),
+            condition: { question_type: [''], step: re.step },
+            action: { type: 'review', description: '被驳斥步骤 ' + re.step + ': ' + re.refuted_desc },
+            error_pattern: re.error_pattern,
+            baseline: { type: 'refuted', step: re.step }
+          };
+          fs.writeFileSync(fixFile, JSON.stringify(fix, null, 2));
+          console.log('   生成修复: ' + fixId);
+        }
+      }
+    }
+
     var fixed = 0
     for (const tr of result.type_results) {
       if (tr.count < 3) continue
@@ -750,6 +828,12 @@ function cli() {
     console.log('  删除长期(>14天)testing候选fix: ' + r.pruned_fixes + ' 个');
     console.log('  保留候选fix: ' + r.kept_fixes + ' 个');
     console.log('  标记长期未命中active规则: ' + r.stale_rules + ' 条');
+    if (r.review_candidates && r.review_candidates.length > 0) {
+      console.log('  📖间隔效应 — 该复习的规则(' + r.review_candidates.length + '条, 7-14天未命中):');
+      r.review_candidates.forEach(rc => console.log('    ' + rc.id + ' (距今' + rc.days_since_hit + '天) → ' + rc.action));
+    } else {
+      console.log('  间隔效应 — 无待复习规则');
+    }
     if (r.saturated_weights.length > 0) {
       console.log('  ⚠️反者道之动 — 权重饱和反转预警(可疑过拟合):');
       r.saturated_weights.forEach(w => console.log('    ' + w.key + '=' + w.value + ' ' + w.warn));
@@ -786,4 +870,4 @@ function cli() {
 }
 
 if (require.main === module) cli();
-module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules, classifyErrorPattern, prune };
+module.exports = { analyze, report, loadRuns, THRESHOLDS, getMatchingRules, classifyErrorPattern, prune, recallErrors, integrateWeightsFromAnalysis };

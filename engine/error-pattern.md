@@ -70,6 +70,22 @@
     再比对——提取动作本身才巩固，重读不巩固
 ```
 
+### 记忆科学三大效应落地（补 L0 缺位）
+
+多学科审计（v1.18.43）发现记忆科学是四个学科维度中最薄弱的——测试效应仅文档提及但无机制，间隔效应和生成效应完全缺位。以下做最小落地。
+
+**测试效应 (testing effect)**：提取动作本身才巩固记忆，被动重读不巩固。
+- 落地方式：`knowledge.js` 的 `deqi` 召回已经是"检索练习"的形态（主动提取而非被动注入）。但召回后缺少"是否答对"的反馈回路。
+- 最小改进：当 MMA 召回的历史被 LLM 采用到当前推理中，`orchestrate.js step` 存储时在 description 加 `[recalled:N]` 标记被采用条数，供后续 recallErrors 判断"召回是否真的帮助了推理"——这给了测试效应的反馈信号。
+
+**间隔效应 (spacing effect)**：分散学习比集中学习效果更好（Ebbinghaus 遗忘曲线）。
+- 落地方式：`evolve.js` 的 `prune` 命令已实现日损（定期清理），但缺少"间隔复习"的正向调度。
+- 最小改进：`prune` 输出中加 `review_candidates` 字段——标记 `lastHit` 在 7-14 天前的规则为"该复习了"，而非直接删除。这些规则在下一次 `evolve analyze` 时优先级提升（weight × 1.2），模拟间隔效应的"最优复习间隔"。
+
+**生成效应 (generation effect)**：自己生成的记忆比被动接收记得更好。
+- 落地方式：当前 `classifyErrorPattern` 的 `check_item` 是框架生成的"检查项"，但 LLM 推理时只是读它，从未"自己写一遍"。
+- 最小改进：`evolve.js` 的 `auto-fix` 产出 `error_pattern` 后，加 `self_generated: false` 字段。当 fix 被验证通过（`deploy-fix`），标记为 `self_generated: true`——这个标记表示"该检查项已被推理验证过，不再是框架单方面写入的"。下次同类型问题再触发时，优先采用 `self_generated: true` 的检查项（生成效应：自验证过的记得更牢）。
+
 ### 道家日损机制（为道日损 + 反者道之动 + 坐忘）
 
 ```

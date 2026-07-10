@@ -2,7 +2,11 @@
   "name": "converge",
   "label": "收敛",
   "stepGoal": "淘汰弱方案，保留3-5个最优",
-  "engine_ref": "engine/converge.md",
+  "engine_ref": [
+    "engine/converge.md",
+    "engine/mcts-converge.md",
+    "engine/working-stance.md"
+  ],
   "tool_ref": [
     "scripts/mcts_guard.js diversity-challenge"
   ],

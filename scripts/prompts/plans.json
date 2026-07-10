@@ -66,5 +66,9 @@
     "required": [
       "plans"
     ]
-  }
+  },
+  "engine_ref": [
+    "engine/teleology.md",
+    "engine/mcts-diverge.md"
+  ]
 }

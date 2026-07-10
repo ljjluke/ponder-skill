@@ -2,7 +2,14 @@
   "name": "synthesis",
   "label": "综合",
   "stepGoal": "最终结论+风险+未决事项",
-  "engine_ref": "engine/synthesis.md",
+  "engine_ref": [
+    "engine/synthesis.md",
+    "engine/mcts-converge.md",
+    "engine/working-stance.md",
+    "engine/error-pattern.md",
+    "engine/otherness.md",
+    "engine/preference-structure.md"
+  ],
   "agent_ref": "agents/memory-agent.md",
   "tool_ref": [
     "scripts/language_guard.js",

@@ -138,24 +138,33 @@ function finalize(questionType, userRequest) {
     result.groomed = (actions || []).length;
   } catch(e) { console.error('知识保洁失败:', e.message); }
 
-  // 2. 权重学习
+  // 2. 进化分析 (先跑分析, 结果驱动后续权重学习)
+  var evolve = null;
+  var analysis = null;
   try {
-    var registry = getWeightRegistry();
-    if (registry.weights._total_learns === undefined || registry.weights._total_learns === 0) {
-      registry.learn('uncertainty_ambiguity', 0.02);
-    }
-    result.weights_learned = true;
-  } catch(e) { console.error('权重学习失败:', e.message); }
-
-  // 3. 进化分析
-  try {
-    var evolve = require('./evolve');
+    evolve = require('./evolve');
     var runs = evolve.loadRuns();
     if (runs.length >= 3) {
-      var analysis = evolve.analyze(runs);
+      analysis = evolve.analyze(runs);
       result.evolve_analyzed = analysis.total_runs > 0;
     }
   } catch(e) { console.error('进化分析失败:', e.message); }
+
+  // 3. 权重学习 (从进化分析结果驱动, 替代占位 learn)
+  try {
+    var registry = getWeightRegistry();
+    if (analysis && evolve && typeof evolve.integrateWeightsFromAnalysis === 'function') {
+      var weightLogs = evolve.integrateWeightsFromAnalysis(analysis);
+      result.weights_learned = weightLogs.length > 0;
+      result.weight_logs = weightLogs;
+    } else {
+      // 数据不足时回退到冷启动占位学习
+      if (registry.weights._total_learns === undefined || registry.weights._total_learns === 0) {
+        registry.learn('uncertainty_ambiguity', 0.02);
+        result.weights_learned = true;
+      }
+    }
+  } catch(e) { console.error('权重学习失败:', e.message); }
 
   // 4. pipeline-meta 版本递增
   try {
