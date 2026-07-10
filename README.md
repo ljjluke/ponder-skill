@@ -178,8 +178,11 @@ Old data decays → unused knowledge sleeps → low quality archived
 /plugin marketplace add https://github.com/ljjluke/ponder-skill
 /plugin install luke
 
-# Use (Codex)
-#   Analyze this using the Ponder framework from github.com/ljjluke/mcts-skill
+# Install (Codex)
+git clone https://github.com/ljjluke/mcts-skill.git ~/.codex/plugins/ponder
+codex plugin marketplace add ~/.codex/plugins/ponder/.agents/plugins
+codex plugin add ponder@personal
+# Restart Codex, then use /ponder
 
 # Use — any domain
 # Claude Code:
