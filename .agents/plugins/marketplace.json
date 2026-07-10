@@ -5,7 +5,7 @@
   },
   "plugins": [
     {
-      "name": "ponder",
+      "name": "luke",
       "source": {
         "source": "local",
         "path": "."
