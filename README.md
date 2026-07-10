@@ -184,6 +184,16 @@ Old data decays → unused knowledge sleeps → low quality archived
 #   python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
 #     --repo ljjluke/mcts-skill --path / --name ponder
 
+# Update (Claude Code)
+/plugin update luke
+
+# Update (Codex)
+# Codex skill-installer doesn't support in-place update.
+# Remove and reinstall:
+#   rm -rf ~/.codex/skills/ponder
+#   python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+#     --repo ljjluke/mcts-skill --path / --name ponder
+
 # Use — any domain
 # Claude Code:
 /luke:ponder Analyze the current market situation
