@@ -1,92 +1,92 @@
 ---
 name: ponder
 alwaysApply: false
-description: "8-step structured reasoning. Domain-agnostic. Each step: read prompt → load engine docs → execute → present results."
+description: "8-step structured reasoning. Domain-agnostic. For user interaction use request_user_input tool - ask ONE question at a time with 2-3 options. Continue asking until 5-dimension profile (time/place/people/method/essence) is complete."
 version: 1.18.49
 license: MIT
 ---
 
-## 流程
+## Pipeline
 
-⛔ 禁止做任何环境检查、配置验证、文件扫描等与用户问题无关的操作。直接开始。
+⛔ NO environment checks, config validation, file scanning, or anything unrelated to the user's question. Start directly.
 
-⛔ Codex环境: 用 request_user_input 替代 AskUserQuestion。每次只提一个问题(questions数组只含1项)，每个问题带2-3个互斥选项(options)。用户回答后继续下一个问题，直到覆盖天时/地利/人和/法/本质。必须在回应中展示选项标签(如A/B/C)，方便用户通过选项标签回答或直接通过UI点击回答。Claude环境: 继续用 AskUserQuestion，行为不变。
-### 需求打磨
-用 AskUserQuestion 一次一问, 覆盖天时/地利/人和/法/本质。所有问题必须带选项。
-完成后用一两句话总结用户需求。⛔ 采访完成立即进入分析阶段，禁止停下来等待用户确认或问"还有什么补充"。
+⛔ Codex: use request_user_input instead of AskUserQuestion. Ask ONE question at a time (questions array with exactly 1 item), each with 2-3 mutually exclusive options. After user responds, continue to next question until all 5 dimensions (time/place/people/method/essence) are covered. Show option labels (A/B/C) in response so user can click or type. Claude: continue with AskUserQuestion, behavior unchanged.
 
-**无知自检（门控:复用神思赌注判断,可逆小事跳过,高赌注问题必做）**: 五诊画像完成后,框架基于当前画像做一次无知自检——列出2-5个"我知道我不知道"的专业事项。⛔不能写"不确定用户预算"(那是五诊低分维度),必须写**领域敏感事项**(即该领域内五诊的五个通用维度探不到、但会显著影响决策质量的专业维度——例如某个领域特定的约束条件、某个只有该领域从业者才熟悉的评估维度、某个在特定情境下会改变方案可行性的专业前提)。每个无知条目须含:(a)该领域为什么需要知道这件事;(b)当前画像缺少它为什么是风险。能自己查的先查(公开信息),查不到的用 AskUserQuestion 追问用户——追问时**先一句话说明为什么重要**,然后给出2-3个具体选项让用户选择。追问结果注入画像的领域专业维度,后续步骤可引用。若当前画像已足够专业无显著无知,可诚实留空(不凑假无知)。方法见 engine/socratic-ignorance.md。
+### Requirement Refinement
+Use AskUserQuestion one question at a time, covering: time/place/people/method/essence. Every question MUST have options.
+After completion, summarize user needs in 1-2 sentences. ⛔ Once interview is done, immediately enter analysis phase. Do NOT pause to ask "anything else to add".
 
-### 分析阶段
+**Socratic Ignorance Check (gate: reuse Shensi stake judgment; skip for reversible minor issues; mandatory for high-stake problems)**: After 5-dimension profile is complete, perform a socratic ignorance check based on the profile — list 2-5 "known unknowns" that are domain-specific professional matters. ⛔ Do NOT list "uncertain about user budget" (that's a weak dimension in the profile). Must list **domain-sensitive matters** (professional dimensions that the 5 generic profile dimensions cannot probe, but significantly affect decision quality — e.g., domain-specific constraints, evaluation dimensions only known to practitioners, professional preconditions that change solution feasibility in certain contexts). Each ignorance item must include: (a) why the domain needs to know this; (b) why lacking it in the current profile is a risk. Research publicly available info first; for what cannot be found, use AskUserQuestion to ask the user — preface with **one sentence explaining why it matters**, then provide 2-3 specific options. Results inject into profile's domain professional dimensions, subsequent steps may reference them. If the profile is already sufficiently professional with no significant unknowns, honestly leave empty (do not fabricate false ignorance). See engine/socratic-ignorance.md.
 
-⛔ 所有输出中不允许出现框架内部术语，用自然语言表达。
-⛔ **噪音边界**：脚本调用（`node scripts/...`）、脚本的 stdout（`{"stored":true,...}` 这类 JSON）、文件路径、命令字符串、"查历史/存产出/保洁学习"这些管线内部动作——一律不展示给用户。用户要看的是**每一步推理的过程与结论**：这一步想到了什么、各 agent 产出了什么、得出了什么判断。内部动作静默执行，推理过程完整展示。
-⛔ 不允许输出"正在等待"、"让我检查"、"等待中"等无关状态消息。只输出推理过程、结论和评分。
-⛔ 子 agent 全部返回后，必须先把各 agent 的产出内容展示到对话，再汇总或进入下一步。禁止跳过展示。
-⛔ **神思 → 发散 → 八卦镜 三步严格串行**：发散必须吃神思的产出，八卦镜必须吃发散的产出。禁止把这三步当成三个并行 agent 一起起。八卦镜内部的 8 维度 agent 才是并行的。
-⛔ 每步必须按以下顺序完整执行。读文件用 Read 工具，禁止 bash echo:
+### Analysis Phase
+
+⛔ No framework internal terminology in any output. Use natural language.
+⛔ **Noise boundary**: Script invocations (`node scripts/...`), script stdout (`{"stored":true,...}` JSON), file paths, command strings, internal pipeline actions like "query history/store output/cleanup learning" — never show to user. Users see **the reasoning process and conclusions of each step**: what was considered, what each agent produced, what judgment was made. Internal actions execute silently; reasoning process is fully displayed.
+⛔ Do NOT output status messages like "waiting", "let me check", "in progress". Only output reasoning, conclusions, and scores.
+⛔ After all sub-agents return, MUST display each agent's output to the conversation first, then summarize or proceed to next step. Skip-free display is forbidden.
+⛔ **Shensi → Divergence → Bagua: strictly serial**. Divergence must consume Shensi output; Bagua must consume Divergence output. Do NOT launch these three as parallel agents. Bagua's internal 8-dimension agents ARE parallel.
+⛔ Every step must execute in full order below. Use Read tool for files, forbid bash echo:
 
 ```
-（内部执行顺序，不输出步骤编号和标签）
-🔇 以下为静默内部动作，禁止把命令/stdout/路径展示给用户：
-   - 查历史（node scripts/orchestrate.js history <步骤名> <问题类型>）+ 错误警告，结果只注入 prompt 参考
-   - 查进化规则（node scripts/orchestrate.js rules <步骤名> <问题类型>）命中的自适应规则，以自然语言融入本步推理参考（和查历史同路径，静默注入不展示命令）
-   - 读 JSON prompt / 读引擎文档（用 Read 工具）
-   - 存产出（node scripts/orchestrate.js step ...）
-   其作用是管线运转，与用户无关，静默完成即可。若历史命中带来新约束/盲点，以自然语言融入本步推理展示，不展示"查到了历史"本身。
+(Internal execution order — do not output step numbers or labels)
+🔇 Silent internal actions — never show commands/stdout/paths to user:
+   - Query history (node scripts/orchestrate.js history <stepName> <questionType>) + error warnings; results only inject into prompt reference
+   - Query evolution rules (node scripts/orchestrate.js rules <stepName> <questionType>); matching adaptive rules blend into this step's reasoning reference in natural language (same path as history query, silently inject without showing command)
+   - Read JSON prompt / read engine docs (use Read tool)
+   - Store output (node scripts/orchestrate.js step ...)
+   These are pipeline operations, irrelevant to user; complete silently. If history match brings new constraints/blindspots, blend into this step's reasoning display in natural language, do not show "found in history" itself.
 
-📢 以下为该展示给用户的推理步骤（每步都要把过程与结果讲清楚）：
-   1. **执行**: 主线程直行；或起子 agent（全部返回后，**必须把每个 agent 的产出逐条展示到对话再汇总，禁止跳过**）
-   2. **画像刷新 + 立场刷新**: 检查本步产出中是否有新发现（新的约束、盲点、用户偏好、矛盾点）需要更新需求画像。有 → 更新画像，后续步骤用新画像。无 → 继续。**收敛及之后步骤额外做立场刷新**：检查本步新产出是否动摇了上一步框架的工作立场（收敛诞生的倾向），动摇则改倾向并记录为何改、后续步骤用新立场；不动摇则记录为何不变。立场是框架自己的判断，区别于用户画像（用户的约束）。可逆小事不立立场。
-   3. **需求确认**: 神思/发散/八卦镜 扩展出的内容中，**涉及用户需求/偏好/真实情况的才问**（用 AskUserQuestion 让用户选）。纯分析性盲点和视角直接交给方案阶段处理，不需要问
+📢 The following reasoning steps MUST be shown to user (process and results clearly presented for each step):
+   1. **Execute**: Main thread directly; or spawn sub-agents (after all return, **MUST display each agent's output item by item in conversation before summarizing; skip-free is forbidden**)
+   2. **Profile refresh + Stance refresh**: Check if this step's output contains new discoveries (new constraints, blindspots, user preferences, contradictions) that need to update the requirement profile. Yes → update profile, subsequent steps use new profile. No → continue. **Convergence and subsequent steps additionally do stance refresh**: check if this step's new output shakes the framework's working stance from the previous step (the inclination born at convergence). If shaken → change inclination and record why, subsequent steps use new stance. If not shaken → record why unchanged. Stance is the framework's own judgment, distinct from user profile (user's constraints). Reversible minor issues do not establish stance.
+   3. **Need confirmation**: Among content expanded by Shensi/Divergence/Bagua, **only ask about matters involving user needs/preferences/real situations** (use AskUserQuestion for user to pick). Pure analytical blindspots and perspectives go directly to solution phase, no need to ask.
 ```
 
-⛔ 表格里每个阶段（神思/发散/八卦镜/方案/收敛/评分/推演/辩论/综合）的"做法"列写了该展示什么——那是给用户看的推理内容，必须展示。流程结束后的 `finalize` 也是静默内部动作，不展示。
-⛔ **门控边界（重要）**：表里的"可逆小事跳过"只跳过该步的**深度动作**（如发散互否、方案辩证、终态画像、归因、可谬、立场谱系）——**绝不跳过步骤本身**。神思/发散/八卦镜/方案/收敛/评分/推演/辩论/综合九步无论赌注高低都必须执行并展示产出。"可逆小事"不是"省略管线"的借口，只是"省略高阶质疑动作"。推演和辩论⛔无论赌注必做必展示。
+⛔ The "method" column in the table below for each phase (Shensi/Divergence/Bagua/Plans/Converge/Scoring/Simulation/Debate/Synthesis) describes what to display — that is the reasoning content for the user and MUST be shown. The `finalize` after the pipeline is also a silent internal action, do not show.
+⛔ **Gate boundary (important)**: "Skip for reversible minor issues" in the table means: for problems whose consequences are easily reversible (e.g., picking a restaurant, choosing a learning path), skippable items marked "skip for reversible minor issues" may be skipped; high-stake problems (e.g., investment decisions, medical treatment, irreversible major decisions) enforce all items even those marked skippable. ⛔ Simulation and Debate steps are mandatory regardless of stake level, immune to gate control.
+⛔ **agent-reach is available**. When needing platform-specific real-time data (GitHub, YouTube, Bilibili, RSS, any webpage, etc.), prefer the platform interfaces exposed by agent-reach (it provides platform read interfaces via its own registered skill, NOT `agent-reach search` subcommand — v1.5+ no longer has this command). After installation, use `agent-reach doctor` to check available platforms. Without agent-reach, use WebSearch normally; core pipeline unaffected.
 
-> 🔌 **Agent-Reach 可用**。需要查特定平台的实时数据时（GitHub、YouTube、B站、RSS、任意网页等），优先用 agent-reach 暴露的平台能力（它通过自身注册的 skill 提供各平台读取接口，**不是** `agent-reach search` 子命令——v1.5+ 已无此命令）。装好后可用 `agent-reach doctor` 查哪些平台可用。没有 agent-reach 也正常走 WebSearch，不影响核心管线。
+| Phase | Prompt File | Goal | Method |
+|-------|------------|------|--------|
+| Shensi | scripts/prompts/shensi.json | Prerequisite scrutiny + break out of conventional thinking | Main thread directly. **First produce stake field (stake judgment; entire downstream reads this field for gate control; schema enforces mandatory; reuse v1.18.37 hard criteria: any hit → high / unclear → treat as high / user solemn → high)**; for high-stake problems, first scrutinize prerequisites (use AskUserQuestion to confirm prerequisites involving user's real situation), then present counterintuitive findings. If prerequisite scrutiny exposes that "the question's formulation presupposes unverified premises", trigger frame dissolution (question whether the question should be asked this way rather than solving within the framework; most problems do not trigger, leave empty). Prerequisite scrutiny internally self-checks prospect attitude (loss aversion/reference point dependence/probability weighting distortion; do not show labels; see engine/prospect-theory.md). |
+| Divergence | scripts/prompts/divergence.json | Multi-perspective scan | **Must wait for Shensi output**, then main thread directly (consuming Shensi conclusions). Present 6 perspectives. **For high-stake problems, after 6-perspective output, perform perspective mutual negation** (find 1-2 pairs of opposing perspectives, mutually challenge then synthesize; skip for reversible minor issues). Consensus must be surviving judgment after mutual negation, not simple summarization. |
+| Bagua | scripts/prompts/bagua.json | Blindspot discovery | **Must wait for Divergence output**, then spawn sub-agents (consuming Divergence consensus). One agent per dimension; display blindspot table. After all return, main thread synthesizes as key_finding and hands to Plans. |
+| Plans | scripts/prompts/plans.json | 5-10 alternative solutions | **For high-stake problems, before launching agents, first do end-state profile** (describe "what success concretely looks like", must be verifiable like acceptance criteria, then reverse-chain decompose to today's first step; skip for reversible minor issues). Inject end-state into each agent so solutions converge toward it. One agent per solution. **For high-stake problems, each solution must undergo dialectical movement (thesis → antithesis → synthesis); skip for reversible minor issues**: after generating a solution, write out under what specific conditions it fails (antithesis, must write "does not hold when X"); after absorbing the antithesis, how the solution is corrected or scoped (synthesis). Display solution comparison table + antithesis/synthesis per solution. |
+| Converge | scripts/prompts/converge.json | Eliminate weak solutions, keep optimal | Main thread directly (consuming plans). Display surviving solutions and elimination reasons. **For high-stake problems, additionally output working stance** (which surviving solution the framework currently leans toward + based on what + what would change my mind; no fence-sitting; skip for reversible minor issues). |
+| Scoring | scripts/prompts/simulate.json | 8-dimension scoring of surviving solutions | **Must wait for convergence survivors**, then one agent per solution (consuming survivors). **Must display per-dimension individual scores and total score**. **For high-stake problems, attribute the top-scoring solution** (why it got this score: 3 most likely reasons + counterfactual ranking if reasons do not hold; skip for reversible minor issues). If scoring legitimacy is questionable (scores cluster near ranking-sensitive weights / diverge from intuition / certain dimension lacks experience anchor / weight source case-type mismatch), trigger prior self-check (question the scoring tool's prior framework rather than continue using results; most cases do not trigger, leave empty). |
+| Simulation | scripts/prompts/simulate-scenarios.json | Simulate surviving solutions | ⛔ **Mandatory regardless of stake level, immune to reversible-minor gate control**. **Must wait for scoring**, then one agent per solution (mcts-simulator, consuming scored_survivors). **Must display simulation result table + 💡 findings**. |
+| Debate | scripts/prompts/debate.json | Ranked recommendation | ⛔ **Mandatory regardless of stake level, immune to reversible-minor gate control**. Each solution presents opening → aggregate → attack evaluation → pressure-tested ranking. **Must display ranking table**. **For high-stake problems, additionally output stance evolution** (did debate attacks change the inclination formed at convergence: if changed, record from X to Y + which attack shook it; if unchanged, record why not; skip for reversible minor issues). Counterfactual thinking internally upgraded to systematic counterfactual investigation (bidirectional counterfactuals / causal chain investigation / controllable vs uncontrollable distinction; do not show methodology labels; see engine/counterfactual-thinking.md). |
+| Synthesis | scripts/prompts/synthesis.json | Final conclusion + risks + conclusion self-reflection + fallibility annotation + unassimilable items + stance genealogy + preference introspection | Main thread directly (consuming debate debate_summary + ranked). For high-stake problems, output complete conclusion + conclusion self-reflection (challenge ledger convergence + shared premises) + fallibility annotation (**stance-based**: framework ultimately leans toward A; A is most likely wrong due to X + fallback option; skip for reversible minor issues) + unassimilable items + stance genealogy + preference introspection (intertemporal preference / motivational orientation / preference stability; do not show labels; see engine/preference-structure.md). Three-action mutual exclusion constraint has code guard (synthesis_guard.js blocks fallibility↔self-reflection / fallibility↔otherness object collision + otherness field completeness). ⛔ Reversible minor issues only skip these four deep actions, but **simulation and debate conclusions must be displayed normally**; do not swallow previous step outputs by "just giving the conclusion". |
 
-| 阶段 | 提示文件 | 目标 | 做法 |
-|-----|---------|------|------|
-| 神思 | scripts/prompts/shensi.json | 前提审视+跳出常规思维 | 主线程直行，**先产出 stake 字段（赌注判定，全链下游读此字段定门控，schema 强制必填，复用v1.18.37硬判据：任一命中即high/判不清按high/用户郑重即high）**，高赌注问题先审视前提（涉及用户真实情况的前提用 AskUserQuestion 确认），再展示反直觉发现；若前提审视暴露出"问题提法本身预设了未验证前提"则触发问题消解（质疑问题该不该这么问而非在框架内解题，多数问题不触发留空）；前提审视段内部自检损失态度（损失厌恶/参照点依赖/概率权重扭曲，不展示标签，见 engine/prospect-theory.md） |
-| 发散 | scripts/prompts/divergence.json | 多角度审视 | **必须等神思产出后**主线程直行（吃神思结论），展示6视角，**高赌注问题六视产出后做视角互否**（找1-2对对立视角互质疑再合题，可逆小事跳过），共识须是互否后存活判断非简单汇总 |
-| 八卦镜 | scripts/prompts/bagua.json | 发现盲点 | **必须等发散产出后**再起子 agent（吃发散共识）；每维度一个 agent，展示盲点表格；全部返回后主线程汇总为 key_finding 交给方案 |
-| 方案 | scripts/prompts/plans.json | 5-10个可选方案 | **高赌注问题起agent前先做终态画像**（先描述"成了的具体样子"须可判定像验收标准，再反向链拆解到今天第一步，可逆小事跳过），把终态注入每个agent让方案朝终态收敛；每方案一个 agent，**高赌注问题每个方案必须经辩证运动(正题→反题→合题)，可逆小事跳过**：生成方案后写出它具体在什么条件下失效(反题，须写"当X时不成立")、吸收反题后如何修正或划界(合题)，展示方案对比表格+每方案的反题合题 |
-| 收敛 | scripts/prompts/converge.json | 淘汰弱方案保留最优 | 主线程直行（吃 plans），展示幸存方案及淘汰理由；**高赌注问题额外输出工作立场**（框架此刻倾向哪个幸存方案+凭什么+什么会让我改主意，不许骑墙，可逆小事跳过） |
-| 方案评分 | scripts/prompts/simulate.json | 8维度评幸存方案 | **必须等收敛产出 survivors 后**每方案一个 agent（吃 survivors），**必须展示各维度单项分和总分**，**高赌注问题对总分最高方案做归因**（它凭什么拿这个分：3个最可能原因+若原因不成立反事实排名，可逆小事跳过）；若评分合法性可疑（分数接近排名敏感权重/与直觉背离/某维度无经验锚点/权重来源case类型不匹配）触发先验自检（质疑评分工具的先验框架而非继续用结果，多数case不触发留空） |
-| 推演 | scripts/prompts/simulate-scenarios.json | 模拟幸存方案 | ⛔**无论赌注高低必做，不受可逆小事门控影响**。**必须等方案评分后**每方案一个 agent(mcts-simulator，吃 scored_survivors（survivors 附评分结果）），**必须展示推演结果表格+💡发现** |
-| 辩论 | scripts/prompts/debate.json | 排名推荐 | ⛔**无论赌注高低必做，不受可逆小事门控影响**。每方案立论→汇总→攻击评估→抗压排名，**必须展示排名表格**；**高赌注问题额外输出立场演化**（辩论攻防有没有改变收敛阶段的倾向：变了记从X到Y+哪个攻击动摇的，没变记为何不动，可逆小事跳过）；反向思维段内部升级为系统反事实排查（双向反事实/因果链排查/可控不可控区分，不展示方法论标签，见 engine/counterfactual-thinking.md） |
-| 综合 | scripts/prompts/synthesis.json | 最终结论+风险+结论自反+可谬标注+不可同化项+立场谱系+偏好自省 | 主线程直行（吃辩论 debate_summary+ranked），高赌注问题输出完整结论+结论自反（质疑账本收敛+共享前提）+可谬标注（**基于立场**：框架最终倾向A，A最可能因X错+备选，可逆小事跳过）+不可同化项+立场谱系+偏好自省（跨期偏好/动机取向/偏好稳定性，不展示标签，见 engine/preference-structure.md），三动作互斥约束有代码兜底（synthesis_guard.js 拦可谬↔自反/可谬↔他者撞对象+他者字段齐全）。⛔可逆小事只跳过这四个深度动作，但**推演辩论的结论必须正常展示**，不允许"只出结论"把前面步骤的产出吞掉 |
+### User Confirmation
+Profile refresh at each step already covers most user confirmation. After synthesis, if there are still **core directional choices** requiring user's personal judgment (not information confirmation), use AskUserQuestion with options. After user responds, output final conclusion. If nothing remains, directly output conclusion.
 
-### 用户确认
-各步的画像刷新已覆盖大部分用户确认。综合后仍需要用户本人拍板的**核心方向选择**（而非信息确认），用 AskUserQuestion 带选项提问。用户回应后输出最终结论。没有遗留则直接出结论。
+### Presenting Conclusions
+Use natural language to connect reasoning across phases. Do not use mechanical labels like "Step X", "Now entering phase Y". Each phase's output should read like insightful analysis, not a dry report.
 
-### 呈现结论
-用自然语言串联各阶段推理。不要出现"第X步"、"现在进入XX阶段"等机械标签。每个阶段的输出要像一段有洞察的分析，不是干巴巴的报告。
+Table design:
+- **Bold** headers; **bold** key numbers or conclusions
+- Brief assessment after each data row, not just raw numbers
+- Scoring tables paired with a summary line (e.g., "Overall, dimension X is strongest, Y is weakest")
+- Comparison tables highlight the best option
 
-表格设计:
-- 表头用 **加粗**，关键数字或结论用 **加粗** 突出
-- 每行数据后有简短评价，不要只列数字
-- 评分类的表配上一行总结文字（如"整体来看，X维度最强、Y维度最弱"）
-- 对比类的表突出最佳选项
+Copy style:
+- First sentence grabs attention — directly state the most valuable insight (not "Let me summarize", but "The core finding is X")
+- ⭐ Highlight / 💡 Key Finding / ⚠️ Risk / ✅ Conclusion / 🏆 Recommendation
+- No JSON, file paths, Bash commands, or framework jargon
+- No "requires user confirmation" prompts
 
-文案风格:
-- 每段第一句抓眼球，直接说最有价值的信息（不是"我来总结一下"，而是"核心发现是X"）
-- ⭐ 亮点 / 💡 关键发现 / ⚠️ 风险 / ✅ 结论 / 🏆 推荐
-- 不允许出现 JSON、文件路径、Bash 命令、框架术语
-- 不允许出现"需要用户确认"这种提示
+Per-phase format:
+- **Bagua**: Blindspot table + one-sentence summary of the most critical blindspot
+- **Plans**: For high-stake problems, first present **end-state profile** (what success looks like + reverse-chain to today's first step), then comparison table (name/direction/core logic), with differentiated commentary per solution; **each solution accompanied by "under what conditions it fails"** (antithesis) and "therefore how to correct or scope it" (synthesis)
+- **Converge**: Survivor table (name/retention reason), with one line "eliminated N, kept M, mainly eliminated due to X"
+- **Scoring**: Scoring table must include **per-dimension individual scores** and total. **Bold the top scorer**. Add one line "Solution X performs best on dimension Y". For high-stake problems, append **top scorer attribution** (why it got this score + if reasons don't hold, where it would fall)
+- **Simulation**: Simulation result table; **key findings written as a separate 💡 paragraph**, not stuffed in the table
+- **Debate**: Ranking table; **🏆 first place bolded**; one-line pressure-resistance commentary per solution
+- **Final Conclusion**: 🏆 **Recommended solution (bolded)** → Core judgment → Risks and responses → Items to confirm → Conclusion self-reflection (high-stake only: top 3 challenge responses + shared premises) → Fallibility annotation (high-stake only, **stance-based**: framework ultimately leans toward A; where A is most likely to fail + if it fails, switch to what) → Unassimilable items (high-stake only; most problems have none: stances that synthesis cannot digest + who the conclusion does not apply to) → Stance genealogy (high-stake only: how the framework's inclination moved from convergence → debate → synthesis; one sentence per phase + why it settled here) → Preference introspection (high-stake only: what intertemporal preferences and motivational orientations the conclusion implicitly assumes; would the conclusion still hold for someone with a different time horizon or motivational orientation)
 
-各阶段格式:
-- **八卦镜**: 盲点表格 + 最关键的盲点一句话总结
-- **方案**: 高赌注问题先亮出**终态画像**（成了是什么样+反推到今天第一步），再展示对比表格（名称/方向/核心逻辑），配上各方案的差异化点评；**每个方案附一句"它在什么情况下不成立"**（反题）和"因此如何修正或限定"（合题）
-- **收敛**: 幸存方案表格（名称/保留理由），附一句"淘汰N个，保留M个，主要因X被淘汰"
-- **方案评分**: 评分表格必须包含**各维度单项分**和总分，**总分最高者加粗突出**，附一句"方案X在Y维度上表现最优"；高赌注问题附**最高分方案的归因**（凭什么拿这个分+若原因不成立落到第几）
-- **推演**: 推演结果表格，**关键发现用💡单独写一段**，不塞在表格里
-- **辩论**: 排名表格，**🏆 第一名加粗**，附各方案抗压能力一句话点评
-- **最终结论**: 🏆 **推荐方案（加粗）** → 核心判断 → 风险与应对 → 待确认事项 → 结论自反（高赌注问题才有：top3质疑回应 + 共享前提）→ 可谬标注（高赌注问题才有，**基于立场**：框架最终倾向A，A最可能在哪翻车 + 若翻车改走什么）→ 不可同化项（高赌注问题才有，多数问题没有：合题消化不掉的立场 + 结论不适用于谁）→ 立场谱系（高赌注问题才有：收敛→辩论→综合框架倾向怎么走的，一句话各阶段+为何收口至此）→ 偏好自省（高赌注问题才有：结论隐含什么跨期偏好和动机取向，换成不同时间情境或不同动机取向的人，结论还站得住吗）
-
-### 流程结束后
+### After Pipeline
 ```
-node scripts/orchestrate.js finalize <类型> <问题>
+node scripts/orchestrate.js finalize <type> <question>
 ```
-保洁 + 学习。
+Cleanup + learning.
