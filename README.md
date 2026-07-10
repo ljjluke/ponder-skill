@@ -178,22 +178,12 @@ Old data decays → unused knowledge sleeps → low quality archived
 /plugin marketplace add https://github.com/ljjluke/ponder-skill
 /plugin install luke
 
-# Install (Codex)
-# Ask Codex: "Install the ponder skill from https://github.com/ljjluke/mcts-skill"
-# Or use skill-installer directly:
-#   python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-#     --repo ljjluke/mcts-skill --path / --name ponder
-# After install: restart Codex or start a new session to see /ponder
+# Install (Codex — full plugin with parallel agents)
+git clone https://github.com/ljjluke/mcts-skill.git ~/.codex/plugins/ponder
+# Then restart Codex. Use /ponder to invoke.
 
-# Update (Claude Code)
-/plugin update luke
-
-# Update (Codex)
-# Codex skill-installer doesn't support in-place update.
-# Remove and reinstall:
-#   rm -rf ~/.codex/skills/ponder
-#   python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-#     --repo ljjluke/mcts-skill --path / --name ponder
+# Or quick use (no install, no parallel agents):
+#   Analyze this using the Ponder framework from github.com/ljjluke/mcts-skill
 
 # Use — any domain
 # Claude Code:
