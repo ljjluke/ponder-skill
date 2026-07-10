@@ -210,6 +210,41 @@ claude
 
 Default (Claude Code): `~/.claude/data/skills/ponder/`  
 Default (Codex): `~/.codex/data/ponder/`
+
+## 📁 Project Structure
+
+```
+ponder-skill/
+├── SKILL.md                        # Single orchestrator — no pipeline, no workflow
+├── agents/                         # Sub-agent definitions (each = one role)
+│   ├── dimension-evaluator.md      # Blindspot finder per dimension
+│   ├── solution-generator.md       # Independent plan generator
+│   ├── debater.md                  # Solution advocate (opening stance)
+│   └── mcts-simulator.md           # Scenario simulator
+├── engine/                         # Thinking frameworks (one per phase)
+│   ├── shensi.md / divergence.md / bagua.md
+│   ├── converge.md / debate.md / synthesis.md
+│   └── mcts-constraint.md / mcts-predictive.md / td-learner.md
+├── scripts/
+│   ├── orchestrate.js             # Step persistence, history query, finalize
+│   ├── mcts_compute.js            # Math engine (80+ commands)
+│   ├── mcts_guard.js              # Compliance guards (15 checkers)
+│   ├── mcts_tree.js               # Tree data structure (optional)
+│   ├── knowledge.js               # MMA memory interface
+│   ├── prompts/                   # Phase prompt templates + schemas
+│   │   ├── shensi.json / divergence.json / bagua.json
+│   │   ├── plans.json / simulate.json / converge.json
+│   │   ├── debate.json / synthesis.json
+│   └── mma/                       # Meridian Memory Algorithm (12 modules)
+│       ├── io.js / deqi.js / ashi.js / reinforce.js / decay.js
+│       ├── constants.js / state_machine.js / ziwu.js
+│       ├── diagnosis.js / cluster.js / audit.js / user_profile.js
+├── hooks/hooks.json               # Session lifecycle
+└── pipeline-meta.json             # Evolutionary metadata
+```
+
+---
+
 ## 🧘 Design Philosophy
 
 | Principle | Meaning |
