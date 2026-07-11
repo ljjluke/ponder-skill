@@ -15,6 +15,7 @@ const VERSION_FILE = path.join(ROOT, 'version.json');
 const FILES = [
   { path: 'SKILL.md', pattern: /^(version:\s*)\d+\.\d+\.\d+/m },
   { path: 'SKILL.md', pattern: /Ponder v\d+\.\d+\.\d+/, description: 'header version' },
+  { path: 'SKILL.md', pattern: /╚.+v\d+\.\d+\.\d+/, description: 'banner version' },
   { path: '.claude-plugin/plugin.json', pattern: /"version":\s*"\d+\.\d+\.\d+"/ },
   { path: '.claude-plugin/marketplace.json', pattern: /"version":\s*"\d+\.\d+\.\d+"/g },
   { path: 'pipeline-meta.json', pattern: /"version":\s*"\d+\.\d+\.\d+"/ },
