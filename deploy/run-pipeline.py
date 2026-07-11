@@ -272,6 +272,30 @@ if risk_data and risk_data.get('positions'):
 
 ts = datetime.now().strftime('%Y-%m-%d %H:%M')
 
+# ═══ 注入当前持仓到 Ponder prompt（让 Ponder 知道要卖什么） ═══
+position_prompt = ""
+try:
+    sys.path.insert(0, '/opt/scripts')
+    from paper_account import Account
+    acc_positions = Account.load(ACCOUNT_NAME)
+    if acc_positions.positions:
+        position_prompt = "\n\n## 当前持仓（必须对每只持仓在 position_adjustments 中给出调仓建议）\n\n"
+        for pos in acc_positions.positions.values():
+            pnl_icon = "🟢" if pos.unrealized_pnl >= 0 else "🔴"
+            position_prompt += f"{pnl_icon} {pos.name}({pos.symbol}): {pos.shares}股, 成本¥{pos.avg_cost:.2f}, 现价¥{pos.current_price:.2f}, 盈亏{pos.unrealized_pnl:+,.2f}({pos.unrealized_pnl_pct:+.2f}%)\n"
+        position_prompt += "\n⚠️ 以上是当前持仓，**必须对每只持仓在 position_adjustments 中给出调仓建议**：\n"
+        position_prompt += "  - current_action = \"HOLD\" → 继续持有（多数情况）\n"
+        position_prompt += "  - current_action = \"REDUCE\" → 减仓（需填 reduce_ratio: 0.5 = 卖一半）\n"
+        position_prompt += "  - current_action = \"CLEAR\" → 清仓（趋势走坏/基本面恶化/风控信号触发）\n"
+        position_prompt += "  - current_action = \"ADD\" → 加仓（非常看好，当前仓位不够）\n"
+        position_prompt += "对亏损严重的持仓（超过-5%）应优先考虑 REDUCE 或 CLEAR，不要机械地写 HOLD。\n"
+        log(f'  📋 注入 {len(acc_positions.positions)} 只持仓到 Ponder prompt')
+    else:
+        position_prompt = "\n\n当前无持仓。\n"
+except Exception as e:
+    log(f'  ⚠️ 持仓注入失败: {e}')
+    position_prompt = ""
+
 # ═══ 获取推荐候选池的实时价格（注入 Ponder prompt） ═══
 stock_price_hint = ""
 try:
@@ -338,6 +362,8 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
 
 {risk_context}
 
+{position_prompt}
+
 ## ⛔ 强制输出格式（第一优先级）
 
 全部 9 步推理正常执行，但**最终回复必须以 ```json 代码块开头**，JSON 之后可以附上自然语言总结。
@@ -348,6 +374,8 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
 2. target_price 和 stop_loss 必须根据 buy_price 计算（例如 target_price = buy_price * 1.05, stop_loss = buy_price * 0.95），不能为 null。
 3. recommended_stocks 每只股票都要有完整的 symbol/name/action/confidence/buy_price/target_price/stop_loss/reason。
 4. position_adjustments 必须包含所有现有持仓的调仓建议（继续持有/减仓/清仓），不能遗漏。每条必须包含 symbol/name/current_action/reason/pnl_analysis。
+5. 亏损超过-5%的持仓**必须优先考虑 REDUCE 或 CLEAR**，不要机械写 HOLD。
+6. REDUCE 时须填写 reduce_ratio（0~1，如 0.5 = 卖一半），CLEAR 时不需要 reduce_ratio。
 
 ```json
 {{
@@ -359,7 +387,9 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
     {{"symbol": "000001.SZ", "name": "平安银行", "action": "BUY", "confidence": 0.75, "buy_price": 11.20, "target_price": 12.50, "stop_loss": 10.50, "reason": "多维度理由"}}
   ],
   "position_adjustments": [
-    {{"symbol": "000001.SZ", "name": "平安银行", "current_action": "HOLD", "reason": "调整理由", "pnl_analysis": "盈亏分析"}}
+    {{"symbol": "000001.SZ", "name": "平安银行", "current_action": "HOLD", "reason": "调整理由", "pnl_analysis": "盈亏分析"}},
+    {{"symbol": "600036.SH", "name": "招商银行", "current_action": "REDUCE", "reduce_ratio": 0.5, "reason": "调整理由", "pnl_analysis": "盈亏分析"}},
+    {{"symbol": "300433.SZ", "name": "蓝思科技", "current_action": "CLEAR", "reason": "调整理由", "pnl_analysis": "盈亏分析"}}
   ],
   "action_plan": [{{"step": 1, "action": "具体动作", "criterion": "完成判据", "urgency": "时间"}}],
   "kill_conditions": ["可观测中止条件"],
@@ -566,6 +596,27 @@ def get_real_price(symbol):
     log(f'    ⚠️ 无真实价格 {symbol}，使用默认50')
     return 50.0
 
+# ═══ 独立止损扫描（不依赖任何外部信号，直接执行） ═══
+stop_loss_executed = []
+for sid, pos in list(acc.positions.items()):
+    pnl_pct = pos.unrealized_pnl_pct
+    if pnl_pct < -10:
+        # 亏损超过10% → 强制清仓
+        sell_shares = max(int(pos.shares / 100) * 100, 100)
+        if sell_shares <= pos.shares:
+            acc.sell(sid, sell_shares, pos.current_price, f'止损清仓(亏损{pnl_pct:.1f}%)')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'stop_loss_10pct'})
+            log(f'  🛑 止损清仓 {pos.name}({sid}) 亏损{pnl_pct:+.1f}%')
+            stop_loss_executed.append(sid)
+    elif pnl_pct < -7:
+        # 亏损超过7% → 强制减半
+        sell_shares = max(int(pos.shares * 0.5 / 100) * 100, 100)
+        if sell_shares <= pos.shares:
+            acc.sell(sid, sell_shares, pos.current_price, f'止损减半(亏损{pnl_pct:.1f}%)')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'stop_loss_7pct'})
+            log(f'  🛑 止损减半 {pos.name}({sid}) 亏损{pnl_pct:+.1f}%')
+            stop_loss_executed.append(sid)
+
 for i, stock in enumerate(recommended[:3]):
     ta = ta_results[i] if i < len(ta_results) else {}
     action = ta.get('action', stock.get('action', 'HOLD')).upper()
@@ -603,16 +654,38 @@ for i, stock in enumerate(recommended[:3]):
     else:
         log(f'  ⚪ {name}: HOLD')
 
-# 处理调仓建议
+# 处理调仓建议（REDUCE/CLEAR）
 for adj in position_adj:
     symbol = adj.get('symbol', '')
     action = adj.get('current_action', '').upper()
-    if 'SELL' in action and symbol in acc.positions:
-        pos = acc.positions[symbol]
-        sell_shares = max(int(pos.shares * 0.3 / 100) * 100, 100)
+    if symbol in stop_loss_executed:
+        continue  # 已被止损清仓，跳过
+    if symbol not in acc.positions:
+        continue
+    pos = acc.positions[symbol]
+    if 'CLEAR' in action:
+        # 清仓
+        sell_shares = max(int(pos.shares / 100) * 100, 100)
         if sell_shares <= pos.shares:
-            trade = acc.sell(symbol, sell_shares, pos.current_price, f'风控调仓: {adj.get("reason","")}')
-            execution_log['trades'].append({'action': 'SELL', 'symbol': symbol, 'shares': sell_shares, 'price': pos.current_price})
+            acc.sell(symbol, sell_shares, pos.current_price, f'Ponder清仓: {adj.get("reason","")}')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': symbol, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'ponder_clear'})
+            log(f'  🔴 清仓 {symbol} {sell_shares}股 — {adj.get("reason","")[:60]}')
+    elif 'REDUCE' in action:
+        # 减仓（按 reduce_ratio 或默认卖一半）
+        ratio = adj.get('reduce_ratio', 0.5)
+        if not isinstance(ratio, (int, float)) or ratio <= 0 or ratio > 1:
+            ratio = 0.5
+        sell_shares = max(int(pos.shares * ratio / 100) * 100, 100)
+        if sell_shares <= pos.shares:
+            acc.sell(symbol, sell_shares, pos.current_price, f'Ponder减仓({ratio:.0%}): {adj.get("reason","")}')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': symbol, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'ponder_reduce'})
+            log(f'  🔴 减仓 {symbol} {sell_shares}股({ratio:.0%}) — {adj.get("reason","")[:60]}')
+    elif 'SELL' in action:
+        # 兼容旧的 SELL 标记
+        sell_shares = max(int(pos.shares * 0.5 / 100) * 100, 100)
+        if sell_shares <= pos.shares:
+            acc.sell(symbol, sell_shares, pos.current_price, f'风控调仓: {adj.get("reason","")}')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': symbol, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'risk_sell'})
             log(f'  🔴 调仓卖出 {symbol} {sell_shares}股')
 
 acc.save()
@@ -680,19 +753,34 @@ except Exception as e:
     log(f'  经验结晶失败: {e}')
 
 # ═══════════════════════════════════════════════════════════
-# Phase 7: 微信推送
+# Phase 7: 微信推送（含真实送达检测）
 # ═══════════════════════════════════════════════════════════
 log('═ Phase 7/7: 微信推送 ═')
 
+wechat_sent = False
 try:
     r7 = subprocess.run(['python3', '/opt/scripts/send-wechat-report.py'],
                         capture_output=True, text=True, timeout=300)
     if r7.returncode == 0:
-        log('  微信推送 ✅')
+        # 检查 send-wechat-report.py 的输出，确认实际送达
+        r7_out = (r7.stderr or '') + (r7.stdout or '')
+        if '✅ 微信发送成功' in r7_out or '✅ 微信发送成功' in r7_out:
+            log('  微信推送 ✅')
+            wechat_sent = True
+        else:
+            log(f'  ⚠️ 微信推送脚本退出码0但未确认送达')
+            log(f'  stderr: {(r7.stderr or \"\")[:200]}')
     else:
-        log(f'  微信推送失败: {r7.stderr[:100]}')
+        log(f'  微信推送失败: {r7.stderr[:200]}')
 except Exception as e:
     log(f'  微信推送异常: {e}')
+
+# 如果微信推送失败，保存报告到本地供查看
+if not wechat_sent and r7.returncode == 0 and r7.stdout:
+    report_path = os.path.join(DATA_DIR, 'last-report.txt')
+    with open(report_path, 'w') as f:
+        f.write(r7.stdout)
+    log(f'  📄 报告已保存到 {report_path}')
 
 # ═══════════════════════════════════════════════════════════
 # 完成
@@ -702,7 +790,7 @@ print('=' * 70)
 print(f'  🤖 全自动交易流水线完成 — {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
 print(f'  总资产: ¥{acc.total_equity:,.2f}  |  收益: {acc.total_return:+.2f}%')
 print(f'  今日操作: {len(execution_log["trades"])}笔')
-print(f'  微信推送: {"✅" if r7.returncode == 0 else "❌"}')
+print(f'  微信推送: {"✅" if wechat_sent else "❌"}')
 print('=' * 70)
 
 log('流水线完成 ✅')

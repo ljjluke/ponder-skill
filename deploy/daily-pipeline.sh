@@ -63,6 +63,12 @@ except: print('null|0')
 fi
 
 if [ "$NEED_RESTART" = "true" ]; then
+    echo "[$(date '+%H:%M:%S')] 微信通道从未成功出站 (lastOutboundAt=null)"
+    echo "[$(date '+%H:%M:%S')] 需要扫码配对：在服务器上运行 openclaw channels login --channel openclaw-weixin --account bbfd203f2235-im-bot"
+    echo "[$(date '+%H:%M:%S')] 扫码完成后 lastOutboundAt 会更新为时间戳，微信推送才能正常工作"
+    echo "[$(date '+%H:%M:%S')] 当前通道状态:"
+    echo "  $CHANNEL_JSON" | head -5
+
     echo "[$(date '+%H:%M:%S')] 重启 Gateway..."
     pkill -f "openclaw gateway" 2>/dev/null || true
     sleep 5
