@@ -28,6 +28,73 @@ os.environ['TRADINGAGENTS_DEEP_THINK_LLM'] = 'astron-code-latest'
 os.environ['TRADINGAGENTS_QUICK_THINK_LLM'] = 'astron-code-latest'
 os.environ['TRADINGAGENTS_LLM_BACKEND_URL'] = 'https://maas-coding-api.cn-huabei-1.xf-yun.com/anthropic'
 os.environ['TRADINGAGENTS_OUTPUT_LANGUAGE'] = 'Chinese'
+
+# ═══════════════════════════════════════════════════════════
+# 引擎思维工具箱 — 27个引擎文档的精简摘要（约3KB）
+# ═══════════════════════════════════════════════════════════
+def build_engine_toolbox():
+    """从 engine/*.md 生成精简思维工具箱，注入 Ponder prompt"""
+    engine_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'engine')
+    if not os.path.isdir(engine_dir):
+        # 远端路径
+        alt = '/opt/workspace/mcts-skill/engine'
+        if os.path.isdir(alt):
+            engine_dir = alt
+        else:
+            return ""
+
+    # 核心框架：每个文档提炼1-3句
+    summaries = {
+        # ── 认知管线步骤 ──
+        "shensi": "**神思(前提审视)**：检查问题预设的前提是否成立，不成立则消解问题而非在框架内解题。先问问题该不该这样问，再问怎么答。",
+        "divergence": "**发散(六合)**：6视角审视(多/空/趋势/价值/情绪/对冲)。高赌注问题做视角互否——找1-2对对立视角互质疑再合题，共识须是互否后存活的判断。",
+        "bagua": "**八卦镜(盲点扫描)**：8维度并行扫描盲点(政策/资金/基本面/技术/外盘/结构/筹码/季节)。盲点是被忽视但可能致命的缺口。",
+        "converge": "**收敛(合意)**：从多个选项中筛选幸存方案。淘汰弱方案并记录淘汰理由。收敛后幸存方案才进入后续评分推演。",
+        "debate": "**辩论(抗压)**：每方案立论→汇总→相互攻击评估→抗压排名。第一名是压力下最站得住的方案。",
+        "synthesis": "**综合(枢机)**：输出最终结论+风险+结论自反(质疑自己结论的成立条件)+可谬标注(最可能错在哪+备选)+不可同化项(合题消化不掉的他者立场)。",
+
+        # ── 独立思维工具 ──
+        "working-stance": "**工作立场**：在推理中维持一个会演化的临时倾向(有倾向/有依据/会演化/可被质疑)。框架不再中立裁判，而是每次推理都沉淀一个判断。进化回路因立场而闭环。",
+        "signal-filter": "**信号过滤**：从连续信号流中识别值得注意的东西，只放行有信息增量的信号进深度管线。防止被噪音淹没。",
+        "phronesis": "**实践智慧(巴氏)**：在不确定情境中做明智判断，平衡理性分析与直觉经验。不是最优解而是足够好且可执行的解。",
+        "outcome-learning": "**结果学习**：每次判断的后果回流，修正后续判断的权重和倾向。与进化回路协同，让框架从经验中学习。",
+        "self-continuity": "**自我连续性**：框架维护一个跨时间的身份叙事(自我叙事)，确保判断在时间上一致——今天的我不会轻易推翻昨天的我的判断，除非有新证据。",
+        "dissolve-frame": "**问题消解**：不是所有问题都需要回答——有些问题的提法本身预设了错误的前提。识别并消解伪问题，不浪费精力。",
+        "counterfactual-thinking": "**反事实思考**：在方案评估中做如果当时不这么做会怎样的假设推演，评估决策的边际价值。",
+        "error-pattern": "**错误模式**：识别重复出现的错误类型(确认偏误/锚定/过度自信等)，在推理中主动检测并标记。",
+
+        # ── 十大家族范式 ──
+        "teleology": "**目的论(终态反推)**：先锚定成了的样子(可判定的验收标准)，再从终态反推今天第一步做什么。不是从当下向前铺选项，是从未来倒推路径。",
+        "transcendental-audit": "**先验自检**：质疑评分工具/推理框架本身的前提是否适用于当前情境。当评分合法性可疑时触发——问这个评分框架本身对吗而非继续用它。",
+        "socratic-ignorance": "**苏格拉底无知**：承认我不知道我知道什么。在做判断前先识别自己可能不知道的东西，让结论自带一个未知边界。",
+        "otherness": "**他者性**：每个判断都可能有无法被消化吸收的残余——那个不认同不配合不合题的他者。识别不可同化项，标注这个结论不适用于谁。",
+        "prospect-theory": "**前景理论**：人在损失区域的决策比获利区域更激进(损失厌恶)。在亏损持仓上主动检查是否因厌恶实现亏损而持有过久。",
+        "mcts-constraint": "**MCTS约束**：搜索深度有限时，优先扩展高信息量的分支，而非高收益的分支——不确定性越大的分支，探索价值越高。",
+        "mcts-predictive": "**预测性MCTS**：模拟时不仅看平均回报，还看回报的分布——最差情形、最佳情形、分布的偏度。",
+        "mcts-simulate": "**模拟推演**：对每个幸存方案做乐观/悲观/现实3种情景的模拟，展示各情景下的路径和终态。",
+        "mcts-diverge": "**MCTS发散**：在搜索树的每个节点刻意向不同方向发散，防止过早收敛到局部最优。",
+        "mcts-converge": "**MCTS收敛**：当多个分支的评估趋同时主动收敛，避免在无差异的分支上浪费计算资源。",
+
+        # ── 道家思想 ──
+        "dao": "**道家思想**：(1)为道日损——交易策略做减法而非加法，去除不必要的操作，保留核心判断。(2)反者道之动——物极必反，大跌之后考虑反弹机会，大涨之后警惕回调。(3)坐忘——暂时放下已有立场重新审视市场。(4)涤除玄览——清除偏见后重新观察。",
+
+        # ── 心理学/认知科学 ──
+        "psychology": "**心理学**：(1)贝特森学习层次——零学习(不调整)/I(调参数)/II(调框架)/III(调前提)。亏损时应检查是参数错了还是框架错了。(2)弗拉维尔元认知——对自己的思考过程做二阶观察：我此刻的推理可靠吗？有没有跳步？(3)库伯学习圈——具体经验/反思观察/抽象概念化/主动实验，每轮交易完整走一圈。(4)邓宁-克鲁格——刚接触新策略时最容易过度自信，应在此时主动降仓。(5)记忆科学——间隔重复(教训需反复接触才内化)+记忆重构(每次回忆都是重写，因此记录必须原始完整)。",
+    }
+
+    parts = ["\n## 🧠 思维工具箱（引擎文档精简）\n"]
+    # 按分类顺序排列
+    order = ["shensi","divergence","bagua","converge","debate","synthesis",
+             "working-stance","signal-filter","phronesis","outcome-learning","self-continuity",
+             "dissolve-frame","counterfactual-thinking","error-pattern",
+             "teleology","transcendental-audit","socratic-ignorance","otherness","prospect-theory",
+             "mcts-constraint","mcts-predictive","mcts-simulate","mcts-diverge","mcts-converge",
+             "dao","psychology"]
+    for key in order:
+        if key in summaries:
+            parts.append(summaries[key])
+
+    return "\n".join(parts)
 os.environ['TRADINGAGENTS_LLM_MAX_RETRIES'] = '6'
 
 ACCOUNT_NAME = sys.argv[1] if len(sys.argv) > 1 else 'default'
@@ -39,6 +106,13 @@ def log(msg):
     ts = datetime.now().strftime('%H:%M:%S')
     line = f'[{ts}] {msg}'
     print(line, flush=True)
+    # 同时写入文件
+    try:
+        log_file = os.path.join(DATA_DIR, 'pipeline.log')
+        with open(log_file, 'a') as f:
+            f.write(line + '\n')
+    except:
+        pass
 
 def load_json(path):
     if os.path.exists(path):
@@ -55,15 +129,15 @@ def save_json(path, data):
 # ═══════════════════════════════════════════════════════════
 log('═ Phase 0/7: 前置检查 ═')
 
-# 0a. Gateway 存活检查
+# 0a. Gateway 存活检查（快速，不阻塞）
 try:
-    r = subprocess.run(['openclaw', 'status'], capture_output=True, text=True, timeout=10)
+    r = subprocess.run(['openclaw', 'status'], capture_output=True, text=True, timeout=5)
     if r.returncode != 0:
-        log(f'  ⚠️ Gateway 异常: {r.stderr[:100]}')
+        log(f'  ⚠️ Gateway 状态异常（继续执行）')
     else:
         log('  Gateway ✅')
 except Exception as e:
-    log(f'  ⚠️ Gateway 不可达: {e}')
+    log(f'  ⚠️ Gateway 不可达（继续执行）')
 
 # 0b. 加载经验库
 self_file = os.path.join(PONDER_DIR, 'scripts', 'mma', 'framework_self.json')
@@ -118,7 +192,9 @@ if meltdown:
     log('  🛑 熔断激活 — 跳过交易决策，只推风控报告')
     # 只跑风控+推送，不交易
     try:
-        subprocess.run(['python3', '/opt/scripts/position-risk.py'], timeout=120)
+        env = os.environ.copy()
+        env['TQDM_DISABLE'] = '1'
+        subprocess.run(['python3', '/opt/scripts/position-risk.py'], timeout=60, env=env)
     except: pass
     try:
         subprocess.run(['python3', '/opt/scripts/send-wechat-report.py'], timeout=300)
@@ -202,8 +278,10 @@ log('═ Phase 2/7: 持仓五维风控 ═')
 
 risk_file = os.path.join(DATA_DIR, 'position-risk.json')
 try:
+    env = os.environ.copy()
+    env['TQDM_DISABLE'] = '1'
     r = subprocess.run(['python3', '/opt/scripts/position-risk.py'],
-                       capture_output=True, text=True, timeout=120)
+                       capture_output=True, text=True, timeout=60, env=env)
     if r.returncode == 0 and r.stdout.strip():
         with open(risk_file, 'w') as f:
             f.write(r.stdout)
@@ -213,8 +291,11 @@ try:
             f'{risk_summary.get("high_risk_count",0)}只高风险, '
             f'均分{risk_summary.get("avg_risk_score",0)}')
     else:
-        log('  风控异常，继续')
+        log(f'  风控异常(rc={r.returncode})，继续')
         risk_data = {"positions": [], "summary": {"overall_level": "unknown"}}
+except subprocess.TimeoutExpired:
+    log('  ⚠️ 风控超时60s，跳过（不影响后续）')
+    risk_data = {"positions": [], "summary": {"overall_level": "unknown"}}
 except Exception as e:
     log(f'  风控失败: {e}')
     risk_data = {"positions": [], "summary": {"overall_level": "unknown"}}
@@ -272,7 +353,7 @@ if risk_data and risk_data.get('positions'):
 
 ts = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-# ═══ 注入当前持仓到 Ponder prompt（让 Ponder 知道要卖什么） ═══
+# ═══ 注入当前持仓+可用资金到 Ponder prompt ═══
 position_prompt = ""
 try:
     sys.path.insert(0, '/opt/scripts')
@@ -283,18 +364,58 @@ try:
         for pos in acc_positions.positions.values():
             pnl_icon = "🟢" if pos.unrealized_pnl >= 0 else "🔴"
             position_prompt += f"{pnl_icon} {pos.name}({pos.symbol}): {pos.shares}股, 成本¥{pos.avg_cost:.2f}, 现价¥{pos.current_price:.2f}, 盈亏{pos.unrealized_pnl:+,.2f}({pos.unrealized_pnl_pct:+.2f}%)\n"
-        position_prompt += "\n⚠️ 以上是当前持仓，**必须对每只持仓在 position_adjustments 中给出调仓建议**：\n"
-        position_prompt += "  - current_action = \"HOLD\" → 继续持有（多数情况）\n"
-        position_prompt += "  - current_action = \"REDUCE\" → 减仓（需填 reduce_ratio: 0.5 = 卖一半）\n"
-        position_prompt += "  - current_action = \"CLEAR\" → 清仓（趋势走坏/基本面恶化/风控信号触发）\n"
-        position_prompt += "  - current_action = \"ADD\" → 加仓（非常看好，当前仓位不够）\n"
-        position_prompt += "对亏损严重的持仓（超过-5%）应优先考虑 REDUCE 或 CLEAR，不要机械地写 HOLD。\n"
-        log(f'  📋 注入 {len(acc_positions.positions)} 只持仓到 Ponder prompt')
+        position_prompt += "\n⚠️ 以上是当前持仓。**必须对每只持仓给出调仓建议**：\n"
+        position_prompt += "  - HOLD → 继续持有\n"
+        position_prompt += "  - REDUCE → 减仓（需填 reduce_ratio: 0.5 = 卖一半）\n"
+        position_prompt += "  - CLEAR → 清仓（趋势走坏/基本面恶化/风控信号触发）\n"
+        position_prompt += "  - ADD → 加仓（非常看好，当前仓位不够）\n"
+        position_prompt += "\n📌 亏损超-5% → REDUCE或CLEAR | 盈利超+5% → REDUCE一半止盈 | 盈利超+10% → CLEAR止盈\n"
     else:
         position_prompt = "\n\n当前无持仓。\n"
+    position_prompt += f"\n💰 **可用资金: ¥{acc_positions.cash:,.2f}**  (占总资产约{acc_positions.cash/acc_positions.total_equity*100:.0f}%)\n"
+    position_prompt += "\n🔥 **核心指令：你是交易员不是风控员。你的目标不是'不犯错'而是'赚钱'。**\n"
+    position_prompt += "  - 当传感器数据显示强烈买入信号时，**必须推荐 BUY action**，不能因为怕错就写 HOLD\n"
+    position_prompt += "  - 闲置资金不产生收益。可用资金多时必须积极寻找买入机会\n"
+    position_prompt += "  - 每只推荐股票请在 recommended_stocks 中填写 position_size 字段(0.05-0.30)，表示占总资产的比例\n"
+    position_prompt += "    - confidence≥0.80 → position_size=0.20~0.30（重仓）\n"
+    position_prompt += "    - confidence 0.60-0.79 → position_size=0.10~0.20（中等仓位）\n"
+    position_prompt += "    - confidence<0.60 → position_size=0.05~0.10（轻仓试错）\n"
+    position_prompt += "  - 单只股票最高不超过总资产的30%（position_size≤0.30）\n"
+    position_prompt += "  - 所有推荐的 BUY 加起来不超过可用资金的90%\n"
+    log(f'  📋 注入持仓+资金到 Ponder prompt')
 except Exception as e:
     log(f'  ⚠️ 持仓注入失败: {e}')
     position_prompt = ""
+
+# ═══ 从文件加载历史交易教训（供 Ponder 参考，避免重复犯错） ═══
+trade_lessons_injection = ""
+lessons_file = os.path.join(DATA_DIR, 'trade-lessons.json')
+if os.path.exists(lessons_file):
+    try:
+        lessons_data = load_json(lessons_file)
+        if lessons_data and lessons_data.get('lessons'):
+            lessons_text = ""
+            for l in lessons_data['lessons'][-10:]:
+                severity_map = {"critical": "⛔", "high": "⚠️", "medium": "⚡", "low": "💡"}
+                icon = severity_map.get(l.get("severity",""), "📌")
+                text = l.get('lesson_text', l.get('lesson', l.get('id', '?')))
+                lessons_text += f"{icon} [{l['type']}] {text}\n"
+            # 统计
+            try:
+                sys.path.insert(0, '/opt/scripts')
+                from paper_account import Account
+                acc_tmp = Account.load(ACCOUNT_NAME)
+                buy_count = sum(1 for t in acc_tmp.trades if t.action == "BUY")
+                sell_count = sum(1 for t in acc_tmp.trades if t.action == "SELL")
+                stats = f"\n📊 历史统计: {len(acc_tmp.trades)}笔交易（买入{buy_count}笔 / 卖出{sell_count}笔）\n" \
+                        f"   当前持仓: {len(acc_tmp.positions)}只\n" \
+                        f"   总资产: ¥{acc_tmp.total_equity:,.2f}"
+            except:
+                stats = ""
+            trade_lessons_injection = "\n\n## 📚 历史交易教训（trade-lessons.json）\n\n" + lessons_text + stats
+            log(f'  📚 加载 {len(lessons_data["lessons"])} 条历史交易教训到 Ponder')
+    except Exception as e:
+        log(f'  ⚠️ 加载教训失败: {e}')
 
 # ═══ 获取推荐候选池的实时价格（注入 Ponder prompt） ═══
 stock_price_hint = ""
@@ -343,11 +464,38 @@ try:
 except Exception as e:
     log(f'  ⚠️ 价格提示获取失败: {e}')
 
+# ═══ 注入引擎思维工具箱（27个引擎文档的精简摘要） ═══
+engine_toolbox = build_engine_toolbox()
+log(f'  🧠 注入引擎工具箱 ({len(engine_toolbox)} 字符)')
+
+# ═══ 启动外部子 agent（八卦镜 8 维度并行） ═══
+sub_agent_injection = ""
+try:
+    log('  🔄 启动外部子 agent（八卦镜 8 维度并行）...')
+    sub_agent_json = os.path.join(DATA_DIR, 'sub_agent_results.json')
+    r_sa = subprocess.run([
+        'python3', '/opt/scripts/sub_agents.py',
+        os.path.join(DATA_DIR, 'last-signals.json'),
+        sub_agent_json,
+    ], capture_output=True, text=True, timeout=1800)
+    if os.path.exists(sub_agent_json):
+        with open(sub_agent_json, 'r') as f:
+            sub_data = json.load(f)
+        injection_text = sub_data.get('injection_text', '')
+        ok_count = sub_data.get('stats', {}).get('ok', 0)
+        if injection_text:
+            sub_agent_injection = "\n\n## Bagua Mirrors (Sub-Agent Results)\n\n" + injection_text + "\n"
+        log(f'  ✅ 外部子 agent: {ok_count}/8 维度成功, 注入 {len(injection_text)} 字符')
+except Exception as e:
+    log(f'  ⚠️ 外部子 agent 异常: {e}')
+
 # 构建完整的 Ponder 分析 prompt —— 触发 SKILL.md 的 9 步管线
 ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析A股市场数据，产出交易决策。
 
 当前时间: {ts}
 可用市场: 沪深A股、创业板、科创板、ETF
+
+{sub_agent_injection}
 
 ## 自动交互规则
 
@@ -359,23 +507,26 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
 {summary}
 {stock_price_hint}
 {experience_prompt}
-
+{engine_toolbox}
 {risk_context}
 
 {position_prompt}
+{trade_lessons_injection}
 
-## ⛔ 强制输出格式（第一优先级）
+## ⛔ 强制输出格式（第一优先级 — JSON 必须在最开头）
 
-全部 9 步推理正常执行，但**最终回复必须以 ```json 代码块开头**，JSON 之后可以附上自然语言总结。
-如果 JSON 不完整或缺失，整个推理将被视为无效，操盘指令无法执行。
+🚨 致命规则：你的**第一个输出**必须是 ```json 代码块，包含完整决策数据。JSON 之后可以附上自然语言总结。
+如果第一个字符不是 ```json，整个推理将被视为无效，操盘指令无法执行，交易机会永久丢失！
 
 ⛔ JSON 关键规则：
-1. buy_price 必须填写真实价格（参考上方"个股实时行情"），不能为 null。如果没有实时行情数据，用传感器数据中该股票的最新价估算。连估算都没有的股票不要推荐。
-2. target_price 和 stop_loss 必须根据 buy_price 计算（例如 target_price = buy_price * 1.05, stop_loss = buy_price * 0.95），不能为 null。
-3. recommended_stocks 每只股票都要有完整的 symbol/name/action/confidence/buy_price/target_price/stop_loss/reason。
-4. position_adjustments 必须包含所有现有持仓的调仓建议（继续持有/减仓/清仓），不能遗漏。每条必须包含 symbol/name/current_action/reason/pnl_analysis。
-5. 亏损超过-5%的持仓**必须优先考虑 REDUCE 或 CLEAR**，不要机械写 HOLD。
+1. buy_price 必须填写真实价格（参考上方"个股实时行情"），不能为 null。没有实时行情数据的股票不要推荐。
+2. target_price 和 stop_loss 必须根据 buy_price 计算（例如 target_price = buy_price * 1.05~1.15, stop_loss = buy_price * 0.93~0.97），不能为 null。
+3. recommended_stocks 每只股票都要有完整的 symbol/name/action/confidence/buy_price/target_price/stop_loss/reason/position_size。
+4. position_adjustments 必须包含所有现有持仓的调仓建议（HOLD/REDUCE/CLEAR/ADD），不能遗漏。每条必须包含 symbol/name/current_action/reason/pnl_analysis。
+5. 亏损超-5%的持仓优先 REDUCE 或 CLEAR | 盈利超+5%的持仓优先 REDUCE 一半止盈 | 盈利超+10%必须 CLEAR 止盈
 6. REDUCE 时须填写 reduce_ratio（0~1，如 0.5 = 卖一半），CLEAR 时不需要 reduce_ratio。
+7. **🔥 BUY 规则**：当传感器数据呈现强烈信号（至少2个独立维度同时指向同一方向）+ 有可用资金时，**必须推荐 BUY action**。不允许因为"等确认"而写 HOLD。信号明确就出手，信号模糊才等待。
+8. **position_size** 0.05~0.30 表示占总资产的比例。confidence高则高仓位，低则轻仓试错。
 
 ```json
 {{
@@ -384,7 +535,7 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
   "signals": [{{"type": "异常/机会/矛盾", "description": "信号描述+具体数值", "source": "数据来源", "strength": "强/中/弱"}}],
   "conclusion": "综合结论（至少200字）",
   "recommended_stocks": [
-    {{"symbol": "000001.SZ", "name": "平安银行", "action": "BUY", "confidence": 0.75, "buy_price": 11.20, "target_price": 12.50, "stop_loss": 10.50, "reason": "多维度理由"}}
+    {{"symbol": "000001.SZ", "name": "平安银行", "action": "BUY", "confidence": 0.75, "buy_price": 11.20, "target_price": 12.50, "stop_loss": 10.50, "position_size": 0.15, "reason": "多维度理由"}}
   ],
   "position_adjustments": [
     {{"symbol": "000001.SZ", "name": "平安银行", "current_action": "HOLD", "reason": "调整理由", "pnl_analysis": "盈亏分析"}},
@@ -401,21 +552,25 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
 
 ⚠️ 再次强调：完成全部推理后，必须先用上述 JSON 格式输出决策数据，再附自然语言总结。JSON 是第一优先级。"""
 
+# 保存 prompt 到文件（供 Phase 6.5 复盘分析使用）
+with open(os.path.join(DATA_DIR, 'last-ponder-prompt.txt'), 'w') as _f:
+    _f.write(ponder_prompt)
 
 ponder_file = os.path.join(DATA_DIR, 'ponder-output.json')
 try:
-    env = os.environ.copy()
-    env['CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS'] = '0'  # 无限等待子agent，防止截断
+    # ═══ --print 模式：经测试，--print + --permission-mode auto 可以正常使用 Agent tool 启动子 agent ═══
+    ponder_env = os.environ.copy()
+    ponder_env['API_TIMEOUT_MS'] = '120000'
+    log('  🚀 启动 Ponder (--print 模式，子 agent 可用)...')
     r3 = subprocess.run([
-        'claude',
-        '--permission-mode', 'auto',
-        '--max-turns', '50',
-        ponder_prompt,
-    ], capture_output=True, text=True, timeout=7200, cwd=PONDER_DIR, input='', env=env)
+        'claude', '--permission-mode', 'auto', '--max-turns', '100', '-p', ponder_prompt,
+    ], capture_output=True, text=True, timeout=7200, cwd=PONDER_DIR, env=ponder_env)
     ponder_text = (r3.stdout or '')
     if r3.stderr:
-        ponder_text = (r3.stderr + '\n' + ponder_text)
-    log(f'  Ponder 退出码: {r3.returncode}, 输出: {len(ponder_text)}字符 (stdout:{len(r3.stdout or "")} stderr:{len(r3.stderr or "")})')
+        log(f'  Ponder stderr: {len(r3.stderr)}字符')
+    with open(ponder_file, 'w') as f:
+        f.write(ponder_text)
+    log(f'  Ponder 退出码: {r3.returncode}, 输出: {len(ponder_text)}字符')
 except subprocess.TimeoutExpired:
     log('  Ponder 超时(2h)')
     ponder_text = ''
@@ -423,17 +578,62 @@ except Exception as e:
     log(f'  Ponder 异常: {e}')
     ponder_text = ''
 
-with open(ponder_file, 'w') as f:
-    f.write(ponder_text)
+# ═══ 记录 Ponder 立场到 framework_self（供 Phase 6 recordOutcome 使用） ═══
+if ponder_text and len(ponder_text) > 200:
+    try:
+        r_stance = subprocess.run([
+            'node', '-e', f'''
+            const fs = require("fs");
+            const self = require("{PONDER_DIR}/scripts/mma/framework_self.js");
+            const result = self.recordStance(
+                "pipeline_{datetime.now().strftime('%Y%m%d_%H%M')}",
+                "股票交易决策",
+                {json.dumps(ponder_text[:300])},
+                {json.dumps(summary[:300])}
+            );
+            console.log("stance_recorded:", result);
+            ''',
+        ], capture_output=True, text=True, timeout=15, cwd=PONDER_DIR)
+        if r_stance.returncode == 0:
+            log(f'  立场已记录到 framework_self')
+        else:
+            log(f'  立场记录异常: {r_stance.stderr[:100]}')
+    except Exception as e:
+        log(f'  立场记录失败: {e}')
 
-# 提取 JSON
+# 提取 JSON — 支持多种格式：```json 块、裸 JSON、被截断的 JSON
 recommended = []
 position_adj = []
 if ponder_text:
+    # 策略1：```json 代码块
     m = re.search(r'```json\s*\n(.*?)\n\s*```', ponder_text, re.DOTALL)
-    if m:
+    json_str = m.group(1) if m else ''
+
+    # 策略2：文本以 { 开头（JSON 在最开头）
+    if not json_str:
+        stripped = ponder_text.strip()
+        if stripped.startswith('{'):
+            # 找第一个完整的 } 作为 JSON 结束
+            depth = 0
+            end = -1
+            for i, ch in enumerate(stripped):
+                if ch == '{': depth += 1
+                elif ch == '}': depth -= 1
+                if depth == 0 and ch == '}':
+                    end = i + 1
+                    break
+            if end > 0:
+                json_str = stripped[:end]
+
+    # 策略3：任意位置找 { ... }
+    if not json_str:
+        m2 = re.search(r'\{[^{}]*"recommended_stocks"[^{}]*\}', ponder_text, re.DOTALL)
+        if m2:
+            json_str = m2.group(0)
+
+    if json_str:
         try:
-            data = json.loads(m.group(1))
+            data = json.loads(json_str)
             recommended = data.get('recommended_stocks', [])
             position_adj = data.get('position_adjustments', [])
         except Exception as e:
@@ -596,35 +796,66 @@ def get_real_price(symbol):
     log(f'    ⚠️ 无真实价格 {symbol}，使用默认50')
     return 50.0
 
-# ═══ 独立止损扫描（不依赖任何外部信号，直接执行） ═══
+# ═══ 独立止损+止盈扫描（不依赖任何外部信号，直接执行） ═══
 stop_loss_executed = []
+take_profit_executed = []
 for sid, pos in list(acc.positions.items()):
     pnl_pct = pos.unrealized_pnl_pct
-    if pnl_pct < -10:
-        # 亏损超过10% → 强制清仓
+    # --- 止损 ---
+    if pnl_pct < -7:
+        # 亏损超过7% → 强制清仓
         sell_shares = max(int(pos.shares / 100) * 100, 100)
         if sell_shares <= pos.shares:
             acc.sell(sid, sell_shares, pos.current_price, f'止损清仓(亏损{pnl_pct:.1f}%)')
-            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'stop_loss_10pct'})
+            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'stop_loss_7pct'})
             log(f'  🛑 止损清仓 {pos.name}({sid}) 亏损{pnl_pct:+.1f}%')
             stop_loss_executed.append(sid)
-    elif pnl_pct < -7:
-        # 亏损超过7% → 强制减半
+    elif pnl_pct < -5:
+        # 亏损超过5% → 强制减半
         sell_shares = max(int(pos.shares * 0.5 / 100) * 100, 100)
         if sell_shares <= pos.shares:
             acc.sell(sid, sell_shares, pos.current_price, f'止损减半(亏损{pnl_pct:.1f}%)')
-            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'stop_loss_7pct'})
+            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'stop_loss_5pct'})
             log(f'  🛑 止损减半 {pos.name}({sid}) 亏损{pnl_pct:+.1f}%')
             stop_loss_executed.append(sid)
 
-for i, stock in enumerate(recommended[:3]):
+    # --- 止盈 ---
+    if pnl_pct > 10:
+        # 盈利超过10% → 强制清仓止盈
+        sell_shares = max(int(pos.shares / 100) * 100, 100)
+        if sell_shares <= pos.shares:
+            acc.sell(sid, sell_shares, pos.current_price, f'止盈清仓(盈利{pnl_pct:.1f}%)')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'take_profit_10pct'})
+            log(f'  ✅ 止盈清仓 {pos.name}({sid}) 盈利{pnl_pct:+.1f}%')
+            take_profit_executed.append(sid)
+    elif pnl_pct > 5:
+        # 盈利超过5% → 止盈一半
+        sell_shares = max(int(pos.shares * 0.5 / 100) * 100, 100)
+        if sell_shares <= pos.shares:
+            acc.sell(sid, sell_shares, pos.current_price, f'止盈减半(盈利{pnl_pct:.1f}%)')
+            execution_log['trades'].append({'action': 'SELL', 'symbol': sid, 'shares': sell_shares, 'price': pos.current_price, 'reason': 'take_profit_5pct'})
+            log(f'  ✅ 止盈减半 {pos.name}({sid}) 盈利{pnl_pct:+.1f}%')
+            take_profit_executed.append(sid)
+
+for i, stock in enumerate(recommended[:5]):  # 最多处理5只推荐
     ta = ta_results[i] if i < len(ta_results) else {}
     action = ta.get('action', stock.get('action', 'HOLD')).upper()
     symbol = stock['symbol']
     name = stock.get('name', symbol)
 
     if 'BUY' in action or 'OVERWEIGHT' in action:
-        budget = acc.cash * 0.15  # 单票最多15%仓位
+        # 动态仓位: Ponder 指定 position_size(0.05~0.30)，否则按 confidence 计算
+        pos_size = stock.get('position_size', None)
+        if pos_size and isinstance(pos_size, (int, float)) and 0.03 <= pos_size <= 0.30:
+            budget = acc.total_equity * pos_size
+        else:
+            conf = stock.get('confidence', 0.5)
+            # confidence 映射到仓位比例: 0.5→0.08, 0.6→0.12, 0.75→0.18, 0.9→0.25
+            pos_size = 0.05 + (conf - 0.3) * 0.35
+            pos_size = max(0.05, min(0.25, pos_size))
+            budget = acc.total_equity * pos_size
+        # 检查可用现金
+        budget = min(budget, acc.cash * 0.95)
         # 多级价格获取: Ponder JSON > TA > akshare实时 > 缓存 > 历史收盘价 > 默认50
         price = None
         if stock.get('buy_price') and isinstance(stock['buy_price'], (int, float)) and stock['buy_price'] > 1:
@@ -638,10 +869,17 @@ for i, stock in enumerate(recommended[:3]):
         shares = max(int(budget / price / 100) * 100, 100)
         if shares * price <= acc.cash:
             trade = acc.buy(symbol, name, shares, price, 'Ponder+TA联合决策')
-            execution_log['trades'].append({'action': 'BUY', 'symbol': symbol, 'shares': shares, 'price': price})
-            log(f'  🟢 买入 {name} {shares}股 @{price:.2f}')
+            execution_log['trades'].append({'action': 'BUY', 'symbol': symbol, 'shares': shares, 'price': price, 'pos_size': pos_size})
+            log(f'  🟢 买入 {name} {shares}股 @{price:.2f} (仓位{pos_size*100:.0f}%, 预算¥{budget:,.0f})')
         else:
-            log(f'  ⚠️ 现金不足跳过 {name}')
+            # 现金不足时按实际现金比例买
+            affordable = max(int(acc.cash / price / 100) * 100, 100)
+            if affordable >= 100:
+                trade = acc.buy(symbol, name, affordable, price, 'Ponder决策(现金受限)')
+                execution_log['trades'].append({'action': 'BUY', 'symbol': symbol, 'shares': affordable, 'price': price, 'pos_size': affordable * price / acc.total_equity})
+                log(f'  🟡 买入 {name} {affordable}股 @{price:.2f} (现金受限)')
+            else:
+                log(f'  ⚠️ 现金不足跳过 {name}, 可用¥{acc.cash:,.0f} < ¥{price:.0f}')
 
     elif 'SELL' in action or 'UNDERWEIGHT' in action:
         if symbol in acc.positions:
@@ -654,12 +892,12 @@ for i, stock in enumerate(recommended[:3]):
     else:
         log(f'  ⚪ {name}: HOLD')
 
-# 处理调仓建议（REDUCE/CLEAR）
+# 处理调仓建议（REDUCE/CLEAR/ADD）
 for adj in position_adj:
     symbol = adj.get('symbol', '')
     action = adj.get('current_action', '').upper()
-    if symbol in stop_loss_executed:
-        continue  # 已被止损清仓，跳过
+    if symbol in stop_loss_executed or symbol in take_profit_executed:
+        continue  # 已被止损/止盈执行，跳过
     if symbol not in acc.positions:
         continue
     pos = acc.positions[symbol]
@@ -730,27 +968,54 @@ log(f'  账户: 总资产 ¥{acc.total_equity:,.2f}, 收益 {acc.total_return:+.
 log('═ Phase 6/7: 经验结晶 ═')
 
 try:
+    # 根据今日交易盈亏判断 outcome
+    trade_outcome = "validated" if today_pnl >= 0 else "falsified"
+    session_id = "pipeline_{}".format(datetime.now().strftime('%Y%m%d_%H%M'))
     r6 = subprocess.run([
         'node', '-e', f'''
-        const fs = require("fs");
         const self = require("{PONDER_DIR}/scripts/mma/framework_self.js");
-        const result = self.recordOutcome({{
-            session_id: "pipeline_{datetime.now().strftime('%Y%m%d_%H%M')}",
-            question_type: "股票交易决策",
-            stance: {json.dumps(ponder_text[:500] if ponder_text else "无输出")},
-            grounds: {json.dumps(summary[:500])},
-            outcome: "pending",
-            execution_result: {json.dumps(execution_log)}
-        }});
-        console.log(JSON.stringify(result));
+        const result = self.recordOutcome(
+            "{session_id}",
+            "{trade_outcome}",
+            "今日盈亏: {today_pnl:+.2f}, 交易数: {len(execution_log['trades'])}"
+        );
+        console.log("outcome_recorded:", JSON.stringify(result));
         ''',
-    ], capture_output=True, text=True, timeout=30, cwd=PONDER_DIR)
+    ], capture_output=True, text=True, timeout=15, cwd=PONDER_DIR)
     if r6.returncode == 0:
-        log(f'  经验结晶完成')
+        log(f'  经验结晶完成 (outcome={trade_outcome})')
     else:
         log(f'  经验结晶异常: {r6.stderr[:100]}')
 except Exception as e:
     log(f'  经验结晶失败: {e}')
+
+# ═══════════════════════════════════════════════════════════
+# Phase 6.5: 交易复盘与自我迭代
+# ═══════════════════════════════════════════════════════════
+log('═ Phase 6.5/7: 交易复盘与自我迭代 ═')
+try:
+    r65 = subprocess.run(['python3', '/opt/scripts/trade-analyzer.py'],
+                         capture_output=True, text=True, timeout=60)
+    if r65.returncode == 0:
+        # 提取注入文本
+        output = r65.stdout
+        m = re.search(r'---INJECTION_START---\n(.*?)\n---INJECTION_END---', output, re.DOTALL)
+        if m:
+            trade_lessons_injection = m.group(1)
+            log(f'  复盘完成，生成 {len(trade_lessons_injection)} 字教训注入')
+        else:
+            trade_lessons_injection = ""
+            log('  复盘完成（无新教训）')
+        # 输出复盘摘要
+        for line in output.split('\n'):
+            if line.strip() and not line.startswith('---') and not line.startswith('{'):
+                print(line)
+    else:
+        log(f'  复盘异常: {r65.stderr[:100]}')
+        trade_lessons_injection = ""
+except Exception as e:
+    log(f'  复盘失败: {e}')
+    trade_lessons_injection = ""
 
 # ═══════════════════════════════════════════════════════════
 # Phase 7: 微信推送（含真实送达检测）
@@ -768,8 +1033,9 @@ try:
             log('  微信推送 ✅')
             wechat_sent = True
         else:
+            err_snippet = (r7.stderr or '')[:200]
             log(f'  ⚠️ 微信推送脚本退出码0但未确认送达')
-            log(f'  stderr: {(r7.stderr or \"\")[:200]}')
+            log(f'  stderr: {err_snippet}')
     else:
         log(f'  微信推送失败: {r7.stderr[:200]}')
 except Exception as e:
