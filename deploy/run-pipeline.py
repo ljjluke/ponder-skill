@@ -489,6 +489,42 @@ try:
 except Exception as e:
     log(f'  ⚠️ 外部子 agent 异常: {e}')
 
+# ═══ 注入市场感知（持续感知机制） ═══
+market_sense_injection = ""
+try:
+    log('  👁️ 注入市场感知...')
+    r_sense = subprocess.run(
+        ['python3', '/opt/scripts/market-sense.py', '--text'],
+        capture_output=True, text=True, timeout=60)
+    output = r_sense.stdout
+    m = re.search(r'---INJECTION_START---\n(.*?)\n---INJECTION_END---', output, re.DOTALL)
+    if m:
+        market_sense_injection = "\n\n" + m.group(1) + "\n"
+        log(f'  市场感知注入: {len(m.group(1))} 字符')
+    else:
+        log('  市场感知输出未找到注入标记')
+except Exception as e:
+    log(f'  ⚠️ 市场感知异常: {e}')
+
+# ═══ 注入证伪引擎 ═══
+falsify_injection = ""
+try:
+    log('  ❓ 注入证伪引擎...')
+    r_fal = subprocess.run(
+        ['python3', '/opt/scripts/falsify.py'],
+        capture_output=True, text=True, timeout=30)
+    output = r_fal.stdout
+    m = re.search(r'---FALSIFY_START---\n(.*?)\n---FALSIFY_END---', output, re.DOTALL)
+    if m:
+        falsify_injection = "\n\n" + m.group(1) + "\n"
+        log(f'  证伪引擎注入: {len(m.group(1))} 字符')
+    else:
+        # 可能是无持仓时的简短输出
+        falsify_injection = "\n\n" + output + "\n" if output.strip() else ""
+        log(f'  证伪引擎输出: {len(output)} 字符（无持仓）')
+except Exception as e:
+    log(f'  ⚠️ 证伪引擎异常: {e}')
+
 # 构建完整的 Ponder 分析 prompt —— 触发 SKILL.md 的 9 步管线
 ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析A股市场数据，产出交易决策。
 
@@ -512,6 +548,8 @@ ponder_prompt = f"""⛔ 全自动模式：使用 /luke:ponder 完整能力分析
 
 {position_prompt}
 {trade_lessons_injection}
+{market_sense_injection}
+{falsify_injection}
 
 ## ⛔ 强制输出格式（第一优先级 — JSON 必须在最开头）
 
@@ -557,19 +595,26 @@ with open(os.path.join(DATA_DIR, 'last-ponder-prompt.txt'), 'w') as _f:
     _f.write(ponder_prompt)
 
 ponder_file = os.path.join(DATA_DIR, 'ponder-output.json')
+ponder_tmp = os.path.join(DATA_DIR, '.ponder-tmp.txt')
 try:
-    # ═══ --print 模式：经测试，--print + --permission-mode auto 可以正常使用 Agent tool 启动子 agent ═══
+    # ═══ --print 模式 + 文件重定向（避免 pipe 截断输出） ═══
     ponder_env = os.environ.copy()
     ponder_env['API_TIMEOUT_MS'] = '120000'
     log('  🚀 启动 Ponder (--print 模式，子 agent 可用)...')
-    r3 = subprocess.run([
-        'claude', '--permission-mode', 'auto', '--max-turns', '100', '-p', ponder_prompt,
-    ], capture_output=True, text=True, timeout=7200, cwd=PONDER_DIR, env=ponder_env)
-    ponder_text = (r3.stdout or '')
-    if r3.stderr:
-        log(f'  Ponder stderr: {len(r3.stderr)}字符')
-    with open(ponder_file, 'w') as f:
-        f.write(ponder_text)
+    with open(ponder_tmp, 'w') as out_f:
+        r3 = subprocess.run([
+            'claude', '--permission-mode', 'auto', '--max-turns', '100', '-p', ponder_prompt,
+        ], stdout=out_f, stderr=subprocess.PIPE, text=True, timeout=7200, cwd=PONDER_DIR, env=ponder_env)
+    # 从临时文件读取输出
+    if os.path.exists(ponder_tmp):
+        with open(ponder_tmp) as f:
+            ponder_text = f.read()
+        os.rename(ponder_tmp, ponder_file)
+    else:
+        ponder_text = ''
+    stderr_text = r3.stderr or ''
+    if stderr_text:
+        log(f'  Ponder stderr: {len(stderr_text)}字符')
     log(f'  Ponder 退出码: {r3.returncode}, 输出: {len(ponder_text)}字符')
 except subprocess.TimeoutExpired:
     log('  Ponder 超时(2h)')
@@ -1016,6 +1061,77 @@ try:
 except Exception as e:
     log(f'  复盘失败: {e}')
     trade_lessons_injection = ""
+
+# ═══ 进化权重学习（基于教训采纳率和账户表现自动调整） ═══
+log('  🔄 进化权重学习...')
+try:
+    weights_path = os.path.expanduser('~/.claude/data/skills/ponder/learned-weights.json')
+    if os.path.exists(weights_path):
+        with open(weights_path) as f:
+            weights = json.load(f)
+    else:
+        # 默认权重
+        weights = {
+            'uncertainty_ambiguity': 0.35, 'uncertainty_risk': 0.4, 'uncertainty_ignorance': 0.25,
+            'boundary_deepen': 0.5, 'boundary_adjust': 0.25,
+            'free_energy_verify': 0.4, 'free_energy_selfcheck': 0.3, 'free_energy_prederror': 0.3,
+            'vfinal_feas': 0.5, 'vfinal_robust': 0.3, 'vfinal_persp': 0.2,
+            '_learning_rate': 0.08, '_version': 1, '_total_learns': 0
+        }
+
+    # 计算学习信号
+    lesson_adopt_rate = 0
+    lessons_path = os.path.join(DATA_DIR, 'trade-lessons.json')
+    if os.path.exists(lessons_path):
+        with open(lessons_path) as f:
+            ld = json.load(f)
+        all_lessons = ld.get('lessons', [])
+        total = len(all_lessons)
+        adopted = sum(1 for l in all_lessons if l.get('adopted_count', 0) > 0)
+        if total > 0:
+            lesson_adopt_rate = adopted / total
+
+    # 基于教训采纳率和账户表现调整权重
+    lr = weights.get('_learning_rate', 0.08)
+    learn_signals = []
+
+    # 信号1: 教训采纳率低 → 减少经验权重依赖
+    if lesson_adopt_rate < 0.3:
+        # adopt 率低说明经验注入效果差 → 降低 reliance, 增加 uncertainty
+        delta = lr * (0.3 - lesson_adopt_rate) * 2
+        weights['uncertainty_ambiguity'] = min(0.99, weights.get('uncertainty_ambiguity', 0.35) + delta)
+        weights['_total_learns'] = weights.get('_total_learns', 0) + 1
+        learn_signals.append(f'教训采纳率{lesson_adopt_rate:.0%}低 → uncertainty_ambiguity+{delta:.3f}')
+
+    # 信号2: 账户盈亏为正 → 强化当前权重
+    if acc.total_return > 0:
+        delta = lr * min(acc.total_return / 50, 0.5)
+        for key in ['vfinal_feas', 'vfinal_robust']:
+            weights[key] = min(0.99, weights.get(key, 0.5) + delta)
+        weights['_total_learns'] = weights.get('_total_learns', 0) + 1
+        learn_signals.append(f'收益{acc.total_return:+.2f}%正 → 强化vfinal权重+{delta:.3f}')
+
+    # 信号3: 账户亏损 → 增加不确定性权重
+    if acc.total_return < -5:
+        delta = lr * min(abs(acc.total_return) / 100, 0.3)
+        weights['uncertainty_ambiguity'] = min(0.99, weights.get('uncertainty_ambiguity', 0.35) + delta)
+        weights['boundary_deepen'] = min(0.99, weights.get('boundary_deepen', 0.5) + delta)
+        weights['_total_learns'] = weights.get('_total_learns', 0) + 1
+        learn_signals.append(f'亏损{acc.total_return:+.2f}% → 增加不确定性+{delta:.3f}')
+
+    weights['_updated_at'] = datetime.now().isoformat()
+
+    os.makedirs(os.path.dirname(weights_path), exist_ok=True)
+    with open(weights_path, 'w') as f:
+        json.dump(weights, f, ensure_ascii=False, indent=2)
+
+    if learn_signals:
+        for s in learn_signals:
+            log(f'    📈 {s}')
+    else:
+        log(f'    无权重调整信号（采纳率{lesson_adopt_rate:.0%}，收益{acc.total_return:+.2f}%）')
+except Exception as e:
+    log(f'  ⚠️ 权重学习异常: {e}')
 
 # ═══════════════════════════════════════════════════════════
 # Phase 7: 微信推送（含真实送达检测）
